@@ -1,6 +1,6 @@
 import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
-import reactOperator from "./react-operator"
+import reactOperator, { batchUpdates } from "./react-operator"
 
 export function connectFactoryObservable<
   I,
@@ -48,7 +48,9 @@ export function connectFactoryObservable<
           }, suspenseTime)
         }
 
-        const subscription = getReactObservable$(...input).subscribe(value => {
+        const subscription = batchUpdates(
+          getReactObservable$(...input),
+        ).subscribe(value => {
           setValue(value)
           if (timeoutToken !== null) clearTimeout(timeoutToken)
         })

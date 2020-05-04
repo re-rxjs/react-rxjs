@@ -1,6 +1,6 @@
 import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
-import reactOperator from "./react-operator"
+import reactOperator, { batchUpdates } from "./react-operator"
 
 export function connectObservable<O, IO>(
   observable: Observable<O>,
@@ -13,7 +13,7 @@ export function connectObservable<O, IO>(
       reactObservable$.getCurrentValue(),
     )
     useEffect(() => {
-      const subscription = reactObservable$.subscribe(setValue)
+      const subscription = batchUpdates(reactObservable$).subscribe(setValue)
       return () => subscription.unsubscribe()
     }, [])
     return value

@@ -5,9 +5,9 @@ export interface ReactObservable<O, IO> extends Observable<O> {
   getCurrentValue: () => O | IO
 }
 
-const batchUpdates: <T>(source: Observable<T>) => Observable<T> = debounceTime(
-  0,
-)
+export const batchUpdates: <T>(
+  source: Observable<T>,
+) => Observable<T> = debounceTime(0)
 
 const GRACE_PERIOD = 100
 const reactOperator = <T, I>(
@@ -15,7 +15,6 @@ const reactOperator = <T, I>(
   initialValue: I,
   teardown?: () => void,
 ): ReactObservable<T, I> => {
-  const batchedSource$ = batchUpdates(source$)
   let subject: ReplaySubject<T> | undefined
   let subscription: Subscription | undefined
   let timeoutToken: NodeJS.Timeout | undefined = undefined
@@ -31,7 +30,7 @@ const reactOperator = <T, I>(
     if (!subject || hasError) {
       hasError = false
       subject = new ReplaySubject<T>(1)
-      subscription = batchedSource$.subscribe({
+      subscription = source$.subscribe({
         next(value) {
           currentValue = value
           subject!.next(value)
