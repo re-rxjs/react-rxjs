@@ -1,6 +1,22 @@
 import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
-import reactOperator, { batchUpdates } from "./react-operator"
+import reactOperator from "./react-operator"
+import { batchUpdates } from "./batch-updates"
+
+export interface ConnectFactoryObservableOptions {
+  suspenseTime?: number
+  gracePeriod?: number
+}
+
+interface FactoryObservableOptions {
+  suspenseTime: number
+  subscriptionGraceTime: number
+}
+
+const defaultOptions: FactoryObservableOptions = {
+  suspenseTime: 200,
+  subscriptionGraceTime: 100,
+}
 
 export function connectFactoryObservable<
   I,
@@ -9,8 +25,12 @@ export function connectFactoryObservable<
 >(
   getObservable: (...args: A) => Observable<O>,
   initialValue: I,
-  suspenseTime: number = 200,
+  options_?: Partial<FactoryObservableOptions>,
 ): [(...args: A) => O | I, (...args: A) => Observable<O>] {
+  const { suspenseTime, subscriptionGraceTime } = {
+    ...options_,
+    ...defaultOptions,
+  }
   const cache = new Map<string, Observable<O>>()
 
   const getReactObservable$ = (...input: A): Observable<O> => {
@@ -24,6 +44,7 @@ export function connectFactoryObservable<
     const reactObservable$ = reactOperator(
       getObservable(...input),
       initialValue,
+      subscriptionGraceTime,
       () => {
         cache.delete(key)
       },
@@ -39,6 +60,7 @@ export function connectFactoryObservable<
 
       useEffect(() => {
         let timeoutToken: NodeJS.Timeout | null = null
+
         if (suspenseTime === 0) {
           setValue(initialValue)
         } else if (suspenseTime < Infinity) {
@@ -51,8 +73,8 @@ export function connectFactoryObservable<
         const subscription = batchUpdates(
           getReactObservable$(...input),
         ).subscribe(value => {
-          setValue(value)
           if (timeoutToken !== null) clearTimeout(timeoutToken)
+          setValue(value)
         })
         return () => {
           subscription.unsubscribe()

@@ -38,7 +38,7 @@ describe("connectObservable", () => {
     expect(result.current).toEqual([0, 5])
   })
 
-  it("shares the source subscription until the refCount has remained zero for 100 milliseconds", async () => {
+  it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
     let nInitCount = 0
     const observable$ = defer(() => {
       nInitCount += 1

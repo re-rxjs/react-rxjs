@@ -1,18 +1,14 @@
 import { Observable, ReplaySubject, Subscription } from "rxjs"
-import { debounceTime } from "rxjs/operators"
 
 export interface ReactObservable<O, IO> extends Observable<O> {
   getCurrentValue: () => O | IO
 }
 
-export const batchUpdates: <T>(
-  source: Observable<T>,
-) => Observable<T> = debounceTime(0)
-
-const GRACE_PERIOD = 100
+const DEFAULT_GRACE_PERIOD = 100
 const reactOperator = <T, I>(
   source$: Observable<T>,
   initialValue: I,
+  gracePeriod: number = DEFAULT_GRACE_PERIOD,
   teardown?: () => void,
 ): ReactObservable<T, I> => {
   let subject: ReplaySubject<T> | undefined
@@ -47,20 +43,25 @@ const reactOperator = <T, I>(
     }
 
     const innerSub = subject.subscribe(subscriber)
+    const cleanup = () => {
+      timeoutToken = undefined
+      currentValue = initialValue
+      teardown?.()
+      if (subscription) {
+        subscription.unsubscribe()
+        subscription = undefined
+      }
+      subject = undefined
+    }
     return () => {
       refCount--
       innerSub.unsubscribe()
       if (refCount === 0) {
-        timeoutToken = setTimeout(() => {
-          timeoutToken = undefined
-          currentValue = initialValue
-          teardown && teardown()
-          if (subscription) {
-            subscription.unsubscribe()
-            subscription = undefined
-          }
-          subject = undefined
-        }, GRACE_PERIOD)
+        if (gracePeriod > 0) {
+          timeoutToken = setTimeout(cleanup, gracePeriod)
+        } else {
+          cleanup()
+        }
       }
     }
   })
