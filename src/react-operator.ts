@@ -1,14 +1,15 @@
 import { Observable, ReplaySubject, Subscription } from "rxjs"
+import { distinctUntilChanged } from "rxjs/operators"
 
 export interface ReactObservable<O, IO> extends Observable<O> {
   getCurrentValue: () => O | IO
 }
 
-const DEFAULT_GRACE_PERIOD = 100
 const reactOperator = <T, I>(
   source$: Observable<T>,
   initialValue: I,
-  gracePeriod: number = DEFAULT_GRACE_PERIOD,
+  gracePeriod: number,
+  compare: (a: T | I, b: T) => boolean,
   teardown?: () => void,
 ): ReactObservable<T, I> => {
   let subject: ReplaySubject<T> | undefined
@@ -26,7 +27,7 @@ const reactOperator = <T, I>(
     if (!subject || hasError) {
       hasError = false
       subject = new ReplaySubject<T>(1)
-      subscription = source$.subscribe({
+      subscription = distinctUntilChanged(compare)(source$).subscribe({
         next(value) {
           currentValue = value
           subject!.next(value)

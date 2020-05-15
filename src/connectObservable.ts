@@ -3,12 +3,30 @@ import { useEffect, useState } from "react"
 import reactOperator from "./react-operator"
 import batchUpdates from "./batch-updates"
 
+export interface StaticObservableOptions<T> {
+  unsubscribeGraceTime: number
+  compare: (a: T, b: T) => boolean
+}
+export const defaultStaticOptions: StaticObservableOptions<any> = {
+  unsubscribeGraceTime: 100,
+  compare: (a, b) => a === b,
+}
+
 export function connectObservable<O, IO>(
   observable: Observable<O>,
   initialValue: IO,
-  gracePeriod?: number,
+  options?: Partial<StaticObservableOptions<O>>,
 ) {
-  const reactObservable$ = reactOperator(observable, initialValue, gracePeriod)
+  const { unsubscribeGraceTime, compare } = {
+    ...options,
+    ...defaultStaticOptions,
+  }
+  const reactObservable$ = reactOperator(
+    observable,
+    initialValue,
+    unsubscribeGraceTime,
+    compare,
+  )
 
   const useStaticObservable = () => {
     const [value, setValue] = useState<O | IO>(

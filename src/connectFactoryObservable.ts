@@ -2,20 +2,18 @@ import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
 import reactOperator from "./react-operator"
 import { batchUpdates } from "./batch-updates"
+import {
+  StaticObservableOptions,
+  defaultStaticOptions,
+} from "./connectObservable"
 
-export interface ConnectFactoryObservableOptions {
-  suspenseTime?: number
-  gracePeriod?: number
-}
-
-interface FactoryObservableOptions {
+interface FactoryObservableOptions<T> extends StaticObservableOptions<T> {
   suspenseTime: number
-  subscriptionGraceTime: number
 }
 
-const defaultOptions: FactoryObservableOptions = {
+const defaultOptions: FactoryObservableOptions<any> = {
+  ...defaultStaticOptions,
   suspenseTime: 200,
-  subscriptionGraceTime: 100,
 }
 
 export function connectFactoryObservable<
@@ -25,10 +23,10 @@ export function connectFactoryObservable<
 >(
   getObservable: (...args: A) => Observable<O>,
   initialValue: I,
-  options_?: Partial<FactoryObservableOptions>,
+  options?: Partial<FactoryObservableOptions<O>>,
 ): [(...args: A) => O | I, (...args: A) => Observable<O>] {
-  const { suspenseTime, subscriptionGraceTime } = {
-    ...options_,
+  const { suspenseTime, unsubscribeGraceTime, compare } = {
+    ...options,
     ...defaultOptions,
   }
   const cache = new Map<string, Observable<O>>()
@@ -44,7 +42,8 @@ export function connectFactoryObservable<
     const reactObservable$ = reactOperator(
       getObservable(...input),
       initialValue,
-      subscriptionGraceTime,
+      unsubscribeGraceTime,
+      compare,
       () => {
         cache.delete(key)
       },
