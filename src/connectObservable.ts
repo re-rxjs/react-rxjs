@@ -1,14 +1,14 @@
-import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
-import reactOperator from "./react-operator"
-import batchUpdates from "./batch-updates"
+import { Observable } from "rxjs"
+import reactOptimizations from "./operators/react-optimizations"
+import distinctShareReplay from "./operators/distinct-share-replay"
 
 export interface StaticObservableOptions<T> {
   unsubscribeGraceTime: number
   compare: (a: T, b: T) => boolean
 }
 export const defaultStaticOptions: StaticObservableOptions<any> = {
-  unsubscribeGraceTime: 100,
+  unsubscribeGraceTime: 120,
   compare: (a, b) => a === b,
 }
 
@@ -18,25 +18,21 @@ export function connectObservable<O, IO>(
   options?: Partial<StaticObservableOptions<O>>,
 ) {
   const { unsubscribeGraceTime, compare } = {
-    ...options,
     ...defaultStaticOptions,
+    ...options,
   }
-  const reactObservable$ = reactOperator(
-    observable,
-    initialValue,
-    unsubscribeGraceTime,
-    compare,
+  const sharedObservable$ = observable.pipe(distinctShareReplay(compare))
+  const reactObservable$ = sharedObservable$.pipe(
+    reactOptimizations(unsubscribeGraceTime),
   )
 
   const useStaticObservable = () => {
-    const [value, setValue] = useState<O | IO>(
-      reactObservable$.getCurrentValue(),
-    )
+    const [value, setValue] = useState<O | IO>(initialValue)
     useEffect(() => {
-      const subscription = batchUpdates(reactObservable$).subscribe(setValue)
+      const subscription = reactObservable$.subscribe(setValue)
       return () => subscription.unsubscribe()
     }, [])
     return value
   }
-  return [useStaticObservable, reactObservable$] as const
+  return [useStaticObservable, sharedObservable$] as const
 }

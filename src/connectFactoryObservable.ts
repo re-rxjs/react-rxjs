@@ -1,11 +1,12 @@
-import { Observable } from "rxjs"
 import { useEffect, useState } from "react"
-import reactOperator from "./react-operator"
-import { batchUpdates } from "./batch-updates"
+import { Observable, of } from "rxjs"
+import { finalize, delay, takeUntil } from "rxjs/operators"
 import {
   StaticObservableOptions,
   defaultStaticOptions,
 } from "./connectObservable"
+import distinctShareReplay from "./operators/distinct-share-replay"
+import reactOptimizations from "./operators/react-optimizations"
 
 interface FactoryObservableOptions<T> extends StaticObservableOptions<T> {
   suspenseTime: number
@@ -26,12 +27,14 @@ export function connectFactoryObservable<
   options?: Partial<FactoryObservableOptions<O>>,
 ): [(...args: A) => O | I, (...args: A) => Observable<O>] {
   const { suspenseTime, unsubscribeGraceTime, compare } = {
-    ...options,
     ...defaultOptions,
+    ...options,
   }
+
+  const reactEnhander = reactOptimizations(unsubscribeGraceTime)
   const cache = new Map<string, Observable<O>>()
 
-  const getReactObservable$ = (...input: A): Observable<O> => {
+  const getSharedObservable$ = (...input: A): Observable<O> => {
     const key = JSON.stringify(input)
     const cachedVal = cache.get(key)
 
@@ -39,14 +42,11 @@ export function connectFactoryObservable<
       return cachedVal
     }
 
-    const reactObservable$ = reactOperator(
-      getObservable(...input),
-      initialValue,
-      unsubscribeGraceTime,
-      compare,
-      () => {
+    const reactObservable$ = getObservable(...input).pipe(
+      distinctShareReplay(compare),
+      finalize(() => {
         cache.delete(key)
-      },
+      }),
     )
 
     cache.set(key, reactObservable$)
@@ -58,31 +58,26 @@ export function connectFactoryObservable<
       const [value, setValue] = useState<I | O>(initialValue)
 
       useEffect(() => {
-        let timeoutToken: NodeJS.Timeout | null = null
+        const sharedObservable$ = getSharedObservable$(...input)
+        const subscription = reactEnhander(sharedObservable$).subscribe(
+          setValue,
+        )
 
         if (suspenseTime === 0) {
           setValue(initialValue)
         } else if (suspenseTime < Infinity) {
-          timeoutToken = setTimeout(() => {
-            timeoutToken = null
-            setValue(initialValue)
-          }, suspenseTime)
+          subscription.add(
+            of(initialValue)
+              .pipe(delay(suspenseTime), takeUntil(sharedObservable$))
+              .subscribe(setValue),
+          )
         }
 
-        const subscription = batchUpdates(
-          getReactObservable$(...input),
-        ).subscribe(value => {
-          if (timeoutToken !== null) clearTimeout(timeoutToken)
-          setValue(value)
-        })
-        return () => {
-          subscription.unsubscribe()
-          if (timeoutToken !== null) clearTimeout(timeoutToken)
-        }
+        return () => subscription.unsubscribe()
       }, input)
 
       return value
     },
-    getReactObservable$,
+    getSharedObservable$,
   ]
 }
