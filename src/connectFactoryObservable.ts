@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Observable, of } from "rxjs"
-import { finalize, delay, takeUntil } from "rxjs/operators"
+import { delay, takeUntil } from "rxjs/operators"
 import {
   StaticObservableOptions,
   defaultStaticOptions,
@@ -43,10 +43,9 @@ export function connectFactoryObservable<
     }
 
     const reactObservable$ = getObservable(...input).pipe(
-      finalize(() => {
+      distinctShareReplay(compare, () => {
         cache.delete(key)
       }),
-      distinctShareReplay(compare),
     )
 
     cache.set(key, reactObservable$)
