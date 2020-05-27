@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { Observable, of } from "rxjs"
-import { delay, takeUntil } from "rxjs/operators"
+import { Observable, of, race } from "rxjs"
+import { delay, take, mapTo } from "rxjs/operators"
 import {
   StaticObservableOptions,
   defaultStaticOptions,
@@ -66,9 +66,13 @@ export function connectFactoryObservable<
           setValue(initialValue)
         } else if (suspenseTime < Infinity) {
           subscription.add(
-            of(initialValue)
-              .pipe(delay(suspenseTime), takeUntil(sharedObservable$))
-              .subscribe(setValue),
+            race(
+              of(initialValue).pipe(delay(suspenseTime)),
+              sharedObservable$.pipe(
+                take(1),
+                mapTo((x: I | O) => x),
+              ),
+            ).subscribe(setValue),
           )
         }
 
