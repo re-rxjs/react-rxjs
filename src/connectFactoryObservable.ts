@@ -43,10 +43,10 @@ export function connectFactoryObservable<
     }
 
     const reactObservable$ = getObservable(...input).pipe(
-      distinctShareReplay(compare),
       finalize(() => {
         cache.delete(key)
       }),
+      distinctShareReplay(compare),
     )
 
     cache.set(key, reactObservable$)
