@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
-import { Observable, of, race } from "rxjs"
-import { take, mapTo, delay } from "rxjs/operators"
+import { useState, useLayoutEffect } from "react"
+import { Observable, of, race, merge, NEVER } from "rxjs"
+import { take, delay } from "rxjs/operators"
 import reactOptimizations from "./operators/react-optimizations"
 import { defaultFactoryOptions, ObservableOptions } from "./options"
 
@@ -9,35 +9,29 @@ const useSharedReplayableObservable = <O, I>(
   initialValue: I,
   options?: ObservableOptions,
 ) => {
-  const [value, setValue] = useState<I | O>(initialValue)
-
   const { suspenseTime, unsubscribeGraceTime } = {
     ...defaultFactoryOptions,
     ...options,
   }
+  const [state, setState] = useState<I | O>(initialValue)
 
-  useEffect(() => {
-    const subscription = reactOptimizations(unsubscribeGraceTime)(
-      sharedReplayableObservable$,
-    ).subscribe(setValue)
+  useLayoutEffect(() => {
+    const updates$ = sharedReplayableObservable$.pipe(
+      reactOptimizations(unsubscribeGraceTime),
+    )
+    const initialState$ = race(
+      suspenseTime === Infinity
+        ? NEVER
+        : of(initialValue).pipe(delay(suspenseTime)),
+      sharedReplayableObservable$.pipe(take(1)),
+    )
 
-    if (suspenseTime === 0) {
-      setValue(initialValue)
-    } else if (suspenseTime < Infinity) {
-      subscription.add(
-        race(
-          of(initialValue).pipe(delay(suspenseTime)),
-          sharedReplayableObservable$.pipe(
-            take(1),
-            mapTo((x: I | O) => x),
-          ),
-        ).subscribe(setValue),
-      )
-    }
+    const subscription = merge(updates$, initialState$).subscribe(setState)
 
     return () => subscription.unsubscribe()
   }, [sharedReplayableObservable$, suspenseTime, unsubscribeGraceTime])
-  return value
+
+  return state
 }
 
 export default useSharedReplayableObservable

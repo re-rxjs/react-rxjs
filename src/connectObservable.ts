@@ -11,6 +11,7 @@ export function connectObservable<O, IO>(
   const options = {
     ...defaultStaticOptions,
     ..._options,
+    suspenseTime: Infinity,
   }
   const sharedObservable$ = observable.pipe(
     distinctShareReplay(options.compare),

@@ -1,7 +1,7 @@
 import { connectObservable } from "../src"
-import { NEVER, from, of, defer } from "rxjs"
+import { NEVER, from, of, defer, Subject } from "rxjs"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { useEffect, useState } from "react"
+import { useState, useLayoutEffect } from "react"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -25,20 +25,36 @@ describe("connectObservable", () => {
     expect(result.current).toBe(1)
   })
 
-  it("batches the updates that happen on the same event-loop", async () => {
-    const observable$ = from([1, 2, 3, 4, 5])
+  it("sets the initial state synchronously if it's available", async () => {
+    const observable$ = of(1)
+    const [useLatestNumber] = connectObservable(observable$, 0)
+
+    const { result, unmount } = renderHook(() => useLatestNumber())
+    expect(result.current).toEqual(1)
+    unmount()
+  })
+
+  it("batches synchronous updates", async () => {
+    const observable$ = new Subject<number>()
     const [useLatestNumber] = connectObservable(observable$, 0)
     const useLatestNumberTest = () => {
       const latestNumber = useLatestNumber()
       const [emittedValues, setEmittedValues] = useState<number[]>([])
-      useEffect(() => {
+      useLayoutEffect(() => {
         setEmittedValues(prev => [...prev, latestNumber])
       }, [latestNumber])
       return emittedValues
     }
 
     const { result } = renderHook(() => useLatestNumberTest())
+    expect(result.current).toEqual([0])
     await act(async () => {
+      observable$.next(0)
+      observable$.next(1)
+      observable$.next(2)
+      observable$.next(3)
+      observable$.next(4)
+      observable$.next(5)
       await wait(0)
     })
     expect(result.current).toEqual([0, 5])
