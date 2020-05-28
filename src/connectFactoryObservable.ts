@@ -1,21 +1,7 @@
-import { useEffect, useState } from "react"
-import { Observable, of, race } from "rxjs"
-import { delay, take, mapTo } from "rxjs/operators"
-import {
-  StaticObservableOptions,
-  defaultStaticOptions,
-} from "./connectObservable"
+import { Observable } from "rxjs"
 import distinctShareReplay from "./operators/distinct-share-replay"
-import reactOptimizations from "./operators/react-optimizations"
-
-interface FactoryObservableOptions<T> extends StaticObservableOptions<T> {
-  suspenseTime: number
-}
-
-const defaultOptions: FactoryObservableOptions<any> = {
-  ...defaultStaticOptions,
-  suspenseTime: 200,
-}
+import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
+import useSharedReplayableObservable from "./useSharedReplayableObservable"
 
 export function connectFactoryObservable<
   I,
@@ -24,14 +10,13 @@ export function connectFactoryObservable<
 >(
   getObservable: (...args: A) => Observable<O>,
   initialValue: I,
-  options?: Partial<FactoryObservableOptions<O>>,
+  _options?: FactoryObservableOptions<O>,
 ): [(...args: A) => O | I, (...args: A) => Observable<O>] {
-  const { suspenseTime, unsubscribeGraceTime, compare } = {
-    ...defaultOptions,
-    ...options,
+  const options = {
+    ...defaultFactoryOptions,
+    ..._options,
   }
 
-  const reactEnhander = reactOptimizations(unsubscribeGraceTime)
   const cache = new Map<string, Observable<O>>()
 
   const getSharedObservable$ = (...input: A): Observable<O> => {
@@ -43,7 +28,7 @@ export function connectFactoryObservable<
     }
 
     const reactObservable$ = getObservable(...input).pipe(
-      distinctShareReplay(compare, () => {
+      distinctShareReplay(options.compare, () => {
         cache.delete(key)
       }),
     )
@@ -53,34 +38,13 @@ export function connectFactoryObservable<
   }
 
   return [
-    (...input: A) => {
-      const [value, setValue] = useState<I | O>(initialValue)
+    (...input: A) =>
+      useSharedReplayableObservable(
+        getSharedObservable$(...input),
+        initialValue,
+        options,
+      ),
 
-      useEffect(() => {
-        const sharedObservable$ = getSharedObservable$(...input)
-        const subscription = reactEnhander(sharedObservable$).subscribe(
-          setValue,
-        )
-
-        if (suspenseTime === 0) {
-          setValue(initialValue)
-        } else if (suspenseTime < Infinity) {
-          subscription.add(
-            race(
-              of(initialValue).pipe(delay(suspenseTime)),
-              sharedObservable$.pipe(
-                take(1),
-                mapTo((x: I | O) => x),
-              ),
-            ).subscribe(setValue),
-          )
-        }
-
-        return () => subscription.unsubscribe()
-      }, input)
-
-      return value
-    },
     getSharedObservable$,
   ]
 }
