@@ -1,4 +1,4 @@
-import { Observable } from "rxjs"
+import { Observable, NEVER, concat } from "rxjs"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { StaticObservableOptions, defaultStaticOptions } from "./options"
 import useSharedReplayableObservable from "./useSharedReplayableObservable"
@@ -13,7 +13,7 @@ export function connectObservable<O, IO>(
     ..._options,
     suspenseTime: Infinity,
   }
-  const sharedObservable$ = observable.pipe(
+  const sharedObservable$ = concat(observable, NEVER).pipe(
     distinctShareReplay(options.compare),
   )
 

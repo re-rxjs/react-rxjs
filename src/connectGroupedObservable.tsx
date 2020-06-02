@@ -1,6 +1,6 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { Observable, GroupedObservable } from "rxjs"
-import { map, filter, take, mergeMap } from "rxjs/operators"
+import { map, filter, take, concatMap } from "rxjs/operators"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
 import useSharedReplayableObservable from "./useSharedReplayableObservable"
@@ -18,7 +18,12 @@ const connectGroupedObservable = <K, O, I>(
   const observables = new Map<K, Observable<O>>()
   const activeObservables$ = source$.pipe(
     map(x => {
-      observables.set(x.key, x)
+      observables.set(
+        x.key,
+        x.pipe(
+          distinctShareReplay(options.compare, () => observables.delete(x.key)),
+        ),
+      )
       return observables
     }),
     distinctShareReplay(
@@ -31,13 +36,12 @@ const connectGroupedObservable = <K, O, I>(
     activeObservables$.pipe(
       filter(x => x.has(key)),
       take(1),
-      mergeMap(x => x.get(key)!),
-      distinctShareReplay(options.compare, () => observables.delete(key)),
+      concatMap(x => x.get(key)!),
     )
 
   const hook = (key: K) =>
     useSharedReplayableObservable(
-      getObservableByKey(key),
+      useMemo(() => getObservableByKey(key), [key]),
       initialValue,
       options,
     )

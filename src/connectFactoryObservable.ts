@@ -1,4 +1,4 @@
-import { Observable } from "rxjs"
+import { Observable, NEVER, concat } from "rxjs"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
 import useSharedReplayableObservable from "./useSharedReplayableObservable"
@@ -27,7 +27,7 @@ export function connectFactoryObservable<
       return cachedVal
     }
 
-    const reactObservable$ = getObservable(...input).pipe(
+    const reactObservable$ = concat(getObservable(...input), NEVER).pipe(
       distinctShareReplay(options.compare, () => {
         cache.delete(key)
       }),

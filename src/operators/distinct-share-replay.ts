@@ -1,21 +1,62 @@
-import { Observable, ReplaySubject, concat, NEVER } from "rxjs"
-import {
-  distinctUntilChanged,
-  multicast,
-  refCount,
-  finalize,
-} from "rxjs/operators"
+import { Observable, Subscription, Subject } from "rxjs"
 
+const defaultCompare = (a: any, b: any) => a === b
+const defaultTeardown = Function.prototype as () => void
+
+const EMPTY_VALUE: any = {}
 const distinctShareReplay = <T>(
-  compare?: (a: T, b: T) => boolean,
-  tearDown?: () => void,
-) => (source$: Observable<T>): Observable<T> =>
-  source$.pipe(
-    distinctUntilChanged(compare),
-    innerSource => concat(innerSource, NEVER),
-    tearDown ? finalize(tearDown) : x => x,
-    multicast(() => new ReplaySubject<T>(1)),
-    refCount(),
-  )
+  compareFn: (a: T, b: T) => boolean = defaultCompare,
+  teardown = defaultTeardown,
+) => (source$: Observable<T>): Observable<T> => {
+  let subject: Subject<T> | undefined
+  let subscription: Subscription | undefined
+  let refCount = 0
+  let currentValue: { value: T }
+
+  return new Observable<T>(subscriber => {
+    refCount++
+    if (!subject) {
+      currentValue = { value: EMPTY_VALUE }
+      subject = new Subject<T>()
+      subscription = source$.subscribe({
+        next(value) {
+          if (
+            currentValue.value !== EMPTY_VALUE ||
+            !compareFn(value, currentValue.value)
+          ) {
+            subject!.next((currentValue.value = value))
+          }
+        },
+        error(err) {
+          subscription = undefined
+          subject!.error(err)
+        },
+        complete() {
+          subscription = undefined
+          subject!.complete()
+        },
+      })
+    }
+
+    if (currentValue.value !== EMPTY_VALUE) {
+      subscriber.next(currentValue.value)
+    }
+
+    const innerSub = subject.subscribe(subscriber)
+    return () => {
+      refCount--
+      innerSub.unsubscribe()
+      if (refCount === 0) {
+        currentValue.value = EMPTY_VALUE
+        subject = undefined
+        teardown()
+        if (subscription) {
+          subscription.unsubscribe()
+          subscription = undefined
+        }
+      }
+    }
+  })
+}
 
 export default distinctShareReplay
