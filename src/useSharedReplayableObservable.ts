@@ -1,7 +1,7 @@
 import { useState, useLayoutEffect } from "react"
-import { Observable, of, race, merge, NEVER } from "rxjs"
-import { take, delay } from "rxjs/operators"
-import reactOptimizations from "./operators/react-optimizations"
+import { Observable, of, race, concat } from "rxjs"
+import { delay } from "rxjs/operators"
+import delayUnsubscription from "./operators/delay-unsubscription"
 import { defaultFactoryOptions, ObservableOptions } from "./options"
 
 const useSharedReplayableObservable = <O, I>(
@@ -17,16 +17,16 @@ const useSharedReplayableObservable = <O, I>(
 
   useLayoutEffect(() => {
     const updates$ = sharedReplayableObservable$.pipe(
-      reactOptimizations(unsubscribeGraceTime),
-    )
-    const initialState$ = race(
-      suspenseTime === Infinity
-        ? NEVER
-        : of(initialValue).pipe(delay(suspenseTime)),
-      sharedReplayableObservable$.pipe(take(1)),
+      delayUnsubscription(unsubscribeGraceTime),
     )
 
-    const subscription = merge(updates$, initialState$).subscribe(setState)
+    const subscription = (suspenseTime === Infinity
+      ? updates$
+      : race(
+          concat(of(initialValue).pipe(delay(suspenseTime)), updates$),
+          updates$,
+        )
+    ).subscribe(setState)
 
     return () => subscription.unsubscribe()
   }, [sharedReplayableObservable$, suspenseTime, unsubscribeGraceTime])
