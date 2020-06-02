@@ -1,16 +1,19 @@
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import { Observable, GroupedObservable } from "rxjs"
-import { map, filter, take, concatMap } from "rxjs/operators"
+import { map, filter, take, concatMap, shareReplay } from "rxjs/operators"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
 import useSharedReplayableObservable from "./useSharedReplayableObservable"
-import { useLayoutEffect } from "react"
 
 const connectGroupedObservable = <K, O, I>(
   source$: Observable<GroupedObservable<K, O>>,
   initialValue: I,
   _options?: FactoryObservableOptions<O>,
-): [(key: K) => I | O, React.FC, (key: K) => Observable<O>] => {
+): [
+  (key: K) => I | O,
+  () => () => void,
+  (key: K) => GroupedObservable<K, O>,
+] => {
   const options = {
     ...defaultFactoryOptions,
     ..._options,
@@ -26,18 +29,18 @@ const connectGroupedObservable = <K, O, I>(
       )
       return observables
     }),
-    distinctShareReplay(
-      () => false,
-      () => observables.clear(),
-    ),
+    shareReplay(1),
   )
 
-  const getObservableByKey = (key: K) =>
-    activeObservables$.pipe(
+  const getObservableByKey = (key: K) => {
+    const result = activeObservables$.pipe(
       filter(x => x.has(key)),
       take(1),
       concatMap(x => x.get(key)!),
-    )
+    ) as GroupedObservable<K, O>
+    result.key = key
+    return result
+  }
 
   const hook = (key: K) =>
     useSharedReplayableObservable(
@@ -46,15 +49,12 @@ const connectGroupedObservable = <K, O, I>(
       options,
     )
 
-  const GroupSubsriber: React.FC = ({ children }) => {
-    useLayoutEffect(() => {
-      const subscription = activeObservables$.subscribe()
-      return () => subscription.unsubscribe()
-    }, [])
-    return <>{children}</>
+  const getGroupSubscription = () => {
+    const subscription = activeObservables$.subscribe()
+    return () => subscription.unsubscribe()
   }
 
-  return [hook, GroupSubsriber, getObservableByKey]
+  return [hook, getGroupSubscription, getObservableByKey]
 }
 
 export default connectGroupedObservable
