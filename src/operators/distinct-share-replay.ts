@@ -21,7 +21,7 @@ const distinctShareReplay = <T>(
       subscription = source$.subscribe({
         next(value) {
           if (
-            currentValue.value !== EMPTY_VALUE ||
+            currentValue.value === EMPTY_VALUE ||
             !compareFn(value, currentValue.value)
           ) {
             subject!.next((currentValue.value = value))

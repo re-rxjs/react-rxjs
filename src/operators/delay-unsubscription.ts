@@ -8,7 +8,7 @@ const delayUnsubscription = <T>(delayTime: number) => (
   if (delayTime === 0) {
     return source$
   }
-  let cancelUnsubscription = noop
+  let finalizeLastUnsubscription = noop
   return new Observable<T>(subscriber => {
     let isActive = true
     const subscription = source$.subscribe({
@@ -24,7 +24,7 @@ const delayUnsubscription = <T>(delayTime: number) => (
         subscriber.complete()
       },
     })
-    cancelUnsubscription()
+    finalizeLastUnsubscription()
     return () => {
       isActive = false
       let timeoutToken: NodeJS.Timeout | undefined =
@@ -34,11 +34,11 @@ const delayUnsubscription = <T>(delayTime: number) => (
               subscription.unsubscribe()
             }, delayTime)
           : undefined
-      cancelUnsubscription()
-      cancelUnsubscription = () => {
+      finalizeLastUnsubscription()
+      finalizeLastUnsubscription = () => {
         clearTimeout(timeoutToken!)
         subscription.unsubscribe()
-        cancelUnsubscription = noop
+        finalizeLastUnsubscription = noop
       }
     }
   })

@@ -5,7 +5,7 @@ import useSharedReplayableObservable from "./useSharedReplayableObservable"
 
 export function connectFactoryObservable<
   I,
-  A extends (number | string | boolean | null)[],
+  A extends (Observable<any>)[],
   O
 >(
   getObservable: (...args: A) => Observable<O>,
