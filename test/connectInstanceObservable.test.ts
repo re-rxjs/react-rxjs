@@ -54,7 +54,7 @@ const usePriceData = connectInstanceObservable(
 
     return combineLatest(data$, merge(periods$, plug$)).pipe(
       map(([data, period]) => data.slice(-period)),
-    )
+    ) as Observable<number[]>
   },
   [],
 )
