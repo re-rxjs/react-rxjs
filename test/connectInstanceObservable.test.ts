@@ -1,6 +1,6 @@
 import { connectInstanceObservable } from "../src"
 import { of, Subject, Observable, combineLatest, merge } from "rxjs"
-import { renderHook } from "@testing-library/react-hooks"
+import { renderHook, act } from "@testing-library/react-hooks"
 import {
   ignoreElements,
   switchMap,
@@ -37,13 +37,12 @@ const tagsData$ = tagAndPeriod$.pipe(
 )
 const empty: number[] = []
 const usePriceData = connectInstanceObservable(
-  (tags$: Observable<string>, periods$: Observable<number>) => {
-    const plug$ = combineLatest(tags$, periods$).pipe(
-      tap(tagAndPeriod$),
-      ignoreElements(),
-    )
+  (props$: Observable<[string, number]>) => {
+    const plug$ = props$.pipe(tap(tagAndPeriod$), ignoreElements())
 
-    const data$ = tags$.pipe(
+    const data$ = props$.pipe(
+      map(([tag]) => tag),
+      distinctUntilChanged(),
       switchMap(tag =>
         tagsData$.pipe(
           map(tags => tags.get(tag) || empty),
@@ -52,7 +51,12 @@ const usePriceData = connectInstanceObservable(
       ),
     )
 
-    return combineLatest(data$, merge(periods$, plug$)).pipe(
+    const periods$ = props$.pipe(
+      map(([, period]) => period),
+      distinctUntilChanged(),
+    )
+
+    return merge(combineLatest(data$, periods$), plug$).pipe(
       map(([data, period]) => data.slice(-period)),
     ) as Observable<number[]>
   },
@@ -60,9 +64,51 @@ const usePriceData = connectInstanceObservable(
 )
 
 describe("connectInstanceObservable", () => {
-  it("works", async () => {
-    const { result } = renderHook(() => usePriceData("hello", 9))
+  it("works", () => {
+    const { result, rerender } = renderHook(
+      ({ tag, period }: { tag: string; period: number }) =>
+        usePriceData(tag, period),
+      { initialProps: { tag: "hello", period: 9 } },
+    )
 
     expect(result.current).toEqual([0, 1, 2, 3, 4, 9])
+
+    act(() => {
+      rerender({ tag: "hello", period: 2 })
+    })
+
+    expect(result.current).toEqual([4, 9])
+
+    act(() => {
+      rerender({ tag: "ups", period: 8 })
+    })
+
+    expect(result.current).toEqual([0, 1, 2, 8])
+
+    act(() => {
+      rerender({ tag: "012345", period: 10 })
+    })
+
+    expect(result.current).toEqual([0, 1, 2, 3, 4, 5, 10])
+  })
+
+  it("also works with one argument", () => {
+    const useDoubles = connectInstanceObservable(
+      (props$: Observable<number>) => props$.pipe(map(x => x * 2)),
+      null,
+    )
+
+    const { result, rerender } = renderHook(
+      ({ input }: { input: number }) => useDoubles(input),
+      { initialProps: { input: 1 } },
+    )
+
+    expect(result.current).toEqual(2)
+
+    act(() => {
+      rerender({ input: 2 })
+    })
+
+    expect(result.current).toEqual(4)
   })
 })

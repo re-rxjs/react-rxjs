@@ -1,4 +1,5 @@
-import { Observable } from "rxjs"
+import { Observable, of, Subscription } from "rxjs"
+import { delay } from "rxjs/operators"
 
 const noop = Function.prototype as () => void
 
@@ -26,17 +27,19 @@ const delayUnsubscription = <T>(delayTime: number) => (
     })
     finalizeLastUnsubscription()
     return () => {
-      isActive = false
-      let timeoutToken: NodeJS.Timeout | undefined =
-        delayTime < Infinity
-          ? setTimeout(() => {
-              timeoutToken = undefined
-              subscription.unsubscribe()
-            }, delayTime)
-          : undefined
       finalizeLastUnsubscription()
+      isActive = false
+      let timeoutSub: Subscription | undefined =
+        delayTime < Infinity
+          ? of(null)
+              .pipe(delay(delayTime))
+              .subscribe(() => {
+                timeoutSub = undefined
+                subscription.unsubscribe()
+              })
+          : undefined
       finalizeLastUnsubscription = () => {
-        clearTimeout(timeoutToken!)
+        timeoutSub?.unsubscribe()
         subscription.unsubscribe()
         finalizeLastUnsubscription = noop
       }

@@ -1,7 +1,7 @@
 import { Observable, Subscription, Subject } from "rxjs"
 
 const defaultCompare = (a: any, b: any) => a === b
-const defaultTeardown = Function.prototype as () => void
+function defaultTeardown() {}
 
 const EMPTY_VALUE: any = {}
 const distinctShareReplay = <T>(

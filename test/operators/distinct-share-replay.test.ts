@@ -1,7 +1,6 @@
 import { distinctShareReplay } from "../../src"
 import { cold } from "jest-marbles"
 import { TestScheduler } from "rxjs/testing"
-import { shareReplay } from "rxjs/operators"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -47,7 +46,7 @@ describe("operators/distinctShareReplay", () => {
       const sub2 = "      -----------^------------------"
       const expected2 = " -----------a-b-c-d-e-f-g-h-i-j"
 
-      const shared = source.pipe(shareReplay({refCount: true, bufferSize: 1}))
+      const shared = source.pipe(distinctShareReplay())
 
       expectObservable(shared, sub1).toBe(expected1)
       expectObservable(shared, sub2).toBe(expected2)
