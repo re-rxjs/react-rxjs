@@ -1,7 +1,7 @@
 import { Observable, NEVER, concat } from "rxjs"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
-import useSharedReplayableObservable from "./useSharedReplayableObservable"
+import useObservable from "./useObservable"
 
 export function connectFactoryObservable<
   I,
@@ -39,11 +39,7 @@ export function connectFactoryObservable<
 
   return [
     (...input: A) =>
-      useSharedReplayableObservable(
-        getSharedObservable$(...input),
-        initialValue,
-        options,
-      ),
+      useObservable(getSharedObservable$(...input), initialValue, options),
 
     getSharedObservable$,
   ]

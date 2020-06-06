@@ -1,7 +1,7 @@
 import { Observable, NEVER, concat } from "rxjs"
 import distinctShareReplay from "./operators/distinct-share-replay"
 import { StaticObservableOptions, defaultStaticOptions } from "./options"
-import useSharedReplayableObservable from "./useSharedReplayableObservable"
+import useObservable from "./useObservable"
 
 export function connectObservable<O, IO>(
   observable: Observable<O>,
@@ -18,7 +18,7 @@ export function connectObservable<O, IO>(
   )
 
   const useStaticObservable = () =>
-    useSharedReplayableObservable(sharedObservable$, initialValue, options)
+    useObservable(sharedObservable$, initialValue, options)
 
   return [useStaticObservable, sharedObservable$] as const
 }
