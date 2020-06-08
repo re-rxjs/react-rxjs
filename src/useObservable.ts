@@ -20,16 +20,11 @@ const useObservable = <O, I>(
         ? undefined
         : setTimeout(setState, suspenseTime, initialValue)
 
-    const stopInitialState = () => {
-      if (!timeoutToken) return
-      timeoutToken = clearTimeout(timeoutToken) as undefined
-    }
-
     const subscription = delayUnsubscription(unsubscribeGraceTime)(
       source$,
     ).subscribe(nextState => {
       setState(nextState as any)
-      stopInitialState()
+      timeoutToken = timeoutToken && (clearTimeout(timeoutToken) as undefined)
     })
 
     return () => subscription.unsubscribe()
