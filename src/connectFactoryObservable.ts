@@ -4,16 +4,18 @@ import {
   BehaviorObservable,
 } from "./operators/distinct-share-replay"
 import { ConnectorOptions, defaultConnectorOptions } from "./options"
-import { useObservable } from "./"
+import { useObservable, SUSPENSE } from "./"
 
 export function connectFactoryObservable<
-  I,
   A extends (number | string | boolean | null)[],
   O
 >(
   getObservable: (...args: A) => Observable<O>,
   _options?: ConnectorOptions<O>,
-): [(...args: A) => O | I, (...args: A) => Observable<O>] {
+): [
+  (...args: A) => Exclude<O, typeof SUSPENSE>,
+  (...args: A) => Observable<O>,
+] {
   const options = {
     ...defaultConnectorOptions,
     ..._options,

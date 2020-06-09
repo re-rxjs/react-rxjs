@@ -29,7 +29,7 @@ const getEnhancedSource = <T>(
 export const useObservable = <O>(
   source$: Observable<O>,
   unsubscribeGraceTime = 200,
-) => {
+): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState<O>(SUSPENSE as any)
 
   useEffect(() => {
@@ -44,6 +44,6 @@ export const useObservable = <O>(
   }, [source$, unsubscribeGraceTime])
 
   return state !== (SUSPENSE as any)
-    ? state
+    ? (state as any)
     : getEnhancedSource(source$, unsubscribeGraceTime).getValue()
 }
