@@ -1,16 +1,19 @@
-import { Observable, of, Subscription } from "rxjs"
-import { delay } from "rxjs/operators"
+import { Observable, of, Subscription, Subject, race } from "rxjs"
+import { delay, takeUntil, take } from "rxjs/operators"
+import { BehaviorObservable } from "./distinct-share-replay"
 
+const IS_SSR =
+  typeof window === "undefined" ||
+  typeof window.document === "undefined" ||
+  typeof window.document.createElement === "undefined"
 const noop = Function.prototype as () => void
 
 const delayUnsubscription = <T>(delayTime: number) => (
-  source$: Observable<T>,
-): Observable<T> => {
-  if (delayTime === 0) {
-    return source$
-  }
+  source$: BehaviorObservable<T>,
+): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
-  return new Observable<T>(subscriber => {
+  const onSubscribe = new Subject()
+  const result = new Observable<T>(subscriber => {
     let isActive = true
     const subscription = source$.subscribe({
       next(value) {
@@ -25,6 +28,7 @@ const delayUnsubscription = <T>(delayTime: number) => (
         subscriber.complete()
       },
     })
+    onSubscribe.next()
     finalizeLastUnsubscription()
     return () => {
       finalizeLastUnsubscription()
@@ -44,7 +48,23 @@ const delayUnsubscription = <T>(delayTime: number) => (
         finalizeLastUnsubscription = noop
       }
     }
-  })
+  }) as BehaviorObservable<T>
+
+  const getValue = () => {
+    try {
+      source$.getValue()
+    } catch (e) {
+      if (!IS_SSR) {
+        source$
+          .pipe(takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))))
+          .subscribe()
+      }
+      throw source$.pipe(take(1)).toPromise()
+    }
+  }
+
+  result.getValue = getValue as () => T
+  return result
 }
 
 export default delayUnsubscription

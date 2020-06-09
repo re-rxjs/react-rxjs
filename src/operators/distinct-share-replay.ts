@@ -3,17 +3,21 @@ import { Observable, Subscription, Subject } from "rxjs"
 const defaultCompare = (a: any, b: any) => a === b
 function defaultTeardown() {}
 
+export interface BehaviorObservable<T> extends Observable<T> {
+  getValue: () => T
+}
+
 const EMPTY_VALUE: any = {}
 const distinctShareReplay = <T>(
   compareFn: (a: T, b: T) => boolean = defaultCompare,
   teardown = defaultTeardown,
-) => (source$: Observable<T>): Observable<T> => {
+) => (source$: Observable<T>): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
   let subscription: Subscription | undefined
   let refCount = 0
   let currentValue: { value: T }
 
-  return new Observable<T>(subscriber => {
+  const result = new Observable<T>(subscriber => {
     refCount++
     if (!subject) {
       currentValue = { value: EMPTY_VALUE }
@@ -56,7 +60,16 @@ const distinctShareReplay = <T>(
         }
       }
     }
-  })
+  }) as BehaviorObservable<T>
+
+  result.getValue = () => {
+    if (currentValue.value === EMPTY_VALUE) {
+      throw null
+    }
+    return currentValue.value
+  }
+
+  return result
 }
 
 export default distinctShareReplay
