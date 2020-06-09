@@ -3,7 +3,7 @@ export interface StaticObservableOptions<T> {
   compare?: (a: T, b: T) => boolean
 }
 export const defaultStaticOptions = {
-  unsubscribeGraceTime: 120,
+  unsubscribeGraceTime: 200,
   compare: (a: any, b: any) => a === b,
 }
 

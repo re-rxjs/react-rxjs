@@ -86,7 +86,7 @@ export const connectInstanceObservable: ConnectInstanceObservable = (
           flatSingleTuple,
           getObservable,
           distinctUntilChanged(options.compare),
-          delayUnsubscription(options.unsubscribeGraceTime),
+          delayUnsubscription(options.unsubscribeGraceTime) as any,
         )
         .subscribe(setState)
       subject.next(input)
