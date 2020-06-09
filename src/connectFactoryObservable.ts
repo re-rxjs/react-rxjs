@@ -1,9 +1,10 @@
 import { Observable, NEVER, concat } from "rxjs"
-import distinctShareReplay, {
+import {
+  distinctShareReplay,
   BehaviorObservable,
 } from "./operators/distinct-share-replay"
-import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
-import useObservable from "./useObservable"
+import { ConnectorOptions, defaultConnectorOptions } from "./options"
+import { useObservable } from "./"
 
 export function connectFactoryObservable<
   I,
@@ -11,10 +12,10 @@ export function connectFactoryObservable<
   O
 >(
   getObservable: (...args: A) => Observable<O>,
-  _options?: FactoryObservableOptions<O>,
+  _options?: ConnectorOptions<O>,
 ): [(...args: A) => O | I, (...args: A) => Observable<O>] {
   const options = {
-    ...defaultFactoryOptions,
+    ...defaultConnectorOptions,
     ..._options,
   }
 

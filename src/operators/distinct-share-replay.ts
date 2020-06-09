@@ -1,4 +1,5 @@
 import { Observable, Subscription, Subject } from "rxjs"
+import { SUSPENSE } from "../"
 
 const defaultCompare = (a: any, b: any) => a === b
 function defaultTeardown() {}
@@ -8,7 +9,7 @@ export interface BehaviorObservable<T> extends Observable<T> {
 }
 
 const EMPTY_VALUE: any = {}
-const distinctShareReplay = <T>(
+export const distinctShareReplay = <T>(
   compareFn: (a: T, b: T) => boolean = defaultCompare,
   teardown = defaultTeardown,
 ) => (source$: Observable<T>): BehaviorObservable<T> => {
@@ -61,15 +62,16 @@ const distinctShareReplay = <T>(
       }
     }
   }) as BehaviorObservable<T>
-
+  ;(result as any).__id = distinctShareReplay
   result.getValue = () => {
-    if (currentValue.value === EMPTY_VALUE) {
-      throw null
+    if (
+      currentValue.value === EMPTY_VALUE ||
+      currentValue.value === (SUSPENSE as any)
+    ) {
+      throw currentValue.value
     }
     return currentValue.value
   }
 
   return result
 }
-
-export default distinctShareReplay

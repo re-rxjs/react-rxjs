@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0-alpha.8",
+  "version": "0.2.0",
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -43,8 +43,8 @@
     "@types/react-dom": "^16.9.8",
     "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
+    "react": "0.0.0-experimental-33c3af284",
+    "react-dom": "0.0.0-experimental-33c3af284",
     "react-test-renderer": "^16.13.1",
     "rxjs": "^6.5.5",
     "tsdx": "^0.13.2",
