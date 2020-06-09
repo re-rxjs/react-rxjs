@@ -1,6 +1,5 @@
 export { connectObservable } from "./connectObservable"
 export { connectFactoryObservable } from "./connectFactoryObservable"
-export { connectInstanceObservable } from "./connectInstanceObservable"
 export {
   default as distinctShareReplay,
   BehaviorObservable,
