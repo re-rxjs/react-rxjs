@@ -9,7 +9,7 @@ const IS_SSR =
 const noop = Function.prototype as () => void
 
 const delayUnsubscription = <T>(delayTime: number) => (
-  source$: BehaviorObservable<T>,
+  source$: Observable<T>,
 ): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
   const onSubscribe = new Subject()
@@ -52,14 +52,18 @@ const delayUnsubscription = <T>(delayTime: number) => (
 
   const getValue = () => {
     try {
-      source$.getValue()
+      return (source$ as BehaviorObservable<T>).getValue()
     } catch (e) {
       if (!IS_SSR) {
         source$
           .pipe(takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))))
           .subscribe()
       }
-      throw source$.pipe(take(1)).toPromise()
+      try {
+        return (source$ as BehaviorObservable<T>).getValue()
+      } catch (e) {
+        throw source$.pipe(take(1)).toPromise()
+      }
     }
   }
 

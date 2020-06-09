@@ -1,5 +1,5 @@
 import { defer, from, of } from "rxjs"
-import { useObservable } from "../src"
+import { BehaviorObservable, useObservable, distinctShareReplay } from "../src"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { concatMap, delay } from "rxjs/operators"
 
@@ -11,20 +11,20 @@ describe("useObservable", () => {
     const source$ = defer(() => {
       counter++
       return from([1, 2, 3, 4]).pipe(concatMap(x => of(x).pipe(delay(10))))
+    }).pipe(distinctShareReplay()) as BehaviorObservable<number>
+
+    const { result } = renderHook(() => useObservable(source$))
+
+    expect(result.current).toBe(null)
+
+    await act(async () => {
+      await wait(10)
     })
-
-    const { result } = renderHook(() =>
-      useObservable(source$, 0, {
-        suspenseTime: 0,
-        unsubscribeGraceTime: 0,
-      }),
-    )
-
-    expect(result.current).toEqual(0)
+    expect(result.current).toEqual(1)
     expect(counter).toBe(1)
 
     await act(async () => {
-      await wait(50)
+      await wait(40)
     })
 
     expect(result.current).toEqual(4)
