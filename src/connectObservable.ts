@@ -10,7 +10,6 @@ export function connectObservable<T>(
   const options = {
     ...defaultStaticOptions,
     ..._options,
-    suspenseTime: Infinity,
   }
   const sharedObservable$ = distinctShareReplay(options.compare)(
     concat(observable, NEVER),
@@ -18,6 +17,7 @@ export function connectObservable<T>(
 
   const useStaticObservable = () =>
     useObservable(sharedObservable$, options.unsubscribeGraceTime)
+  useStaticObservable.shared$ = sharedObservable$
 
   return [useStaticObservable, sharedObservable$] as const
 }

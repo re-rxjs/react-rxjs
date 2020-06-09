@@ -1,8 +1,9 @@
-import { Observable, Subject } from "rxjs"
-import { FactoryObservableOptions, defaultFactoryOptions } from "./options"
-import { distinctUntilChanged, map } from "rxjs/operators"
-import { useEffect, useRef, useLayoutEffect, useState } from "react"
+import { Observable, BehaviorSubject } from "rxjs"
+import { FactoryObservableOptions } from "./options"
+import { map } from "rxjs/operators"
+import { useEffect, useRef, useState } from "react"
 import delayUnsubscription from "./operators/delay-unsubscription"
+import { distinctShareReplay, BehaviorObservable } from "./"
 
 interface ConnectInstanceObservable {
   <I, T1, T2, O>(
@@ -63,34 +64,37 @@ interface ConnectInstanceObservable {
 const flatSingleTuple = (src: Observable<Array<any>>) =>
   map((inputs: any) => (inputs.length === 1 ? inputs[0] : inputs))(src)
 
+const cache = new WeakMap<
+  React.MutableRefObject<any>,
+  BehaviorObservable<any>
+>()
+
+const defaultValue: any = {}
 export const connectInstanceObservable: ConnectInstanceObservable = (
   getObservable: any,
-  initialValue: any,
-  _options?: any,
+  unsubscribeGraceTime = 200,
 ) => {
-  const options = {
-    ...defaultFactoryOptions,
-    ..._options,
+  const getSuspendedState = (ref: React.MutableRefObject<any>, input: any) => {
+    let source$ = cache.get(ref)
+    if (source$) {
+      return source$.getValue()
+    }
+
+    const subject = new BehaviorSubject(input)
+    ref.current = subject
+    source$ = delayUnsubscription(unsubscribeGraceTime)(
+      distinctShareReplay()(subject.pipe(flatSingleTuple, getObservable)),
+    )
+    cache.set(ref, source$)
+    return source$.getValue()
   }
 
   const useInstance = (...input: any) => {
     const subjectRef = useRef<any>()
-    const [state, setState] = useState(initialValue)
+    const [state, setState] = useState(defaultValue)
 
-    useLayoutEffect(() => {
-      const subject = new Subject<any>()
-      subjectRef.current = subject
-
-      const subscription = subject
-        .pipe(
-          flatSingleTuple,
-          getObservable,
-          distinctUntilChanged(options.compare),
-          delayUnsubscription(options.unsubscribeGraceTime) as any,
-        )
-        .subscribe(setState)
-      subject.next(input)
-
+    useEffect(() => {
+      const subscription = cache.get(subjectRef)!.subscribe(setState)
       return () => subscription.unsubscribe()
     }, [])
 
@@ -101,7 +105,7 @@ export const connectInstanceObservable: ConnectInstanceObservable = (
       subjectRef.current!.i = 1
     }, input)
 
-    return state
+    return state !== defaultValue ? state : getSuspendedState(subjectRef, input)
   }
 
   return useInstance as any

@@ -1,20 +1,13 @@
 import { connectObservable } from "../src"
-import { NEVER, from, of, defer } from "rxjs"
-import { renderHook, act } from "@testing-library/react-hooks"
+import { from, of, defer } from "rxjs"
+import { renderHook } from "@testing-library/react-hooks"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 describe("connectObservable", () => {
-  it("returns the initial value when the stream has not emitted anything", async () => {
-    const [useSomething] = connectObservable(NEVER, "initialValue")
-    const { result } = renderHook(() => useSomething())
-
-    expect(result.current).toBe("initialValue")
-  })
-
   it("sets the initial state synchronously if it's available", async () => {
     const observable$ = of(1)
-    const [useLatestNumber] = connectObservable(observable$, 0)
+    const [useLatestNumber] = connectObservable(observable$)
 
     const { result } = renderHook(() => useLatestNumber())
     expect(result.current).toEqual(1)
@@ -27,7 +20,7 @@ describe("connectObservable", () => {
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = connectObservable(observable$, 0, {
+    const [useLatestNumber] = connectObservable(observable$, {
       unsubscribeGraceTime: 100,
     })
     const { unmount } = renderHook(() => useLatestNumber())
@@ -38,16 +31,12 @@ describe("connectObservable", () => {
     unmount2()
     unmount3()
 
-    await act(async () => {
-      await wait(90)
-    })
+    await wait(90)
     const { unmount: unmount4 } = renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(1)
     unmount4()
 
-    await act(async () => {
-      await wait(101)
-    })
+    await wait(101)
     renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(2)
   })
