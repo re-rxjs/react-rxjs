@@ -1,7 +1,9 @@
-import { defer, from, of } from "rxjs"
-import { BehaviorObservable, useObservable, distinctShareReplay } from "../src"
+import {} from "react/experimental"
+import { defer, from, of, Subject } from "rxjs"
+import { useObservable, SUSPENSE } from "../src"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { concatMap, delay } from "rxjs/operators"
+import { concatMap, delay, switchMap, startWith } from "rxjs/operators"
+import { unstable_useTransition as useTransition, useEffect } from "react"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -11,7 +13,7 @@ describe("useObservable", () => {
     const source$ = defer(() => {
       counter++
       return from([1, 2, 3, 4]).pipe(concatMap(x => of(x).pipe(delay(10))))
-    }).pipe(distinctShareReplay()) as BehaviorObservable<number>
+    })
 
     const { result } = renderHook(() => useObservable(source$))
 
@@ -29,5 +31,49 @@ describe("useObservable", () => {
 
     expect(result.current).toEqual(4)
     expect(counter).toBe(1)
+  })
+
+  const userId$ = new Subject<number>()
+  const getUser = (id: number) =>
+    of({ id, name: `name_${id}` }).pipe(delay(200))
+
+  const user$ = userId$.pipe(
+    switchMap(id => getUser(id).pipe(startWith(SUSPENSE))),
+    startWith({ id: 1, name: "name_1" }),
+  )
+
+  const useUserTransition = () => {
+    const [startTransition, isPending] = useTransition({ timeoutMs: 500 })
+    useEffect(() => {
+      setTimeout(() => {
+        startTransition(() => {
+          userId$.next(8)
+        })
+      }, 100)
+    }, [])
+    // console.log("isPending", isPending)
+    return isPending
+  }
+
+  it.skip("works with useTransition", async () => {
+    const { result: userResult } = renderHook(() => useObservable(user$))
+    const { result: transitionResult } = renderHook(() => useUserTransition())
+
+    expect(userResult.current).toEqual({ id: 1, name: "name_1" })
+    expect(transitionResult.current).toBe(false)
+
+    await act(async () => {
+      await wait(120)
+    })
+
+    expect(userResult.current).toEqual({ id: 1, name: "name_1" })
+    expect(transitionResult.current).toBe(true)
+
+    await act(async () => {
+      await wait(220)
+    })
+
+    expect(userResult.current).toEqual({ id: 8, name: "name_8" })
+    expect(transitionResult.current).toBe(false)
   })
 })

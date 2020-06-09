@@ -1,6 +1,7 @@
 import { Observable, of, Subscription, Subject, race } from "rxjs"
-import { delay, takeUntil, take } from "rxjs/operators"
+import { delay, takeUntil, take, filter, tap } from "rxjs/operators"
 import { BehaviorObservable } from "./distinct-share-replay"
+import { SUSPENSE } from "../"
 
 const IS_SSR =
   typeof window === "undefined" ||
@@ -50,21 +51,32 @@ const delayUnsubscription = <T>(delayTime: number) => (
     }
   }) as BehaviorObservable<T>
 
+  let promise: any
   const getValue = () => {
     try {
       return (source$ as BehaviorObservable<T>).getValue()
     } catch (e) {
-      if (!IS_SSR) {
+      if (promise) throw promise
+
+      if (!IS_SSR && e !== SUSPENSE) {
         source$
           .pipe(takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))))
           .subscribe()
-      }
-      try {
-        return (source$ as BehaviorObservable<T>).getValue()
-      } catch (e) {
-        throw source$.pipe(take(1)).toPromise()
+        try {
+          return (source$ as BehaviorObservable<T>).getValue()
+        } catch (e) {}
       }
     }
+    promise = source$
+      .pipe(
+        filter(value => value !== (SUSPENSE as any)),
+        take(1),
+        tap(() => {
+          promise = undefined
+        }),
+      )
+      .toPromise()
+    throw promise
   }
 
   result.getValue = getValue as () => T
