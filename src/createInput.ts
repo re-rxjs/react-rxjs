@@ -3,7 +3,6 @@ import { finalize } from "rxjs/operators"
 import { distinctShareReplay } from "./operators/distinct-share-replay"
 
 const empty = Symbol("empty") as any
-const F = () => false
 export function createInput<T>(defaultValue: T = empty) {
   const cache = new Map<string, [Subject<T>, { latest: T }, Observable<T>]>()
   const getEntry = (key: string) => {
@@ -16,7 +15,7 @@ export function createInput<T>(defaultValue: T = empty) {
     }
     const source = subject.pipe(
       finalize(() => cache.delete(key)),
-      distinctShareReplay(F),
+      distinctShareReplay(),
     )
     result = [subject, current, source]
     cache.set(key, result)
