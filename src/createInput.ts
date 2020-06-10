@@ -1,6 +1,6 @@
 import { Subject, Observable, ReplaySubject } from "rxjs"
 import { finalize } from "rxjs/operators"
-import { distinctShareReplay } from "operators/distinct-share-replay"
+import { distinctShareReplay } from "./operators/distinct-share-replay"
 
 const empty = Symbol("empty") as any
 const F = () => false
