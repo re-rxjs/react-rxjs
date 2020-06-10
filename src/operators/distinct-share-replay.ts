@@ -1,5 +1,6 @@
 import { Observable, Subscription, Subject } from "rxjs"
 import { SUSPENSE } from "../"
+import { getBatch } from "../utils/batch"
 
 const defaultCompare = (a: any, b: any) => a === b
 function defaultTeardown() {}
@@ -17,6 +18,7 @@ export const distinctShareReplay = <T>(
   let subscription: Subscription | undefined
   let refCount = 0
   let currentValue: { value: T }
+  const batch = getBatch()
 
   const result = new Observable<T>(subscriber => {
     refCount++
@@ -29,7 +31,9 @@ export const distinctShareReplay = <T>(
             currentValue.value === EMPTY_VALUE ||
             !compareFn(value, currentValue.value)
           ) {
-            subject!.next((currentValue.value = value))
+            batch(() => {
+              subject!.next((currentValue.value = value))
+            })
           }
         },
         error(err) {

@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -21,6 +21,14 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "rxjs": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
   },
   "husky": {
     "hooks": {
@@ -45,6 +53,7 @@
     "jest-marbles": "^2.5.1",
     "react": "0.0.0-experimental-33c3af284",
     "react-dom": "0.0.0-experimental-33c3af284",
+    "react-native": "^0.61.4",
     "react-test-renderer": "^16.13.1",
     "rxjs": "^6.5.5",
     "tsdx": "^0.13.2",
