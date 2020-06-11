@@ -2,7 +2,6 @@ import { Observable, Subscription, Subject } from "rxjs"
 import { SUSPENSE } from "../"
 import { getBatch } from "../utils/batch"
 
-const defaultCompare = (a: any, b: any) => a === b
 function defaultTeardown() {}
 
 export interface BehaviorObservable<T> extends Observable<T> {
@@ -11,7 +10,7 @@ export interface BehaviorObservable<T> extends Observable<T> {
 
 const EMPTY_VALUE: any = {}
 export const distinctShareReplay = <T>(
-  compareFn: (a: T, b: T) => boolean = defaultCompare,
+  compareFn: (a: T, b: T) => boolean = Object.is,
   teardown = defaultTeardown,
 ) => (source$: Observable<T>): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
