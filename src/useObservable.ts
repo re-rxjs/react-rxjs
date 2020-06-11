@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useEffect, useReducer } from "react"
 import delayUnsubscription from "./operators/delay-unsubscription"
 import {
   distinctShareReplay,
@@ -26,20 +26,33 @@ const getEnhancedSource = <T>(
   return result
 }
 
+const reducer = (_: any, action: any) => action
+const init = (args: any) => {
+  try {
+    return getEnhancedSource(...(args as [any, any])).getValue()
+  } catch (e) {
+    return SUSPENSE
+  }
+}
+
 export const useObservable = <O>(
   source$: Observable<O>,
   unsubscribeGraceTime = 200,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState<O>(SUSPENSE as any)
+  const [state, dispatch] = useReducer(
+    reducer,
+    [source$, unsubscribeGraceTime],
+    init,
+  )
 
   useEffect(() => {
     const enhancedSource$ = getEnhancedSource(source$, unsubscribeGraceTime)
     try {
-      setState(enhancedSource$.getValue())
+      dispatch(enhancedSource$.getValue())
     } catch (e) {
-      setState(SUSPENSE as any)
+      dispatch(SUSPENSE)
     }
-    const subscription = enhancedSource$.subscribe(setState)
+    const subscription = enhancedSource$.subscribe(dispatch)
     return () => subscription.unsubscribe()
   }, [source$, unsubscribeGraceTime])
 
