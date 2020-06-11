@@ -1,9 +1,9 @@
 {
-  "version": "0.3.1",
+  "version": "0.0.1",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/josepot/react-rxjs.git"
+    "url": "git+https://github.com/rerxjs/rerxjs.git"
   },
   "license": "MIT",
   "main": "dist/index.js",
@@ -40,9 +40,9 @@
     "semi": false,
     "trailingComma": "all"
   },
-  "name": "@josepot/react-rxjs",
+  "name": "rerxjs",
   "author": "Josep M Sobrepere",
-  "module": "dist/react-rxjs.esm.js",
+  "module": "dist/rerxjs.esm.js",
   "devDependencies": {
     "@josepot/rxjs-utils": "^0.12.0",
     "@testing-library/react-hooks": "^3.3.0",

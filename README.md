@@ -1,1 +1,1 @@
-# react-rxjs
+# rerxjs 
