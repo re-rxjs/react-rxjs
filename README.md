@@ -17,7 +17,7 @@
 
 ## Docs
 ```tsx
-const useDocs = () => useObservable(NEVER)
+const useDocs = connectObservable(NEVER)
 
 function Docs() {
   const docs = useDocs()
@@ -28,7 +28,7 @@ function App() {
   return (
     <>
       <h1>Docs</h1>
-      <Suspense fallback={() => <h2>Comming soon...</h1>}>
+      <Suspense fallback={() => <span>Comming soon...</span>}>
         <Docs />
       </Suspense>
     </>

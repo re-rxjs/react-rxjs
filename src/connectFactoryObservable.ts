@@ -4,7 +4,9 @@ import {
   BehaviorObservable,
 } from "./operators/distinct-share-replay"
 import { ConnectorOptions, defaultConnectorOptions } from "./options"
-import { useObservable, SUSPENSE } from "./"
+import { SUSPENSE } from "./"
+import { useObservable } from "./useObservable"
+import reactEnhancer from "./operators/react-enhancer"
 
 export function connectFactoryObservable<
   A extends (number | string | boolean | null)[],
@@ -21,9 +23,14 @@ export function connectFactoryObservable<
     ..._options,
   }
 
-  const cache = new Map<string, BehaviorObservable<O>>()
+  const cache = new Map<
+    string,
+    [BehaviorObservable<O>, BehaviorObservable<O>]
+  >()
 
-  const getSharedObservable$ = (...input: A): BehaviorObservable<O> => {
+  const getSharedObservables$ = (
+    ...input: A
+  ): [BehaviorObservable<O>, BehaviorObservable<O>] => {
     const key = JSON.stringify(input)
     const cachedVal = cache.get(key)
 
@@ -31,18 +38,29 @@ export function connectFactoryObservable<
       return cachedVal
     }
 
-    const reactObservable$ = distinctShareReplay(options.compare, () => {
+    const sharedObservable$ = distinctShareReplay(options.compare, () => {
       cache.delete(key)
     })(concat(getObservable(...input), NEVER))
 
-    cache.set(key, reactObservable$)
-    return reactObservable$
+    const reactObservable$ = reactEnhancer(
+      sharedObservable$,
+      options.unsubscribeGraceTime,
+    )
+    const result: [BehaviorObservable<O>, BehaviorObservable<O>] = [
+      sharedObservable$,
+      reactObservable$,
+    ]
+
+    cache.set(key, result)
+    return result
   }
+  const getSharedObservable$ = (...input: A) =>
+    getSharedObservables$(...input)[0]
 
   return [
     (...input: A) =>
       useObservable(
-        getSharedObservable$(...input),
+        getSharedObservables$(...input)[1],
         options.unsubscribeGraceTime,
       ),
 
