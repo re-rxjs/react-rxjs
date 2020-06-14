@@ -16,6 +16,16 @@
         "maintenance",
         "test"
       ]
+    },
+    {
+      "login": "voliva",
+      "name": "Víctor Oliva",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/5365487?v=4",
+      "profile": "https://github.com/voliva",
+      "contributions": [
+        "ideas",
+        "review"
+      ]
     }
   ],
   "contributorsPerLine": 7,
