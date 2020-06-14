@@ -1,9 +1,7 @@
-# re-rxjs
+# <img src="assets/logo-128.png" alt="Re-RxJS Logo" width="86" height="86"> Re-RxJS: React bindings for RxJS
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
-
-## The ultimate React-RxJS bindings
 
 - :cyclone: Truly Reactive
 - :twisted_rightwards_arrows: First class support for React Suspense
