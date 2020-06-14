@@ -5,10 +5,7 @@ import { useObservable } from "../src/useObservable"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { concatMap, delay, switchMap, startWith } from "rxjs/operators"
 import { unstable_useTransition as useTransition, useEffect } from "react"
-import {
-  distinctShareReplay,
-  BehaviorObservable,
-} from "../src/operators/distinct-share-replay"
+import { BehaviorObservable, distinctShareReplay } from "../src"
 import reactEnhancer from "../src/operators/react-enhancer"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
