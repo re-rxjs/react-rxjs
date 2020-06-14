@@ -65,7 +65,6 @@ export const distinctShareReplay = <T>(
       }
     }
   }) as BehaviorObservable<T>
-  ;(result as any).__id = distinctShareReplay
   result.getValue = () => {
     if (
       currentValue.value === EMPTY_VALUE ||

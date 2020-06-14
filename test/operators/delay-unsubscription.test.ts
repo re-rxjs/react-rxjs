@@ -1,4 +1,4 @@
-import delayUnsubscription from "../../src/operators/delay-unsubscription"
+import reactEnhancer from "../../src/operators/react-enhancer"
 import { TestScheduler } from "rxjs/testing"
 
 const scheduler = () =>
@@ -6,7 +6,7 @@ const scheduler = () =>
     expect(actual).toEqual(expected)
   })
 
-describe("operators/delayUnsubscription", () => {
+describe("operators/reactEnhancer", () => {
   // prettier-ignore
   it("delays the latest unsubscription", () => {
     scheduler().run(({ expectObservable, expectSubscriptions, hot }) => {
@@ -19,7 +19,7 @@ describe("operators/delayUnsubscription", () => {
       const sub2 = "      --^-------!        "
       const expected2 = " --b-c-d-e          "
 
-      const shared = source.pipe(delayUnsubscription(5))
+      const shared = reactEnhancer(source, 5)
 
       expectObservable(shared, sub1).toBe(expected1)
       expectObservable(shared, sub2).toBe(expected2)
@@ -39,7 +39,7 @@ describe("operators/delayUnsubscription", () => {
       const sub2 = "      --^--------!-----------"
       const expected2 = " --b-c-d-e-f-------------------"
 
-      const shared = source.pipe(delayUnsubscription(0))
+      const shared = reactEnhancer(source, 0)
 
       expectObservable(shared, sub1).toBe(expected1)
       expectObservable(shared, sub2).toBe(expected2)
@@ -59,7 +59,7 @@ describe("operators/delayUnsubscription", () => {
       const sub2 = "      --^-------!------------"
       const expected2 = " --b-c-d-e---------------------"
 
-      const shared = source.pipe(delayUnsubscription(Infinity))
+      const shared = reactEnhancer(source, Infinity)
 
       expectObservable(shared, sub1).toBe(expected1)
       expectObservable(shared, sub2).toBe(expected2)
