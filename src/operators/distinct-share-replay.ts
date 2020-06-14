@@ -1,14 +1,10 @@
 import { Observable, Subscription, Subject } from "rxjs"
-import { SUSPENSE } from "../"
+import { SUSPENSE, BehaviorObservable } from "../"
 import { getBatch } from "../utils/batch"
 
 function defaultTeardown() {}
 
-export interface BehaviorObservable<T> extends Observable<T> {
-  getValue: () => T
-}
-
-const EMPTY_VALUE: any = {}
+export const EMPTY_VALUE: any = {}
 export const distinctShareReplay = <T>(
   compareFn: (a: T, b: T) => boolean = Object.is,
   teardown = defaultTeardown,
