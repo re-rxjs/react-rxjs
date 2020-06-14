@@ -9,8 +9,9 @@ const IS_SSR =
   typeof window.document.createElement === "undefined"
 const noop = Function.prototype as () => void
 
-const delayUnsubscription = <T>(delayTime: number) => (
+const reactEnhancer = <T>(
   source$: Observable<T>,
+  delayTime: number,
 ): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
   const onSubscribe = new Subject()
@@ -83,4 +84,4 @@ const delayUnsubscription = <T>(delayTime: number) => (
   return result
 }
 
-export default delayUnsubscription
+export default reactEnhancer

@@ -1,6 +1,8 @@
 import { Observable, NEVER, concat } from "rxjs"
-import { useObservable, distinctShareReplay } from "./"
+import { distinctShareReplay } from "./"
+import { useObservable } from "./useObservable"
 import { ConnectorOptions, defaultConnectorOptions } from "./options"
+import reactEnhancer from "./operators/react-enhancer"
 
 export function connectObservable<T>(
   observable: Observable<T>,
@@ -14,9 +16,12 @@ export function connectObservable<T>(
     concat(observable, NEVER),
   )
 
-  const useStaticObservable = () =>
-    useObservable(sharedObservable$, options.unsubscribeGraceTime)
-  useStaticObservable.shared$ = sharedObservable$
+  const reactObservable$ = reactEnhancer(
+    sharedObservable$,
+    options.unsubscribeGraceTime,
+  )
+
+  const useStaticObservable = () => useObservable(reactObservable$)
 
   return [useStaticObservable, sharedObservable$] as const
 }
