@@ -26,6 +26,15 @@
         "ideas",
         "review"
       ]
+    },
+    {
+      "login": "clayforthcarr",
+      "name": "Ed",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/6012083?v=4",
+      "profile": "http://www.clayforthcarr.com",
+      "contributions": [
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
