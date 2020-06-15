@@ -29,10 +29,6 @@ Main features
 - :microscope: Tiny and tree-shakeable
 - :muscle: Supports TypeScript
 
-## Examples
-
-- [This is a contrived example](https://codesandbox.io/s/crazy-wood-vn7gg?file=/src/fakeApi.js) based on [this example](https://reactjs.org/docs/concurrent-mode-patterns.html#reviewing-the-changes) from the React docs.
-
 ## Docs
 ```tsx
 const [useDocs] = connectObservable(NEVER)
@@ -46,7 +42,7 @@ function App() {
   return (
     <>
       <h1>Docs</h1>
-      <Suspense fallback={() => <span>Comming soon...</span>}>
+      <Suspense fallback={<span>Comming soon...</span>}>
         <Docs />
       </Suspense>
     </>
@@ -54,7 +50,113 @@ function App() {
 }
 ```
 
-Now seriously: they are coming soon, for real! 
+## Examples
+- [This is a contrived example](https://codesandbox.io/s/crazy-wood-vn7gg?file=/src/fakeApi.js) based on [this example](https://reactjs.org/docs/concurrent-mode-patterns.html#reviewing-the-changes) from the React docs.
+
+- A search for Github repos that highlights the most recently updated one:
+
+```tsx
+import React, { Suspense } from "react"
+import { Subject } from "rxjs"
+import { startWith, map } from "rxjs/operators"
+import { connectObservable, switchMapSuspended } from "re-rxjs"
+import { Header, Search, LoadingResults, Repo } from "./components"
+
+interface Repo {
+  id: number
+  name: string
+  description: string
+  author: string
+  stars: number
+  lastUpdate: number
+}
+
+const searchInput$ = new Subject<string>()
+const onSubmit = (value: string) => searchInput$.next(value)
+
+const findRepos = (query: string): Promise<Repo[]> =>
+  fetch(`https://api.github.com/search/repositories?q=${query}`)
+    .then(response => response.json())
+    .then(rawData =>
+      (rawData.items ?? []).map((repo: any) => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        author: repo.owner.login,
+        stars: repo.stargazers_count,
+        lastUpdate: Date.parse(repo.update_at),
+      })),
+    )
+
+const [useRepos, repos$] = connectObservable(
+  searchInput$.pipe(
+    switchMapSuspended(findRepos),
+    startWith(null),
+  ),
+)
+
+function Repos() {
+  const repos = useRepos()
+
+  if (repos === null) {
+    return null
+  }
+
+  if (repos.length === 0) {
+    return <div>No results were found.</div>
+  }
+
+  return (
+    <ul>
+      {repos.map(repo => (
+        <li key={repo.id}>
+          <Repo {...repo} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+const [useMostRecentlyUpdatedRepo] = connectObservable(
+  repos$.pipe(
+    map(repos =>
+      Array.isArray(repos) && repos.length > 0
+        ? repos.reduce((winner, current) =>
+            current.lastUpdate > winner.lastUpdate ? current : winner,
+          )
+        : null,
+    ),
+  ),
+)
+
+function MostRecentlyUpdatedRepo() {
+  const mostRecent = useMostRecentlyUpdatedRepo()
+
+  if (mostRecent === null) {
+    return null
+  }
+
+  const { id, name } = mostRecent
+  return (
+    <div>
+      The most recently updated repo is <a href={`#${id}`}>{name}</a>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <>
+      <Header>Search Github Repos</Header>
+      <Search onSubmit={onSubmit} />
+      <Suspense fallback={<LoadingResults />}>
+        <MostRecentlyUpdatedRepo />
+        <Repos />
+      </Suspense>
+    </>
+  )
+}
+```
 
 ## Contributors ✨
 
