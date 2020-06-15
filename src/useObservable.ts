@@ -1,6 +1,5 @@
 import { useEffect, useReducer } from "react"
-import { BehaviorObservable } from "./operators/distinct-share-replay"
-import { SUSPENSE } from "./"
+import { BehaviorObservable, SUSPENSE } from "./"
 
 const reducer = (_: any, action: any) => action
 const init = (source$: BehaviorObservable<any>) => {

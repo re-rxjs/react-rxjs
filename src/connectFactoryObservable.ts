@@ -1,8 +1,6 @@
 import { Observable, NEVER, concat } from "rxjs"
-import {
-  distinctShareReplay,
-  BehaviorObservable,
-} from "./operators/distinct-share-replay"
+import { BehaviorObservable } from "./BehaviorObservable"
+import { distinctShareReplay } from "./operators/distinct-share-replay"
 import { ConnectorOptions, defaultConnectorOptions } from "./options"
 import { SUSPENSE } from "./"
 import { useObservable } from "./useObservable"
