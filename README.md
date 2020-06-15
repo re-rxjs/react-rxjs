@@ -1,13 +1,33 @@
-# <img src="assets/logo-128.png" alt="Re-RxJS Logo" width="86" height="86"> Re-RxJS: React bindings for RxJS
+<div align="center">
+  <h1>Re-RxJS</h1>
+
+<img
+  height="86"
+  width="86"
+  alt="Re-RxJS Logo"
+  src="https://raw.githubusercontent.com/re-rxjs/re-rxjs/main/assets/logo-128.png"
+/>
+
+<p>React bindings for RxJS</p>
+
+</div>
+
+<hr />
+
+<!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
+<!-- prettier-ignore-end -->
 
+Main features
+-------------
 - :cyclone: Truly Reactive
+- :zap: Highly performant and free of memory-leaks
 - :twisted_rightwards_arrows: First class support for React Suspense
 - :scissors: Decentralized and composable, thus enabling optimal code-splitting
-- :zap: Highly performant (while avoiding memory leaks)
 - :microscope: Tiny and tree-shakeable
+- :muscle: Supports TypeScript
 
 ## Examples
 
