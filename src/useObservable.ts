@@ -1,7 +1,15 @@
 import { useEffect, useReducer } from "react"
 import { BehaviorObservable, SUSPENSE } from "./"
 
-const reducer = (_: any, action: any) => action
+const reducer = (
+  _: any,
+  { type, payload }: { type: "next" | "error"; payload: any },
+) => {
+  if (type === "error") {
+    throw payload
+  }
+  return payload
+}
 const init = (source$: BehaviorObservable<any>) => {
   try {
     return source$.getValue()
@@ -18,11 +26,28 @@ export const useObservable = <O>(
 
   useEffect(() => {
     try {
-      dispatch(source$.getValue())
+      dispatch({
+        type: "next",
+        payload: source$.getValue(),
+      })
     } catch (e) {
-      dispatch(SUSPENSE)
+      dispatch({
+        type: "next",
+        payload: SUSPENSE,
+      })
     }
-    const subscription = source$.subscribe(dispatch)
+    const subscription = source$.subscribe(
+      value =>
+        dispatch({
+          type: "next",
+          payload: value,
+        }),
+      error =>
+        dispatch({
+          type: "error",
+          payload: error,
+        }),
+    )
     return () => subscription.unsubscribe()
   }, [source$, unsubscribeGraceTime])
 

@@ -1,6 +1,6 @@
 import { connectFactoryObservable } from "../src"
-import { from, of, defer, concat } from "rxjs"
-import { renderHook } from "@testing-library/react-hooks"
+import { from, of, defer, concat, BehaviorSubject } from "rxjs"
+import { renderHook, act } from "@testing-library/react-hooks"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -40,5 +40,32 @@ describe("connectObservable", () => {
     await wait(101)
     renderHook(() => useLatestNumber(6))
     expect(nInitCount).toBe(2)
+  })
+
+  it("allows errors to be caught in error boundaries", () => {
+    const errStream = new BehaviorSubject(1)
+    const [useError] = connectFactoryObservable(() => errStream)
+
+    renderHook(() => useError())
+
+    expect(() =>
+      act(() => {
+        errStream.error("error")
+      }),
+    ).toThrow()
+  })
+
+  it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
+    const errStream = new BehaviorSubject(1)
+    const [useError] = connectFactoryObservable(() => errStream)
+
+    const { unmount } = renderHook(() => useError())
+
+    expect(() =>
+      act(() => {
+        errStream.error("error")
+        unmount()
+      }),
+    ).not.toThrow()
   })
 })
