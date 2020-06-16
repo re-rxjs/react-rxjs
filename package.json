@@ -22,14 +22,6 @@
     "react": ">=16.8.0",
     "rxjs": ">=6"
   },
-  "peerDependenciesMeta": {
-    "react-dom": {
-      "optional": true
-    },
-    "react-native": {
-      "optional": true
-    }
-  },
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"

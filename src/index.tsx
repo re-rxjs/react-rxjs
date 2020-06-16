@@ -1,7 +1,3 @@
-import { setBatch } from "./utils/batch"
-import { unstable_batchedUpdates as batch } from "./utils/react-batched-updates"
-setBatch(batch as any)
-
 export const SUSPENSE = Symbol("SUSPENSE")
 export { BehaviorObservable } from "./BehaviorObservable"
 export { connectObservable } from "./connectObservable"
