@@ -20,7 +20,6 @@ const init = (source$: BehaviorObservable<any>) => {
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
-  unsubscribeGraceTime = 200,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, dispatch] = useReducer(reducer, source$, init)
 
@@ -49,7 +48,7 @@ export const useObservable = <O>(
         }),
     )
     return () => subscription.unsubscribe()
-  }, [source$, unsubscribeGraceTime])
+  }, [source$])
 
   return state !== (SUSPENSE as any) ? (state as any) : source$.getValue()
 }

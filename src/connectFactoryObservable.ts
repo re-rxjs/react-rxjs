@@ -56,11 +56,7 @@ export function connectFactoryObservable<
     getSharedObservables$(...input)[0]
 
   return [
-    (...input: A) =>
-      useObservable(
-        getSharedObservables$(...input)[1],
-        options.unsubscribeGraceTime,
-      ),
+    (...input: A) => useObservable(getSharedObservables$(...input)[1]),
 
     getSharedObservable$,
   ]
