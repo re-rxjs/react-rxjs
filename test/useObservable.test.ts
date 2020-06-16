@@ -26,13 +26,13 @@ describe("useObservable", () => {
     expect(result.current).toBe(null)
 
     await act(async () => {
-      await wait(10)
+      await wait(15)
     })
     expect(result.current).toEqual(1)
     expect(counter).toBe(1)
 
     await act(async () => {
-      await wait(40)
+      await wait(45)
     })
 
     expect(result.current).toEqual(4)
