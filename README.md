@@ -35,7 +35,7 @@ Main features
 
 ## Docs
 ```tsx
-const useDocs = connectObservable(NEVER)
+const [useDocs] = connectObservable(NEVER)
 
 function Docs() {
   const docs = useDocs()
