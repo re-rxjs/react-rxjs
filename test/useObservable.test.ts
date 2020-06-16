@@ -1,9 +1,9 @@
 import {} from "react/experimental"
-import { defer, from, of, Subject, Observable } from "rxjs"
+import { defer, of, Subject, Observable, NEVER, concat } from "rxjs"
 import { SUSPENSE } from "../src"
 import { useObservable } from "../src/useObservable"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { concatMap, delay, switchMap, startWith } from "rxjs/operators"
+import { delay, switchMap, startWith, take } from "rxjs/operators"
 import { unstable_useTransition as useTransition, useEffect } from "react"
 import { BehaviorObservable, distinctShareReplay } from "../src"
 import reactEnhancer from "../src/operators/react-enhancer"
@@ -11,32 +11,57 @@ import reactEnhancer from "../src/operators/react-enhancer"
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 const enhancer = <T>(source$: Observable<T>) =>
-  reactEnhancer(source$.pipe(distinctShareReplay()), 200)
+  reactEnhancer(concat(source$, NEVER).pipe(distinctShareReplay()), 20)
 
 describe("useObservable", () => {
   it("works", async () => {
     let counter = 0
+    let subject = new Subject<number>()
     const source$ = defer(() => {
+      subject = new Subject<number>()
       counter++
-      return from([1, 2, 3, 4]).pipe(concatMap(x => of(x).pipe(delay(10))))
+      return subject.asObservable()
     }).pipe(enhancer) as BehaviorObservable<number>
 
-    const { result } = renderHook(() => useObservable(source$))
+    const { result, unmount } = renderHook(() => useObservable(source$))
 
     expect(result.current).toBe(null)
 
     await act(async () => {
-      await wait(15)
+      subject.next(1)
+      await wait(10)
     })
-    expect(result.current).toEqual(1)
     expect(counter).toBe(1)
+    expect(result.current).toEqual(1)
 
-    await act(async () => {
-      await wait(45)
+    act(() => {
+      subject.next(4)
+      subject.complete()
     })
 
     expect(result.current).toEqual(4)
     expect(counter).toBe(1)
+    unmount()
+
+    const secondMount = renderHook(() => useObservable(source$))
+
+    expect(counter).toBe(1)
+    expect(secondMount.result.current).toEqual(4)
+    secondMount.unmount()
+
+    await wait(40)
+
+    const thirdMount = renderHook(() => useObservable(source$))
+
+    expect(thirdMount.result.current).toEqual(null)
+    expect(counter).toBe(2)
+
+    await act(async () => {
+      subject.next(1)
+      await wait(10)
+    })
+    expect(thirdMount.result.current).toEqual(1)
+    expect(counter).toBe(2)
   })
 
   const userId$ = new Subject<number>()
