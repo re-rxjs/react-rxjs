@@ -37,7 +37,7 @@ describe("connectObservable", () => {
     expect(nInitCount).toBe(1)
     unmount4()
 
-    await wait(101)
+    await wait(110)
     renderHook(() => useLatestNumber(6))
     expect(nInitCount).toBe(2)
   })
