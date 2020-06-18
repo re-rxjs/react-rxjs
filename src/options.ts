@@ -4,5 +4,5 @@ export interface ConnectorOptions<T> {
 }
 export const defaultConnectorOptions = {
   unsubscribeGraceTime: 200,
-  compare: (a: any, b: any) => a === b,
+  compare: Object.is,
 }
