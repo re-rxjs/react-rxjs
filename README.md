@@ -18,7 +18,7 @@
 [![Build Status](https://img.shields.io/travis/re-rxjs/re-rxjs.svg?style=flat-square)](https://travis-ci.org/re-rxjs/re-rxjs)
 [![codecov](https://img.shields.io/codecov/c/github/re-rxjs/re-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/re-rxjs)
 [![version](https://img.shields.io/npm/v/re-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/re-rxjs)
-[![MIT License](https://img.shields.io/npm/l/re-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/LICENSE.md)
+[![MIT License](https://img.shields.io/npm/l/re-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/LICENSE)
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/CODE_OF_CONDUCT.md)
