@@ -1,11 +1,14 @@
 import React, { Suspense } from "react"
 import { render, fireEvent, screen } from "@testing-library/react"
-import { connectObservable } from "../src/connectObservable"
-import { switchMapSuspended } from "../src/operators/switchMapSuspended"
-import { suspended } from "../src/operators/suspended"
+import {
+  connectObservable,
+  suspend,
+  suspended,
+  switchMapSuspended,
+} from "../src"
 import { from, of, defer, Subject, concat } from "rxjs"
 import { renderHook } from "@testing-library/react-hooks"
-import { delay, scan, take, mergeMap, mergeMapTo } from "rxjs/operators"
+import { delay, scan, take, mergeMapTo } from "rxjs/operators"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -69,6 +72,7 @@ describe("connectObservable", () => {
         switchMapSuspended(x => of(x).pipe(delay(100))),
       ),
       subject$.pipe(take(1), mergeMapTo(of(3).pipe(delay(100), suspended()))),
+      subject$.pipe(take(1), mergeMapTo(suspend(of(4).pipe(delay(100))))),
     )
     const [useDelayedNumber] = connectObservable(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
@@ -116,6 +120,16 @@ describe("connectObservable", () => {
     await wait(110)
 
     expect(screen.queryByText("Result 3")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+
+    fireEvent.click(screen.getByText(/Next/i))
+
+    expect(screen.queryByText("Result")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    await wait(110)
+
+    expect(screen.queryByText("Result 4")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
   })
 })

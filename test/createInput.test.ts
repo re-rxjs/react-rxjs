@@ -1,4 +1,4 @@
-import { createInput } from "../src/createInput"
+import { createInput } from "../src"
 
 describe("createInput", () => {
   test("it returns the default value", () => {

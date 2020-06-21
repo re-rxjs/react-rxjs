@@ -1,4 +1,4 @@
-import { connectFactoryObservable } from "../src/connectFactoryObservable"
+import { connectFactoryObservable } from "../src"
 import { from, of, defer, concat, BehaviorSubject } from "rxjs"
 import { renderHook, act } from "@testing-library/react-hooks"
 

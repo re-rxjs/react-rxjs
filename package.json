@@ -14,7 +14,9 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
-    "test": "tsdx test --passWithNoTests",
+    "coverage": "codecov",
+    "test": "tsdx test --passWithNoTests --coverage",
+    "test:ci": "npm run test && npm run coverage",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
@@ -42,6 +44,7 @@
     "@types/jest": "^26.0.0",
     "@types/react": "^16.9.38",
     "@types/react-dom": "^16.9.8",
+    "codecov": "^3.7.0",
     "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
     "react": "^16.13.1",
