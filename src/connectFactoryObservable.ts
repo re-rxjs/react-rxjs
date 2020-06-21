@@ -1,10 +1,10 @@
 import { Observable, NEVER, concat } from "rxjs"
-import { BehaviorObservable } from "./BehaviorObservable"
 import { distinctShareReplay } from "./operators/distinct-share-replay"
-import { ConnectorOptions, defaultConnectorOptions } from "./options"
-import { SUSPENSE } from "./"
-import { useObservable } from "./useObservable"
 import reactEnhancer from "./operators/react-enhancer"
+import { ConnectorOptions, defaultConnectorOptions } from "./options"
+import { BehaviorObservable } from "./BehaviorObservable"
+import { SUSPENSE } from "./SUSPENSE"
+import { useObservable } from "./useObservable"
 
 export function connectFactoryObservable<
   A extends (number | string | boolean | null)[],

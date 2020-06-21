@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from "react"
-import { BehaviorObservable, SUSPENSE } from "./"
+import { SUSPENSE } from "./SUSPENSE"
+import { BehaviorObservable } from "./BehaviorObservable"
 
 const reducer = (
   _: any,

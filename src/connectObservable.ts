@@ -1,8 +1,8 @@
 import { Observable, NEVER, concat } from "rxjs"
-import { distinctShareReplay } from "./"
+import { distinctShareReplay } from "./operators/distinct-share-replay"
+import reactEnhancer from "./operators/react-enhancer"
 import { useObservable } from "./useObservable"
 import { ConnectorOptions, defaultConnectorOptions } from "./options"
-import reactEnhancer from "./operators/react-enhancer"
 
 export function connectObservable<T>(
   observable: Observable<T>,

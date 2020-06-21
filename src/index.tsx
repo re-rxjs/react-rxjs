@@ -1,4 +1,4 @@
-export const SUSPENSE = Symbol("SUSPENSE")
+export { SUSPENSE } from "./SUSPENSE"
 export { BehaviorObservable } from "./BehaviorObservable"
 export { connectObservable } from "./connectObservable"
 export { connectFactoryObservable } from "./connectFactoryObservable"

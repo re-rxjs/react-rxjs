@@ -1,6 +1,7 @@
 import { Observable, of, Subscription, Subject, race } from "rxjs"
 import { delay, takeUntil, take, filter, tap } from "rxjs/operators"
-import { BehaviorObservable, SUSPENSE } from "../"
+import { BehaviorObservable } from "../BehaviorObservable"
+import { SUSPENSE } from "../SUSPENSE"
 
 const IS_SSR =
   typeof window === "undefined" ||

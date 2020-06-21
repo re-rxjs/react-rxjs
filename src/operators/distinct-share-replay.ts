@@ -1,5 +1,6 @@
 import { Observable, Subscription, Subject } from "rxjs"
-import { SUSPENSE, BehaviorObservable } from "../"
+import { SUSPENSE } from "../SUSPENSE"
+import { BehaviorObservable } from "../BehaviorObservable"
 
 function defaultTeardown() {}
 
