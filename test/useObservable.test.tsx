@@ -1,11 +1,10 @@
 import React, { useState, Suspense } from "react"
 import { render, fireEvent, screen } from "@testing-library/react"
 import { defer, of, Subject, NEVER, concat } from "rxjs"
-import { useObservable } from "../src/useObservable"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { BehaviorObservable, distinctShareReplay } from "../src"
+import { useObservable } from "../src/useObservable"
 import reactEnhancer from "../src/operators/react-enhancer"
-import { SUSPENSE } from "../src/SUSPENSE"
+import { SUSPENSE, BehaviorObservable, distinctShareReplay } from "../src"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
