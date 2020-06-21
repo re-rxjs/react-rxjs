@@ -26,9 +26,6 @@ const reactEnhancer = <T>(
       error(e) {
         subscriber.error(e)
       },
-      complete() {
-        subscriber.complete()
-      },
     })
     onSubscribe.next()
     finalizeLastUnsubscription()
