@@ -1,4 +1,5 @@
-import { BehaviorObservable, distinctShareReplay, SUSPENSE } from "../../src"
+import { distinctShareReplay, SUSPENSE } from "../../src"
+import { BehaviorObservable } from "../../src/BehaviorObservable"
 import { EMPTY_VALUE } from "../../src/operators/distinct-share-replay"
 import { cold } from "jest-marbles"
 import { TestScheduler } from "rxjs/testing"

@@ -4,7 +4,8 @@ import { defer, of, Subject, NEVER, concat } from "rxjs"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { useObservable } from "../src/useObservable"
 import reactEnhancer from "../src/operators/react-enhancer"
-import { SUSPENSE, BehaviorObservable, distinctShareReplay } from "../src"
+import { SUSPENSE, distinctShareReplay } from "../src"
+import { BehaviorObservable } from "../src/BehaviorObservable"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
