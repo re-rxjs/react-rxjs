@@ -1,5 +1,6 @@
 import reactEnhancer from "../../src/operators/react-enhancer"
-import { BehaviorObservable, distinctShareReplay, SUSPENSE } from "../../src"
+import { distinctShareReplay, SUSPENSE } from "../../src"
+import { BehaviorObservable } from "../../src/BehaviorObservable"
 import { TestScheduler } from "rxjs/testing"
 import { Subject } from "rxjs"
 
