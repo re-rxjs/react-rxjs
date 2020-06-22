@@ -1,9 +1,17 @@
 import { Subject, Observable, ReplaySubject } from "rxjs"
-import { finalize } from "rxjs/operators"
 import { distinctShareReplay } from "./operators/distinct-share-replay"
 
+interface CreateInput {
+  (): [(key: string) => Observable<void>, (key: string) => void]
+  <T>(defaultValue?: T): [
+    (key: string) => Observable<T>,
+    (key: string, update: T | ((prev: T) => T)) => void,
+  ]
+}
+
 const empty = Symbol("empty") as any
-export function createInput<T>(defaultValue: T = empty) {
+const F = () => false
+const createInput_ = <T>(defaultValue: T = empty) => {
   const cache = new Map<string, [Subject<T>, { latest: T }, Observable<T>]>()
   const getEntry = (key: string) => {
     let result = cache.get(key)
@@ -13,10 +21,9 @@ export function createInput<T>(defaultValue: T = empty) {
     if (defaultValue !== empty) {
       subject.next((current.latest = defaultValue))
     }
-    const source = subject.pipe(
-      finalize(() => cache.delete(key)),
-      distinctShareReplay(),
-    )
+    const source = distinctShareReplay(F, () => cache.delete(key))(
+      subject,
+    ) as Observable<T>
     result = [subject, current, source]
     cache.set(key, result)
     return result
@@ -31,3 +38,5 @@ export function createInput<T>(defaultValue: T = empty) {
   const getSource = (key: string) => getEntry(key)[2]
   return [getSource, onChange] as const
 }
+
+export const createInput = createInput_ as CreateInput

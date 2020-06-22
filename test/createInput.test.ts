@@ -1,4 +1,5 @@
 import { createInput } from "../src"
+import { scan } from "rxjs/operators"
 
 describe("createInput", () => {
   test("it returns the default value", () => {
@@ -18,6 +19,28 @@ describe("createInput", () => {
       nUpdates += 1
     })
     expect(nUpdates).toBe(0)
+    sub.unsubscribe()
+  })
+
+  test("it accepts void inputs", () => {
+    const [getClicks$, onClick] = createInput()
+
+    let latestValue: number | undefined = undefined
+    const sub = getClicks$("foo")
+      .pipe(scan(prev => prev + 1, 0))
+      .subscribe(x => {
+        latestValue = x
+      })
+
+    expect(latestValue).toBe(undefined)
+
+    onClick("foo")
+    onClick("foo")
+    onClick("foo")
+    onClick("foo")
+
+    expect(latestValue).toBe(4)
+
     sub.unsubscribe()
   })
 
@@ -53,27 +76,6 @@ describe("createInput", () => {
     sub3.unsubscribe()
   })
 
-  test("it does not trigger updates if the value has not changed", () => {
-    const [getCounter, setCounter] = createInput(10)
-
-    let nUpdates = 0
-    const sub1 = getCounter("foo").subscribe(() => {
-      nUpdates += 1
-    })
-    expect(nUpdates).toBe(1)
-
-    setCounter("foo", 100)
-    expect(nUpdates).toBe(2)
-
-    setCounter("foo", 100)
-    expect(nUpdates).toBe(2)
-
-    setCounter("foo", 100)
-    expect(nUpdates).toBe(2)
-
-    sub1.unsubscribe()
-  })
-
   test("the setter can also be a function", () => {
     const [getCounter, setCounter] = createInput(10)
 
@@ -91,10 +93,6 @@ describe("createInput", () => {
     expect(latestValue).toBe(20)
 
     setCounter("foo", x => x * 2)
-    expect(nUpdates).toBe(3)
-    expect(latestValue).toBe(40)
-
-    setCounter("foo", x => x)
     expect(nUpdates).toBe(3)
     expect(latestValue).toBe(40)
 
