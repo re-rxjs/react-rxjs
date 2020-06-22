@@ -46,7 +46,7 @@ function App() {
   return (
     <>
       <h1>Docs</h1>
-      <Suspense fallback={<span>Comming soon...</span>}>
+      <Suspense fallback={<span>Coming soon...</span>}>
         <Docs />
       </Suspense>
     </>
