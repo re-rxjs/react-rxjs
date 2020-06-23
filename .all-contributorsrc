@@ -28,7 +28,8 @@
         "ideas",
         "review",
         "code",
-        "test"
+        "test",
+        "doc"
       ]
     },
     {
@@ -55,7 +56,8 @@
       "avatar_url": "https://avatars3.githubusercontent.com/u/15194540?v=4",
       "profile": "https://github.com/bhavesh-desai-scratch",
       "contributions": [
-        "review"
+        "review",
+        "doc"
       ]
     }
   ],
