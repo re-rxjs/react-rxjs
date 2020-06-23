@@ -165,7 +165,7 @@ The pipeable version of `suspend`
 
 ```ts
 const story$ = selectedStoryId$.pipe(
-  switchMapSuspended(id => getStory$(id))
+  switchMapSuspended(getStory$)
 )
 ```
 
