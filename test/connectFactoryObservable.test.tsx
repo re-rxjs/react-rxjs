@@ -1,6 +1,10 @@
 import { connectFactoryObservable } from "../src"
-import { from, of, defer, concat, BehaviorSubject } from "rxjs"
-import { renderHook, act } from "@testing-library/react-hooks"
+import { from, of, defer, concat, BehaviorSubject, throwError } from "rxjs"
+import { renderHook, act as actHook } from "@testing-library/react-hooks"
+import { render, act } from "@testing-library/react"
+import { map, switchMap } from "rxjs/operators"
+import { Component, ErrorInfo, FC } from "react"
+import React from "react"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -8,7 +12,10 @@ describe("connectFactoryObservable", () => {
   const originalError = console.error
   beforeAll(() => {
     console.error = (...args: any) => {
-      if (/Consider adding an error/.test(args[0])) {
+      if (
+        /Uncaught 'controlled error'/.test(args[0]) ||
+        /using the error boundary .* TestErrorBoundary/.test(args[0])
+      ) {
         return
       }
       originalError.call(console, ...args)
@@ -20,9 +27,46 @@ describe("connectFactoryObservable", () => {
   })
   describe("hook", () => {
     it("returns the latest emitted value", async () => {
-      const [useNumber] = connectFactoryObservable((id: number) => of(id))
-      const { result } = renderHook(() => useNumber(1))
+      const valueStream = new BehaviorSubject(1)
+      const [useNumber] = connectFactoryObservable(() => valueStream)
+      const { result } = renderHook(() => useNumber())
       expect(result.current).toBe(1)
+
+      actHook(() => {
+        valueStream.next(3)
+      })
+      expect(result.current).toBe(3)
+    })
+
+    it("shares the multicasted subscription with all of the components that use the same parameters", async () => {
+      let subscriberCount = 0
+      const observable$ = defer(() => {
+        subscriberCount += 1
+        return from([1, 2, 3, 4, 5])
+      })
+
+      const [
+        useLatestNumber,
+        latestNumber$,
+      ] = connectFactoryObservable((id: number, value: number) =>
+        concat(observable$, of(id + value)),
+      )
+      expect(subscriberCount).toBe(0)
+
+      renderHook(() => useLatestNumber(1, 1))
+      expect(subscriberCount).toBe(1)
+
+      renderHook(() => useLatestNumber(1, 1))
+      expect(subscriberCount).toBe(1)
+
+      latestNumber$(1, 1).subscribe()
+      expect(subscriberCount).toBe(1)
+
+      renderHook(() => useLatestNumber(1, 2))
+      expect(subscriberCount).toBe(2)
+
+      renderHook(() => useLatestNumber(2, 2))
+      expect(subscriberCount).toBe(3)
     })
 
     it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
@@ -60,27 +104,62 @@ describe("connectFactoryObservable", () => {
       const errStream = new BehaviorSubject(1)
       const [useError] = connectFactoryObservable(() => errStream)
 
-      renderHook(() => useError())
+      const ErrorComponent = () => {
+        const value = useError()
 
-      expect(() =>
-        act(() => {
-          errStream.error("error")
-        }),
-      ).toThrow()
+        return <>{value}</>
+      }
+
+      const errorCallback = jest.fn()
+      render(
+        <TestErrorBoundary onError={errorCallback}>
+          <ErrorComponent />
+        </TestErrorBoundary>,
+      )
+
+      act(() => {
+        errStream.error("controlled error")
+      })
+
+      expect(errorCallback).toHaveBeenCalledWith(
+        "controlled error",
+        expect.any(Object),
+      )
     })
 
     it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
-      const errStream = new BehaviorSubject(1)
-      const [useError] = connectFactoryObservable(() => errStream)
+      const valueStream = new BehaviorSubject(1)
+      const [useValue, value$] = connectFactoryObservable(() => valueStream)
+      const [useError] = connectFactoryObservable(() =>
+        value$().pipe(switchMap(v => (v === 1 ? of(v) : throwError("error")))),
+      )
 
-      const { unmount } = renderHook(() => useError())
+      const ErrorComponent: FC = () => {
+        const value = useError()
 
-      expect(() =>
-        act(() => {
-          errStream.error("error")
-          unmount()
-        }),
-      ).not.toThrow()
+        return <>{value}</>
+      }
+
+      const Container: FC = () => {
+        const value = useValue()
+
+        return value === 1 ? <ErrorComponent /> : <>Nothing to show here</>
+      }
+
+      const errorCallback = jest.fn()
+      render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Container>
+            <ErrorComponent />
+          </Container>
+        </TestErrorBoundary>,
+      )
+
+      act(() => {
+        valueStream.next(2)
+      })
+
+      expect(errorCallback).not.toHaveBeenCalled()
     })
   })
   describe("observable", () => {
@@ -127,3 +206,32 @@ describe("connectFactoryObservable", () => {
     })
   })
 })
+
+class TestErrorBoundary extends Component<
+  {
+    onError: (error: Error, errorInfo: ErrorInfo) => void
+  },
+  {
+    hasError: boolean
+  }
+> {
+  state = {
+    hasError: false,
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.props.onError(error, errorInfo)
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return "error"
+    }
+
+    return this.props.children
+  }
+}
