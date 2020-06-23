@@ -1,5 +1,12 @@
 {
   "version": "0.2.0-alpha.2",
+  "bundlesize": [
+    {
+      "path": "./dist/re-rxjs.cjs.production.min.js",
+      "maxSize": "6 kB",
+      "compression": "none"
+    }
+  ],
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -16,7 +23,7 @@
     "build": "tsdx build",
     "coverage": "codecov",
     "test": "tsdx test --passWithNoTests --coverage",
-    "test:ci": "npm run test && npm run coverage",
+    "test:ci": "npm run test && npm run coverage && bundlesize",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
@@ -44,6 +51,7 @@
     "@types/jest": "^26.0.0",
     "@types/react": "^16.9.38",
     "@types/react-dom": "^16.9.8",
+    "bundlesize": "^0.18.0",
     "codecov": "^3.7.0",
     "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
