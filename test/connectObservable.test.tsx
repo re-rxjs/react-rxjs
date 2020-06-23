@@ -1,14 +1,14 @@
+import { fireEvent, render, screen } from "@testing-library/react"
+import { renderHook, act } from "@testing-library/react-hooks"
 import React, { Suspense } from "react"
-import { render, fireEvent, screen } from "@testing-library/react"
+import { BehaviorSubject, concat, defer, from, of, Subject } from "rxjs"
+import { delay, mergeMapTo, scan, take } from "rxjs/operators"
 import {
   connectObservable,
   suspend,
   suspended,
   switchMapSuspended,
 } from "../src"
-import { from, of, defer, Subject, concat } from "rxjs"
-import { renderHook } from "@testing-library/react-hooks"
-import { delay, scan, take, mergeMapTo } from "rxjs/operators"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -33,6 +33,37 @@ describe("connectObservable", () => {
 
     const { result } = renderHook(() => useLatestNumber())
     expect(result.current).toEqual(1)
+  })
+
+  it("Only update when the previous and current update are distinct according to the comparator function", async () => {
+    interface TestUpdate {
+      value: number
+      valueToIgnore: string
+    }
+    const stream$ = new BehaviorSubject<TestUpdate>({
+      value: 0,
+      valueToIgnore: "A",
+    })
+
+    const compare = (a: TestUpdate, b: TestUpdate) => a.value === b.value
+    const [useLatestValue] = connectObservable(stream$, { compare })
+
+    const { result, rerender } = renderHook(() => useLatestValue())
+    expect(result.current.valueToIgnore).toEqual("A")
+    expect(result.current.value).toEqual(0)
+
+    act(() => {
+      stream$.next({ value: 0, valueToIgnore: "B" })
+    })
+    //should not update to the latest value in the stream
+    expect(result.current.valueToIgnore).toEqual("A")
+    expect(result.current.value).toEqual(0)
+
+    act(() => {
+      stream$.next({ value: 1, valueToIgnore: "B" })
+    })
+    expect(result.current.value).toEqual(1)
+    expect(result.current.valueToIgnore).toEqual("B")
   })
 
   it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
