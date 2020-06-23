@@ -103,7 +103,7 @@ describe("connectFactoryObservable", () => {
         nUpdates += 1
       })
       expect(latestValue1).toBe(4)
-      expect(nUpdates).toBe(1)
+      expect(nUpdates).toBe(4)
 
       let latestValue2: number = 0
       const sub2 = getShared(0).subscribe(x => {
@@ -111,7 +111,7 @@ describe("connectFactoryObservable", () => {
         nUpdates += 1
       })
       expect(latestValue2).toBe(4)
-      expect(nUpdates).toBe(2)
+      expect(nUpdates).toBe(5)
 
       sub1.unsubscribe()
       sub2.unsubscribe()
@@ -122,7 +122,7 @@ describe("connectFactoryObservable", () => {
         nUpdates += 1
       })
       expect(latestValue3).toBe(5)
-      expect(nUpdates).toBe(3)
+      expect(nUpdates).toBe(9)
       sub3.unsubscribe()
     })
   })

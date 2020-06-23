@@ -16,9 +16,11 @@ export const distinctShareReplay = <T>(
 
   const result = new Observable<T>(subscriber => {
     refCount++
+    let innerSub: Subscription
     if (!subject) {
       currentValue = { value: EMPTY_VALUE }
       subject = new Subject<T>()
+      innerSub = subject.subscribe(subscriber)
       subscription = source$.subscribe({
         next(value) {
           if (
@@ -37,13 +39,13 @@ export const distinctShareReplay = <T>(
           subject!.complete()
         },
       })
+    } else {
+      innerSub = subject.subscribe(subscriber)
+      if (currentValue.value !== EMPTY_VALUE) {
+        subscriber.next(currentValue.value)
+      }
     }
 
-    if (currentValue.value !== EMPTY_VALUE) {
-      subscriber.next(currentValue.value)
-    }
-
-    const innerSub = subject.subscribe(subscriber)
     return () => {
       refCount--
       innerSub.unsubscribe()

@@ -1,8 +1,9 @@
-import { BehaviorObservable, distinctShareReplay, SUSPENSE } from "../../src"
+import { distinctShareReplay, SUSPENSE } from "../../src"
+import { BehaviorObservable } from "../../src/BehaviorObservable"
 import { EMPTY_VALUE } from "../../src/operators/distinct-share-replay"
 import { cold } from "jest-marbles"
 import { TestScheduler } from "rxjs/testing"
-import { Subject } from "rxjs"
+import { Subject, from } from "rxjs"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -73,6 +74,19 @@ describe("operators/distinctShareReplay", () => {
       expectObservable(shared, sub1).toBe(expected1);
       expectObservable(shared, sub2).toBe(expected2);
       expectSubscriptions(source.subscriptions).toBe(sourceSubs);
+    })
+  })
+
+  // prettier-ignore
+  it("should not skip values on a sync source", () => {
+    scheduler().run(({ expectObservable }) => {
+      const source = from(['a', 'b', 'c', 'd']) // cold("(abcd|)")
+      const sub1 =         '^';
+      const expected1 = "  (abcd|)"
+
+      const shared = source.pipe(distinctShareReplay());
+
+      expectObservable(shared, sub1).toBe(expected1);
     })
   })
 
