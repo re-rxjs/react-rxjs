@@ -62,9 +62,12 @@ const [useCounter, sharedCounter$] = connectObservable(
   )
 )
 ```
-Returns a hook that provides the latest update of the accepted observable, and an enhanced 
-version of the original observable (the one that the hook will use), which is shared 
-and "replayable".
+Returns a hook that provides the latest update of the accepted observable, and the
+underlying enhanced observable, which shares the subscription to all of its subscribers,
+and always emits the latest value when subscribing to it.
+
+The shared subscription is closed as soon as there are no subscribers to that
+hook/observable.
 
 ### connectFactoryObservable
 ```tsx
@@ -96,6 +99,13 @@ can be used for composing other streams that depend on it. This observable is di
 when its `refCount` goes down to zero.
 
 ### distinctShareReplay
+```ts
+const activePlanetName$ = planet$.pipe(
+  filter(planet => planet.isActive),
+  map(planet => planet.name),
+  distinctShareReplay()
+)
+```
 
 A RxJS pipeable operator which performs a custom `shareReplay` that can be useful 
 when working with these bindings. It's roughly the equivalent of:
@@ -112,40 +122,54 @@ const distinctShareReplay = <T>(compare?: Object.is) => (
 ```
 
 The enhanced observables returned from `connectObservable` and `connectFactoryObservable` 
-have been enhanced like this:
-
-```ts
-const shared$ = concat(original$, NEVER).pipe(distinctShareReplay())
-```
+have been enhanced with this operator.
 
 ### SUSPENSE
 
-This is a special symbol that can be emitted from our observables to let the react-hook
+```ts
+const story$ = selectedStoryId$.pipe(
+  switchMap(id => concat(
+    SUSPENSE,
+    getStory$(id)
+  ))
+)
+```
+
+This is a special symbol that can be emitted from our observables to let the react hook
 know that there is a value on its way, and that we want to leverage React Suspense API
 while we are waiting for that value.
 
 ### suspend
 
-A RxJS creation operator that performs a `startWith(SUSPENSE)` on the source observable.
-
 ```ts
-const suspend = <T>(source$: ObservableInput<T>) =>
-  from(source$).pipe(startWith(SUSPENSE))
+const story$ = selectedStoryId$.pipe(
+  switchMap(id => suspend(getStory$(id))
+)
 ```
 
+A RxJS creation operator that prepends a `SUSPENSE` on the source observable.
+
 ### suspended
+
+```ts
+const story$ = selectedStoryId$.pipe(
+  switchMap(id => getStory$(id).pipe(
+    suspended()
+  ))
+)
+```
 
 The pipeable version of `suspend`
 
 ### switchMapSuspended
 
-Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
-
 ```ts
-const switchMapSuspended = <Input, Output>(
-  fn: (input: Input) => ObservableInput<Output>,
-) => (src$: Observable<Input>) => src$.pipe(switchMap(x => suspend(fn(x))))
+const story$ = selectedStoryId$.pipe(
+  switchMapSuspended(id => getStory$(id))
+)
 ```
+
+Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
 
 ### createInput
 
