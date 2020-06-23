@@ -67,7 +67,7 @@ underlying enhanced observable, which shares the subscription to all of its subs
 and always emits the latest value when subscribing to it.
 
 The shared subscription is closed as soon as there are no subscribers to that
-hook/observable.
+observable.
 
 ### connectFactoryObservable
 ```tsx
