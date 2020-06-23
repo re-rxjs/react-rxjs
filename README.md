@@ -19,7 +19,7 @@
 [![codecov](https://img.shields.io/codecov/c/github/re-rxjs/re-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/re-rxjs)
 [![version](https://img.shields.io/npm/v/re-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/re-rxjs)
 [![MIT License](https://img.shields.io/npm/l/re-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/LICENSE)
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/CODE_OF_CONDUCT.md)
 <!-- prettier-ignore-end -->
@@ -28,9 +28,9 @@ Main features
 -------------
 - :cyclone: Truly Reactive
 - :zap: Highly performant and free of memory-leaks
-- :twisted_rightwards_arrows: First class support for React Suspense
+- :twisted_rightwards_arrows: First class support for React Suspense and [ready for Concurrent Mode](https://github.com/dai-shi/will-this-react-global-state-work-in-concurrent-mode#results)
 - :scissors: Decentralized and composable, thus enabling optimal code-splitting
-- :microscope: Tiny and tree-shakeable
+- :microscope: [Tiny and tree-shakeable](https://bundlephobia.com/result?p=re-rxjs)
 - :muscle: Supports TypeScript
 
 ## Table of Contents
