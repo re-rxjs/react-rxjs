@@ -15,7 +15,8 @@
         "ideas",
         "maintenance",
         "test",
-        "review"
+        "review",
+        "doc"
       ]
     },
     {
@@ -27,7 +28,8 @@
         "ideas",
         "review",
         "code",
-        "test"
+        "test",
+        "doc"
       ]
     },
     {
