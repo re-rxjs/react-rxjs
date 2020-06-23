@@ -47,6 +47,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "bhavesh-desai-scratch",
+      "name": "Bhavesh Desai",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/15194540?v=4",
+      "profile": "https://github.com/bhavesh-desai-scratch",
+      "contributions": [
+        "review"
+      ]
     }
   ],
   "contributorsPerLine": 7,
