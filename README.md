@@ -111,7 +111,7 @@ A RxJS pipeable operator which performs a custom `shareReplay` that can be usefu
 when working with these bindings. It's roughly the equivalent of:
 
 ```ts
-const distinctShareReplay = <T>(compare?: Object.is) => (
+const distinctShareReplay = <T>(compare = Object.is) => (
   source$: Observable<T>,
 ): Observable<T> =>
   source$.pipe(
