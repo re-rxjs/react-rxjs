@@ -2,7 +2,7 @@ import { connectFactoryObservable } from "../src"
 import { from, of, defer, concat, BehaviorSubject, throwError } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
 import { render, act } from "@testing-library/react"
-import { map, switchMap } from "rxjs/operators"
+import { switchMap } from "rxjs/operators"
 import { Component, ErrorInfo, FC } from "react"
 import React from "react"
 
