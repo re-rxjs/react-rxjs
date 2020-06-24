@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { renderHook, act } from "@testing-library/react-hooks"
-import React, { Suspense } from "react"
+import React, { Suspense, useRef, useEffect } from "react"
 import { BehaviorSubject, concat, defer, from, of, Subject } from "rxjs"
 import { delay, mergeMapTo, scan, take } from "rxjs/operators"
 import {
@@ -47,23 +47,39 @@ describe("connectObservable", () => {
 
     const compare = (a: TestUpdate, b: TestUpdate) => a.value === b.value
     const [useLatestValue] = connectObservable(stream$, { compare })
+    const useLatestValueWithUpdates = () => {
+      const nUpdates = useRef(0)
+      const latestValue = useLatestValue()
+      useEffect(() => {
+        nUpdates.current++
+      })
+      return {
+        latestValue,
+        nUpdates,
+      }
+    }
 
-    const { result, rerender } = renderHook(() => useLatestValue())
-    expect(result.current.valueToIgnore).toEqual("A")
-    expect(result.current.value).toEqual(0)
+    const { result } = renderHook(() => useLatestValueWithUpdates())
+    expect(result.current.latestValue.valueToIgnore).toEqual("A")
+    expect(result.current.latestValue.value).toEqual(0)
+    expect(result.current.nUpdates.current).toEqual(1)
 
     act(() => {
       stream$.next({ value: 0, valueToIgnore: "B" })
     })
+
     //should not update to the latest value in the stream
-    expect(result.current.valueToIgnore).toEqual("A")
-    expect(result.current.value).toEqual(0)
+    expect(result.current.latestValue.valueToIgnore).toEqual("A")
+    expect(result.current.latestValue.value).toEqual(0)
+    //should not trigger a react update
+    expect(result.current.nUpdates.current).toEqual(1)
 
     act(() => {
       stream$.next({ value: 1, valueToIgnore: "B" })
     })
-    expect(result.current.value).toEqual(1)
-    expect(result.current.valueToIgnore).toEqual("B")
+    expect(result.current.latestValue.valueToIgnore).toEqual("B")
+    expect(result.current.latestValue.value).toEqual(1)
+    expect(result.current.nUpdates.current).toEqual(2)
   })
 
   it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
