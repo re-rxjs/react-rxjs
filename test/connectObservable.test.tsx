@@ -1,14 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react"
-import { renderHook, act } from "@testing-library/react-hooks"
-import React, { Suspense, useRef, useEffect } from "react"
-import { BehaviorSubject, concat, defer, from, of, Subject } from "rxjs"
-import { delay, mergeMapTo, scan, take } from "rxjs/operators"
 import {
-  connectObservable,
-  suspend,
-  suspended,
-  switchMapSuspended,
-} from "../src"
+  act as componentAct,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react-hooks"
+import React, { Suspense, useEffect, useRef, FC } from "react"
+import { BehaviorSubject, defer, from, of, Subject } from "rxjs"
+import { delay, scan, startWith, map } from "rxjs/operators"
+import { connectObservable, SUSPENSE } from "../src"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -33,6 +33,49 @@ describe("connectObservable", () => {
 
     const { result } = renderHook(() => useLatestNumber())
     expect(result.current).toEqual(1)
+  })
+
+  it("updates with the last emitted value", async () => {
+    const numberStream = new BehaviorSubject(1)
+    const [useNumber] = connectObservable(numberStream)
+    const { result } = renderHook(() => useNumber())
+    expect(result.current).toBe(1)
+
+    act(() => {
+      numberStream.next(2)
+    })
+    expect(result.current).toBe(2)
+  })
+
+  it("allows React to batch synchronous updates", async () => {
+    const numberStream = new BehaviorSubject(1)
+    const stringStream = new BehaviorSubject("a")
+    const [useNumber] = connectObservable(numberStream)
+    const [useString] = connectObservable(stringStream)
+
+    const BatchComponent: FC<{
+      onUpdate: () => void
+    }> = ({ onUpdate }) => {
+      const number = useNumber()
+      const string = useString()
+      useEffect(onUpdate)
+      return (
+        <>
+          {number} {string}
+        </>
+      )
+    }
+
+    const updates = jest.fn()
+    render(<BatchComponent onUpdate={updates} />)
+    expect(updates).toHaveBeenCalledTimes(1)
+
+    componentAct(() => {
+      numberStream.next(2)
+      numberStream.next(3)
+      stringStream.next("b")
+    })
+    expect(updates).toHaveBeenCalledTimes(2)
   })
 
   it("Only update when the previous and current update are distinct according to the comparator function", async () => {
@@ -110,16 +153,40 @@ describe("connectObservable", () => {
     expect(nInitCount).toBe(2)
   })
 
-  it("works with suspense", async () => {
+  it("suspends the component when the observable hasn't emitted yet.", async () => {
+    const source$ = of(1).pipe(delay(100))
+    const [useDelayedNumber] = connectObservable(source$)
+    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
+    const TestSuspense: React.FC = () => {
+      return (
+        <Suspense fallback={<span>Waiting</span>}>
+          <Result />
+        </Suspense>
+      )
+    }
+
+    render(<TestSuspense />)
+
+    expect(screen.queryByText("Result")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    await wait(110)
+
+    expect(screen.queryByText("Result 1")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+  })
+
+  it("suspends the component when the observable emits SUSPENSE", async () => {
     const subject$ = new Subject()
-    const source$ = concat(
-      subject$.pipe(
-        take(2),
-        scan(a => a + 1, 0),
-        switchMapSuspended(x => of(x).pipe(delay(100))),
-      ),
-      subject$.pipe(take(1), mergeMapTo(of(3).pipe(delay(100), suspended()))),
-      subject$.pipe(take(1), mergeMapTo(suspend(of(4).pipe(delay(100))))),
+    const source$ = subject$.pipe(
+      scan(a => a + 1, 0),
+      map(x => {
+        if (x === 1) {
+          return SUSPENSE
+        }
+        return x
+      }),
+      startWith(0),
     )
     const [useDelayedNumber] = connectObservable(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
@@ -136,47 +203,60 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    expect(screen.queryByText("Result")).toBeNull()
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Result")).toBeNull()
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    await wait(110)
-
-    expect(screen.queryByText("Result 1")).not.toBeNull()
+    expect(screen.queryByText("Result 0")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    expect(screen.queryByText("Result")).toBeNull()
     expect(screen.queryByText("Waiting")).not.toBeNull()
 
-    await wait(110)
+    fireEvent.click(screen.getByText(/Next/i))
 
     expect(screen.queryByText("Result 2")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
+  })
 
-    fireEvent.click(screen.getByText(/Next/i))
+  it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
+    const subject$ = new Subject()
+    const source$ = subject$.pipe(
+      scan(a => a + 1, 0),
+      map(x => {
+        if (x <= 2) {
+          return SUSPENSE
+        }
+        return x
+      }),
+      startWith(0),
+    )
+    const [useDelayedNumber] = connectObservable(source$)
+    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
+    const TestSuspense: React.FC = () => {
+      return (
+        <div>
+          <button onClick={() => subject$.next()}>Next</button>
+          <Suspense fallback={<span>Waiting</span>}>
+            <Result />
+          </Suspense>
+        </div>
+      )
+    }
 
-    expect(screen.queryByText("Result")).toBeNull()
-    expect(screen.queryByText("Waiting")).not.toBeNull()
+    render(<TestSuspense />)
 
-    await wait(110)
-
-    expect(screen.queryByText("Result 3")).not.toBeNull()
+    expect(screen.queryByText("Result 0")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    expect(screen.queryByText("Result")).toBeNull()
     expect(screen.queryByText("Waiting")).not.toBeNull()
 
-    await wait(110)
+    fireEvent.click(screen.getByText(/Next/i))
 
-    expect(screen.queryByText("Result 4")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    fireEvent.click(screen.getByText(/Next/i))
+
+    expect(screen.queryByText("Result 3")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
   })
 })
