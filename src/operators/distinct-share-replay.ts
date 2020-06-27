@@ -5,6 +5,7 @@ import { BehaviorObservable } from "../BehaviorObservable"
 function defaultTeardown() {}
 
 export const EMPTY_VALUE: any = {}
+
 export const distinctShareReplay = <T>(
   compareFn: (a: T, b: T) => boolean = Object.is,
   teardown = defaultTeardown,

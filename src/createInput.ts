@@ -2,7 +2,19 @@ import { Subject, Observable, ReplaySubject } from "rxjs"
 import { distinctShareReplay } from "./operators/distinct-share-replay"
 
 interface CreateInput {
+  /**
+   * Creates a pool of void observables identified by strings, and returns:
+   *   - A function that returns the observable by key
+   *   - A function that makes the observable emit by key
+   */
   (): [(key: string) => Observable<void>, (key: string) => void]
+  /**
+   * Creates a pool of observables identified by strings, and returns:
+   *   - A function that returns the observable by key
+   *   - A function that updates the observable value by key
+   *
+   * @param defaultValue Default value.
+   */
   <T>(defaultValue?: T): [
     (key: string) => Observable<T>,
     (key: string, update: T | ((prev: T) => T)) => void,
@@ -39,4 +51,9 @@ const createInput_ = <T>(defaultValue: T = empty) => {
   return [getSource, onChange] as const
 }
 
+/**
+ * Creates a pool of observables identified by strings, and returns:
+ *   - A function that returns the observable by key
+ *   - A function that updates the observable value by key
+ */
 export const createInput = createInput_ as CreateInput
