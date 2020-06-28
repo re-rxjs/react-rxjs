@@ -1,8 +1,7 @@
-import { Observable, NEVER, concat } from "rxjs"
-import { distinctShareReplay } from "./operators/distinct-share-replay"
-import reactEnhancer from "./operators/react-enhancer"
-import { useObservable } from "./useObservable"
-import { ConnectorOptions, defaultConnectorOptions } from "./options"
+import { Observable } from "rxjs"
+import shareLatest from "./internal/share-latest"
+import reactEnhancer from "./internal/react-enhancer"
+import { useObservable } from "./internal/useObservable"
 
 /**
  * Returns a hook that provides the latest update of the accepted observable,
@@ -13,30 +12,19 @@ import { ConnectorOptions, defaultConnectorOptions } from "./options"
  * observable.
  *
  * @param observable Source observable to be used by the hook.
- * @param options ConnectorOptions:
- *  - unsubscribeGraceTime (= 200): Amount of time in ms that the shared
- *    observable should wait before unsubscribing from the source observable
- *    when there are no new subscribers.
- *  - compare (= Object.is): Equality function.
+ * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
+ *        observable should wait before unsubscribing from the source observable
+ *        when there are no new subscribers.
  */
 export function connectObservable<T>(
   observable: Observable<T>,
-  options?: ConnectorOptions<T>,
+  unsubscribeGraceTime = 200,
 ) {
-  const _options = {
-    ...defaultConnectorOptions,
-    ...options,
-  }
-  const sharedObservable$ = distinctShareReplay(_options.compare)(
-    concat(observable, NEVER),
-  )
-
+  const sharedObservable$ = shareLatest<T>(false)(observable)
   const reactObservable$ = reactEnhancer(
     sharedObservable$,
-    _options.unsubscribeGraceTime,
+    unsubscribeGraceTime,
   )
-
   const useStaticObservable = () => useObservable(reactObservable$)
-
-  return [useStaticObservable, sharedObservable$] as const
+  return [useStaticObservable, sharedObservable$ as Observable<T>] as const
 }

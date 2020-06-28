@@ -1,10 +1,9 @@
-import { Observable, NEVER, concat } from "rxjs"
-import { distinctShareReplay } from "./operators/distinct-share-replay"
-import reactEnhancer from "./operators/react-enhancer"
-import { ConnectorOptions, defaultConnectorOptions } from "./options"
-import { BehaviorObservable } from "./BehaviorObservable"
+import { Observable } from "rxjs"
+import shareLatest from "./internal/share-latest"
+import reactEnhancer from "./internal/react-enhancer"
+import { BehaviorObservable } from "./internal/BehaviorObservable"
+import { useObservable } from "./internal/useObservable"
 import { SUSPENSE } from "./SUSPENSE"
-import { useObservable } from "./useObservable"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -19,27 +18,20 @@ import { useObservable } from "./useObservable"
  *
  * @param getObservable Factory of observables. The arguments of this function
  *  will be the ones used in the hook.
- * @param options ConnectorOptions:
- *  - unsubscribeGraceTime (= 200): Amount of time in ms that the shared
- *    observable should wait before unsubscribing from the source observable
- *    when there are no new subscribers.
- *  - compare (= Object.is): Equality function.
+ * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
+ *        observable should wait before unsubscribing from the source observable
+ *        when there are no new subscribers.
  */
 export function connectFactoryObservable<
   A extends (number | string | boolean | null)[],
   O
 >(
   getObservable: (...args: A) => Observable<O>,
-  options?: ConnectorOptions<O>,
+  unsubscribeGraceTime = 200,
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
 ] {
-  const _options = {
-    ...defaultConnectorOptions,
-    ...options,
-  }
-
   const cache = new Map<
     string,
     [BehaviorObservable<O>, BehaviorObservable<O>]
@@ -55,13 +47,13 @@ export function connectFactoryObservable<
       return cachedVal
     }
 
-    const sharedObservable$ = distinctShareReplay(_options.compare, () => {
+    const sharedObservable$ = shareLatest<O>(false, () => {
       cache.delete(key)
-    })(concat(getObservable(...input), NEVER))
+    })(getObservable(...input))
 
     const reactObservable$ = reactEnhancer(
       sharedObservable$,
-      _options.unsubscribeGraceTime,
+      unsubscribeGraceTime,
     )
     const result: [BehaviorObservable<O>, BehaviorObservable<O>] = [
       sharedObservable$,

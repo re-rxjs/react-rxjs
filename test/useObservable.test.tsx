@@ -1,16 +1,17 @@
-import React, { useState, Suspense } from "react"
+import React, { useState, Suspense, useRef, useEffect } from "react"
 import { render, fireEvent, screen } from "@testing-library/react"
-import { defer, of, Subject, NEVER, concat } from "rxjs"
+import { defer, of, Subject, NEVER, BehaviorSubject, Observable } from "rxjs"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { useObservable } from "../src/useObservable"
-import reactEnhancer from "../src/operators/react-enhancer"
-import { SUSPENSE, distinctShareReplay } from "../src"
-import { BehaviorObservable } from "../src/BehaviorObservable"
+import { useObservable } from "../src/internal/useObservable"
+import shareLatest from "../src/internal/share-latest"
+import reactEnhancer from "../src/internal/react-enhancer"
+import { SUSPENSE } from "../src"
+import { BehaviorObservable } from "../src/internal/BehaviorObservable"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
-const enhancer = (source$: any) =>
-  reactEnhancer(concat(source$, NEVER).pipe(distinctShareReplay()), 20)
+const enhancer = <T extends any>(source$: Observable<T>) =>
+  reactEnhancer<T>(source$.pipe(shareLatest(false)), 20)
 
 describe("useObservable", () => {
   it("works", async () => {
@@ -63,7 +64,42 @@ describe("useObservable", () => {
     expect(counter).toBe(2)
   })
 
-  const observables: any = [NEVER, of(10), of(SUSPENSE), of(20)].map(enhancer)
+  it("doesn't trigger react updates when the observable emits the same value", () => {
+    const subject$ = new BehaviorSubject(1)
+    const src$ = subject$.pipe(enhancer) as BehaviorObservable<number>
+    const useLatestNumber = () => {
+      const result = useObservable(src$)
+      const nUpdatesRef = useRef(0)
+      useEffect(() => {
+        nUpdatesRef.current++
+      })
+      return { result, nUpdatesRef }
+    }
+
+    const { result } = renderHook(() => useLatestNumber())
+
+    expect(result.current.result).toBe(1)
+    expect(result.current.nUpdatesRef.current).toBe(1)
+
+    act(() => {
+      subject$.next(1)
+      subject$.next(1)
+      subject$.next(1)
+      subject$.next(1)
+    })
+
+    expect(result.current.nUpdatesRef.current).toBe(1)
+
+    act(() => {
+      subject$.next(20)
+    })
+    expect(result.current.result).toBe(20)
+    expect(result.current.nUpdatesRef.current).toBe(2)
+  })
+
+  const observables: any = [NEVER, of(10), of(SUSPENSE), of(20)].map((x: any) =>
+    enhancer(x),
+  )
   const Result: React.FC<{ idx: number }> = ({ idx }) => {
     const result = useObservable(observables[idx % observables.length])
     return <div>Result {result}</div>

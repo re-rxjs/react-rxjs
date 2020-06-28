@@ -78,9 +78,7 @@ describe("connectFactoryObservable", () => {
 
       const [useLatestNumber] = connectFactoryObservable(
         (id: number) => concat(observable$, of(id)),
-        {
-          unsubscribeGraceTime: 100,
-        },
+        100,
       )
       const { unmount } = renderHook(() => useLatestNumber(6))
       const { unmount: unmount2 } = renderHook(() => useLatestNumber(6))

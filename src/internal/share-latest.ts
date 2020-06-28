@@ -1,15 +1,12 @@
 import { Observable, Subscription, Subject } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
-import { BehaviorObservable } from "../BehaviorObservable"
+import { BehaviorObservable } from "./BehaviorObservable"
+import { EMPTY_VALUE } from "./empty-value"
+import { noop } from "./noop"
 
-function defaultTeardown() {}
-
-export const EMPTY_VALUE: any = {}
-
-export const distinctShareReplay = <T>(
-  compareFn: (a: T, b: T) => boolean = Object.is,
-  teardown = defaultTeardown,
-) => (source$: Observable<T>): BehaviorObservable<T> => {
+const shareLatest = <T>(complete = true, teardown = noop) => (
+  source$: Observable<T>,
+): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
   let subscription: Subscription | undefined
   let refCount = 0
@@ -24,20 +21,17 @@ export const distinctShareReplay = <T>(
       innerSub = subject.subscribe(subscriber)
       subscription = source$.subscribe({
         next(value) {
-          if (
-            currentValue.value === EMPTY_VALUE ||
-            !compareFn(value, currentValue.value)
-          ) {
-            subject!.next((currentValue.value = value))
-          }
+          subject!.next((currentValue.value = value))
         },
         error(err) {
           subscription = undefined
           subject!.error(err)
         },
         complete() {
-          subscription = undefined
-          subject!.complete()
+          if (complete) {
+            subscription = undefined
+            subject!.complete()
+          }
         },
       })
     } else {
@@ -73,3 +67,4 @@ export const distinctShareReplay = <T>(
 
   return result
 }
+export default shareLatest

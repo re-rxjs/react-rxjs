@@ -1,7 +1,6 @@
-import { distinctShareReplay, SUSPENSE } from "../../src"
-import { BehaviorObservable } from "../../src/BehaviorObservable"
-import { EMPTY_VALUE } from "../../src/operators/distinct-share-replay"
-import { cold } from "jest-marbles"
+import { shareLatest, SUSPENSE } from "../../src"
+import { BehaviorObservable } from "../../src/internal/BehaviorObservable"
+import { EMPTY_VALUE } from "../../src/internal/empty-value"
 import { TestScheduler } from "rxjs/testing"
 import { Subject, from } from "rxjs"
 
@@ -10,33 +9,7 @@ const scheduler = () =>
     expect(actual).toEqual(expected)
   })
 
-describe("operators/distinctShareReplay", () => {
-  it("only emits distinct values", () => {
-    const values = {
-      a: { val: 1 },
-      b: { val: 2 },
-      c: { val: 3 },
-      d: { val: 4 },
-    }
-
-    let source = "  a-b-b-b-c-c-d|"
-    let expected = "a-b-----c---d|"
-
-    expect(cold(source, values).pipe(distinctShareReplay())).toBeObservable(
-      cold(expected, values),
-    )
-
-    const customCompare = (a: { val: number }, b: { val: number }) =>
-      a.val === b.val
-    values.c.val = 2
-
-    source = "  a-b-b-b-c-c-d|"
-    expected = "a-b---------d|"
-    expect(
-      cold(source, values).pipe(distinctShareReplay(customCompare)),
-    ).toBeObservable(cold(expected, values))
-  })
-
+describe("operators/shareLatest", () => {
   // prettier-ignore
   it("should restart due to unsubscriptions", () => {
     scheduler().run(({ expectObservable, expectSubscriptions, cold }) => {
@@ -49,7 +22,7 @@ describe("operators/distinctShareReplay", () => {
       const sub2 = "      -----------^------------------"
       const expected2 = " -----------a-b-c-d-e-f-g-h-i-j"
 
-      const shared = source.pipe(distinctShareReplay())
+      const shared = source.pipe(shareLatest())
 
       expectObservable(shared, sub1).toBe(expected1)
       expectObservable(shared, sub2).toBe(expected2)
@@ -69,7 +42,7 @@ describe("operators/distinctShareReplay", () => {
       const sub2 =        '-----------^--!';
       const expected2 =   '-----------a-(b|)';
 
-      const shared = source.pipe(distinctShareReplay());
+      const shared = source.pipe(shareLatest());
 
       expectObservable(shared, sub1).toBe(expected1);
       expectObservable(shared, sub2).toBe(expected2);
@@ -84,7 +57,7 @@ describe("operators/distinctShareReplay", () => {
       const sub1 =         '^';
       const expected1 = "  (abcd|)"
 
-      const shared = source.pipe(distinctShareReplay());
+      const shared = source.pipe(shareLatest());
 
       expectObservable(shared, sub1).toBe(expected1);
     })
@@ -93,9 +66,7 @@ describe("operators/distinctShareReplay", () => {
   describe("Returns a BehaviorObservable which exposes a getValue function", () => {
     it("getValue returns the latest emitted value", () => {
       const input = new Subject<string>()
-      const obs$ = input.pipe(distinctShareReplay()) as BehaviorObservable<
-        string
-      >
+      const obs$ = input.pipe(shareLatest()) as BehaviorObservable<string>
 
       const subscription = obs$.subscribe()
 
@@ -110,9 +81,7 @@ describe("operators/distinctShareReplay", () => {
 
     it("getValue throws EMPTY_VALUE if nothing has been emitted", () => {
       const input = new Subject<string>()
-      const obs$ = input.pipe(distinctShareReplay()) as BehaviorObservable<
-        string
-      >
+      const obs$ = input.pipe(shareLatest()) as BehaviorObservable<string>
 
       const subscription = obs$.subscribe()
       let error: any
@@ -127,7 +96,7 @@ describe("operators/distinctShareReplay", () => {
 
     it("getValue throws SUSPENSE if the latest emitted value is SUSPENSE", () => {
       const input = new Subject<any>()
-      const obs$ = input.pipe(distinctShareReplay()) as BehaviorObservable<any>
+      const obs$ = input.pipe(shareLatest()) as BehaviorObservable<any>
 
       const subscription = obs$.subscribe()
       input.next(SUSPENSE)

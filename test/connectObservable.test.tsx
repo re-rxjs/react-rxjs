@@ -5,7 +5,7 @@ import {
   screen,
 } from "@testing-library/react"
 import { act, renderHook } from "@testing-library/react-hooks"
-import React, { Suspense, useEffect, useRef, FC } from "react"
+import React, { Suspense, useEffect, FC } from "react"
 import { BehaviorSubject, defer, from, of, Subject } from "rxjs"
 import { delay, scan, startWith, map } from "rxjs/operators"
 import { connectObservable, SUSPENSE } from "../src"
@@ -78,53 +78,6 @@ describe("connectObservable", () => {
     expect(updates).toHaveBeenCalledTimes(2)
   })
 
-  it("Only update when the previous and current update are distinct according to the comparator function", async () => {
-    interface TestUpdate {
-      value: number
-      valueToIgnore: string
-    }
-    const stream$ = new BehaviorSubject<TestUpdate>({
-      value: 0,
-      valueToIgnore: "A",
-    })
-
-    const compare = (a: TestUpdate, b: TestUpdate) => a.value === b.value
-    const [useLatestValue] = connectObservable(stream$, { compare })
-    const useLatestValueWithUpdates = () => {
-      const nUpdates = useRef(0)
-      const latestValue = useLatestValue()
-      useEffect(() => {
-        nUpdates.current++
-      })
-      return {
-        latestValue,
-        nUpdates,
-      }
-    }
-
-    const { result } = renderHook(() => useLatestValueWithUpdates())
-    expect(result.current.latestValue.valueToIgnore).toEqual("A")
-    expect(result.current.latestValue.value).toEqual(0)
-    expect(result.current.nUpdates.current).toEqual(1)
-
-    act(() => {
-      stream$.next({ value: 0, valueToIgnore: "B" })
-    })
-
-    //should not update to the latest value in the stream
-    expect(result.current.latestValue.valueToIgnore).toEqual("A")
-    expect(result.current.latestValue.value).toEqual(0)
-    //should not trigger a react update
-    expect(result.current.nUpdates.current).toEqual(1)
-
-    act(() => {
-      stream$.next({ value: 1, valueToIgnore: "B" })
-    })
-    expect(result.current.latestValue.valueToIgnore).toEqual("B")
-    expect(result.current.latestValue.value).toEqual(1)
-    expect(result.current.nUpdates.current).toEqual(2)
-  })
-
   it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
     let nInitCount = 0
     const observable$ = defer(() => {
@@ -132,9 +85,7 @@ describe("connectObservable", () => {
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = connectObservable(observable$, {
-      unsubscribeGraceTime: 100,
-    })
+    const [useLatestNumber] = connectObservable(observable$, 100)
     const { unmount } = renderHook(() => useLatestNumber())
     const { unmount: unmount2 } = renderHook(() => useLatestNumber())
     const { unmount: unmount3 } = renderHook(() => useLatestNumber())
