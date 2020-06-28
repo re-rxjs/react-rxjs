@@ -1,6 +1,6 @@
-import reactEnhancer from "../../src/operators/react-enhancer"
-import { distinctShareReplay, SUSPENSE } from "../../src"
-import { BehaviorObservable } from "../../src/BehaviorObservable"
+import reactEnhancer from "../../src/internal/react-enhancer"
+import { shareLatest, SUSPENSE } from "../../src"
+import { BehaviorObservable } from "../../src/internal/BehaviorObservable"
 import { TestScheduler } from "rxjs/testing"
 import { Subject } from "rxjs"
 
@@ -74,7 +74,7 @@ describe("operators/reactEnhancer", () => {
     it("getValue returns the latest emitted value", () => {
       const input = new Subject<string>()
       const obs$ = reactEnhancer(
-        input.pipe(distinctShareReplay()),
+        input.pipe(shareLatest()),
         0,
       ) as BehaviorObservable<string>
 
@@ -92,7 +92,7 @@ describe("operators/reactEnhancer", () => {
     it("if nothing has been emitted, then getValue throws a promise that will resolve when the first value is emitted", async () => {
       const input = new Subject<string>()
       const obs$ = reactEnhancer(
-        input.pipe(distinctShareReplay()),
+        input.pipe(shareLatest()),
         0,
       ) as BehaviorObservable<string>
 
@@ -115,7 +115,7 @@ describe("operators/reactEnhancer", () => {
     it("if the latest emitted value is SUSPENSE, then getValue throws a promise that will resolve when the next non SUSPENSE value is emitted", async () => {
       const input = new Subject<any>()
       const obs$ = reactEnhancer(
-        input.pipe(distinctShareReplay()),
+        input.pipe(shareLatest()),
         0,
       ) as BehaviorObservable<any>
 

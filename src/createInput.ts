@@ -1,5 +1,5 @@
 import { Subject, Observable, ReplaySubject } from "rxjs"
-import { distinctShareReplay } from "./operators/distinct-share-replay"
+import shareLatest from "./internal/share-latest"
 
 interface CreateInput {
   /**
@@ -22,7 +22,6 @@ interface CreateInput {
 }
 
 const empty = Symbol("empty") as any
-const F = () => false
 const createInput_ = <T>(defaultValue: T = empty) => {
   const cache = new Map<string, [Subject<T>, { latest: T }, Observable<T>]>()
   const getEntry = (key: string) => {
@@ -33,7 +32,7 @@ const createInput_ = <T>(defaultValue: T = empty) => {
     if (defaultValue !== empty) {
       subject.next((current.latest = defaultValue))
     }
-    const source = distinctShareReplay(F, () => cache.delete(key))(
+    const source = shareLatest(true, () => cache.delete(key))(
       subject,
     ) as Observable<T>
     result = [subject, current, source]

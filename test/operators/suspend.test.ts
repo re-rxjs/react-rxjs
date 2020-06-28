@@ -1,6 +1,5 @@
 import { TestScheduler } from "rxjs/testing"
-import { suspend } from "../../src/operators/suspend"
-import { SUSPENSE } from "../../src/SUSPENSE"
+import { suspend, SUSPENSE } from "../../src"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

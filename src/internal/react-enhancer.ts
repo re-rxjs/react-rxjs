@@ -1,13 +1,14 @@
 import { Observable, of, Subscription, Subject, race } from "rxjs"
 import { delay, takeUntil, take, filter, tap } from "rxjs/operators"
-import { BehaviorObservable } from "../BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
+import { BehaviorObservable } from "./BehaviorObservable"
+import { EMPTY_VALUE } from "./empty-value"
+import { noop } from "./noop"
 
 const IS_SSR =
   typeof window === "undefined" ||
   typeof window.document === "undefined" ||
   typeof window.document.createElement === "undefined"
-const noop = Function.prototype as () => void
 
 const reactEnhancer = <T>(
   source$: Observable<T>,
@@ -17,10 +18,11 @@ const reactEnhancer = <T>(
   const onSubscribe = new Subject()
   const result = new Observable<T>(subscriber => {
     let isActive = true
+    let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe({
       next(value) {
-        if (isActive) {
-          subscriber.next(value)
+        if (isActive && !Object.is(latestValue, value)) {
+          subscriber.next((latestValue = value))
         }
       },
       error(e) {
