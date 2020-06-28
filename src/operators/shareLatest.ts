@@ -1,4 +1,5 @@
 import internalShareLatest from "../internal/share-latest"
+import { MonoTypeOperatorFunction } from "rxjs"
 
 /**
  * A RxJS pipeable operator which shares and replays the latest emitted value.
@@ -16,4 +17,5 @@ import internalShareLatest from "../internal/share-latest"
  * complete. Meaning that the latest emitted value will be available until the
  * `refCount` drops to zero.
  */
-export const shareLatest = <T>() => internalShareLatest<T>()
+export const shareLatest = <T>() =>
+  internalShareLatest<T>() as MonoTypeOperatorFunction<T>
