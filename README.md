@@ -39,7 +39,7 @@ Main features
 - [API](#api)
   - [connectObservable](#connectObservable)
   - [connectFactoryObservable](#connectFactoryObservable)
-  - [distinctShareReplay](#distinctShareReplay)
+  - [shareLatest](#shareLatest)
   - [SUSPENSE](#SUSPENSE)
   - [suspend](#suspend)
   - [suspended](#suspended)
