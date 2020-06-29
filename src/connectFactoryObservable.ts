@@ -55,6 +55,7 @@ export function connectFactoryObservable<
       sharedObservable$,
       unsubscribeGraceTime,
     )
+
     const result: [BehaviorObservable<O>, BehaviorObservable<O>] = [
       sharedObservable$,
       reactObservable$,
@@ -63,12 +64,9 @@ export function connectFactoryObservable<
     cache.set(key, result)
     return result
   }
-  const getSharedObservable$ = (...input: A) =>
-    getSharedObservables$(...input)[0]
 
   return [
     (...input: A) => useObservable(getSharedObservables$(...input)[1]),
-
-    getSharedObservable$,
+    (...input: A) => getSharedObservables$(...input)[0],
   ]
 }

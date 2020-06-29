@@ -1,4 +1,6 @@
-export { shareLatest } from "./operators/shareLatest"
+// core
+export { connectObservable } from "./connectObservable"
+export { connectFactoryObservable } from "./connectFactoryObservable"
 
 // support for React Suspense
 export { SUSPENSE } from "./SUSPENSE"
@@ -6,9 +8,6 @@ export { suspend } from "./operators/suspend"
 export { suspended } from "./operators/suspended"
 export { switchMapSuspended } from "./operators/switchMapSuspended"
 
-// core
-export { connectObservable } from "./connectObservable"
-export { connectFactoryObservable } from "./connectFactoryObservable"
-
 // utils
+export { shareLatest } from "./operators/shareLatest"
 export { createInput } from "./createInput"
