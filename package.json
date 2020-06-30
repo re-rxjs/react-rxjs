@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.1",
   "bundlesize": [
     {
       "path": "./dist/react-rxjs.cjs.production.min.js",
@@ -10,7 +10,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/react-rxjs/react-rxjs.git"
+    "url": "git+https://github.com/re-rxjs/react-rxjs.git"
   },
   "license": "MIT",
   "main": "dist/index.js",

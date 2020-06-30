@@ -5,7 +5,7 @@
   height="86"
   width="86"
   alt="React-RxJS Logo"
-  src="https://raw.githubusercontent.com/react-rxjs/react-rxjs/main/assets/logo-128.png"
+  src="https://raw.githubusercontent.com/re-rxjs/react-rxjs/main/assets/logo-128.png"
 />
 
 <p>React bindings for RxJS</p>
@@ -15,13 +15,13 @@
 <hr />
 
 <!-- prettier-ignore-start -->
-[![Build Status](https://img.shields.io/travis/react-rxjs/react-rxjs.svg?style=flat-square)](https://travis-ci.org/react-rxjs/react-rxjs)
-[![codecov](https://img.shields.io/codecov/c/github/react-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/react-rxjs/react-rxjs)
+[![Build Status](https://img.shields.io/travis/re-rxjs/react-rxjs.svg?style=flat-square)](https://travis-ci.org/re-rxjs/react-rxjs)
+[![codecov](https://img.shields.io/codecov/c/github/re-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/react-rxjs)
 [![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/react-rxjs)
-[![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/react-rxjs/react-rxjs/blob/main/LICENSE)
+[![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/LICENSE)
 [![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/react-rxjs/react-rxjs/blob/main/CODE_OF_CONDUCT.md)
+[![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/CODE_OF_CONDUCT.md)
 <!-- prettier-ignore-end -->
 
 Main features
