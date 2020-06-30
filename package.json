@@ -1,8 +1,8 @@
 {
-  "version": "0.2.0-alpha.6",
+  "version": "3.0.0-alpha.0",
   "bundlesize": [
     {
-      "path": "./dist/re-rxjs.cjs.production.min.js",
+      "path": "./dist/react-rxjs.cjs.production.min.js",
       "maxSize": "6 kB",
       "compression": "none"
     }
@@ -10,7 +10,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/re-rxjs/re-rxjs.git"
+    "url": "git+https://github.com/react-rxjs/react-rxjs.git"
   },
   "license": "MIT",
   "main": "dist/index.js",
@@ -41,9 +41,9 @@
     "semi": false,
     "trailingComma": "all"
   },
-  "name": "re-rxjs",
+  "name": "react-rxjs",
   "author": "Josep M Sobrepere",
-  "module": "dist/re-rxjs.esm.js",
+  "module": "dist/react-rxjs.esm.js",
   "devDependencies": {
     "@josepot/rxjs-utils": "^0.12.0",
     "@testing-library/react": "^10.4.3",

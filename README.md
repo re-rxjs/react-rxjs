@@ -1,11 +1,11 @@
 <div align="center">
-  <h1>Re-RxJS</h1>
+  <h1>React-RxJS</h1>
 
 <img
   height="86"
   width="86"
-  alt="Re-RxJS Logo"
-  src="https://raw.githubusercontent.com/re-rxjs/re-rxjs/main/assets/logo-128.png"
+  alt="React-RxJS Logo"
+  src="https://raw.githubusercontent.com/react-rxjs/react-rxjs/main/assets/logo-128.png"
 />
 
 <p>React bindings for RxJS</p>
@@ -15,13 +15,13 @@
 <hr />
 
 <!-- prettier-ignore-start -->
-[![Build Status](https://img.shields.io/travis/re-rxjs/re-rxjs.svg?style=flat-square)](https://travis-ci.org/re-rxjs/re-rxjs)
-[![codecov](https://img.shields.io/codecov/c/github/re-rxjs/re-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/re-rxjs)
-[![version](https://img.shields.io/npm/v/re-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/re-rxjs)
-[![MIT License](https://img.shields.io/npm/l/re-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/travis/react-rxjs/react-rxjs.svg?style=flat-square)](https://travis-ci.org/react-rxjs/react-rxjs)
+[![codecov](https://img.shields.io/codecov/c/github/react-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/react-rxjs/react-rxjs)
+[![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/react-rxjs)
+[![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/react-rxjs/react-rxjs/blob/main/LICENSE)
 [![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/re-rxjs/blob/main/CODE_OF_CONDUCT.md)
+[![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/react-rxjs/react-rxjs/blob/main/CODE_OF_CONDUCT.md)
 <!-- prettier-ignore-end -->
 
 Main features
@@ -30,7 +30,7 @@ Main features
 - :zap: Highly performant and free of memory-leaks
 - :twisted_rightwards_arrows: First class support for React Suspense and [ready for Concurrent Mode](https://github.com/dai-shi/will-this-react-global-state-work-in-concurrent-mode#results)
 - :scissors: Decentralized and composable, thus enabling optimal code-splitting
-- :microscope: [Tiny and tree-shakeable](https://bundlephobia.com/result?p=re-rxjs)
+- :microscope: [Tiny and tree-shakeable](https://bundlephobia.com/result?p=react-rxjs)
 - :muscle: Supports TypeScript
 
 ## Table of Contents
@@ -52,7 +52,7 @@ Main features
 
 
 ## Installation
-    npm install re-rxjs
+    npm install react-rxjs
 
 ## API
 
@@ -234,7 +234,7 @@ const Counter: React.FC<{id: string}> = ({id}) => {
 import React, { Suspense } from "react"
 import { Subject } from "rxjs"
 import { startWith, map } from "rxjs/operators"
-import { connectObservable, switchMapSuspended } from "re-rxjs"
+import { connectObservable, switchMapSuspended } from "react-rxjs"
 import { Header, Search, LoadingResults, Repo } from "./components"
 
 interface Repo {
@@ -342,11 +342,11 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/josepot"><img src="https://avatars1.githubusercontent.com/u/8620144?v=4" width="100px;" alt=""/><br /><sub><b>Josep M Sobrepere</b></sub></a><br /><a href="https://github.com/re-rxjs/re-rxjs/commits?author=josepot" title="Code">💻</a> <a href="#ideas-josepot" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-josepot" title="Maintenance">🚧</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=josepot" title="Tests">⚠️</a> <a href="https://github.com/re-rxjs/re-rxjs/pulls?q=is%3Apr+reviewed-by%3Ajosepot" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=josepot" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/voliva"><img src="https://avatars2.githubusercontent.com/u/5365487?v=4" width="100px;" alt=""/><br /><sub><b>Víctor Oliva</b></sub></a><br /><a href="#ideas-voliva" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/re-rxjs/re-rxjs/pulls?q=is%3Apr+reviewed-by%3Avoliva" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=voliva" title="Code">💻</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=voliva" title="Tests">⚠️</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=voliva" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/josepot"><img src="https://avatars1.githubusercontent.com/u/8620144?v=4" width="100px;" alt=""/><br /><sub><b>Josep M Sobrepere</b></sub></a><br /><a href="https://github.com/react-rxjs/react-rxjs/commits?author=josepot" title="Code">💻</a> <a href="#ideas-josepot" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-josepot" title="Maintenance">🚧</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=josepot" title="Tests">⚠️</a> <a href="https://github.com/react-rxjs/react-rxjs/pulls?q=is%3Apr+reviewed-by%3Ajosepot" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=josepot" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/voliva"><img src="https://avatars2.githubusercontent.com/u/5365487?v=4" width="100px;" alt=""/><br /><sub><b>Víctor Oliva</b></sub></a><br /><a href="#ideas-voliva" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/react-rxjs/react-rxjs/pulls?q=is%3Apr+reviewed-by%3Avoliva" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=voliva" title="Code">💻</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=voliva" title="Tests">⚠️</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=voliva" title="Documentation">📖</a></td>
     <td align="center"><a href="http://www.clayforthcarr.com"><img src="https://avatars3.githubusercontent.com/u/6012083?v=4" width="100px;" alt=""/><br /><sub><b>Ed</b></sub></a><br /><a href="#design-clayforthcarr" title="Design">🎨</a></td>
-    <td align="center"><a href="https://github.com/pgrimaud"><img src="https://avatars1.githubusercontent.com/u/1866496?v=4" width="100px;" alt=""/><br /><sub><b>Pierre Grimaud</b></sub></a><br /><a href="https://github.com/re-rxjs/re-rxjs/commits?author=pgrimaud" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/bhavesh-desai-scratch"><img src="https://avatars3.githubusercontent.com/u/15194540?v=4" width="100px;" alt=""/><br /><sub><b>Bhavesh Desai</b></sub></a><br /><a href="https://github.com/re-rxjs/re-rxjs/pulls?q=is%3Apr+reviewed-by%3Abhavesh-desai-scratch" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=bhavesh-desai-scratch" title="Documentation">📖</a> <a href="https://github.com/re-rxjs/re-rxjs/commits?author=bhavesh-desai-scratch" title="Tests">⚠️</a></td>
+    <td align="center"><a href="https://github.com/pgrimaud"><img src="https://avatars1.githubusercontent.com/u/1866496?v=4" width="100px;" alt=""/><br /><sub><b>Pierre Grimaud</b></sub></a><br /><a href="https://github.com/react-rxjs/react-rxjs/commits?author=pgrimaud" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/bhavesh-desai-scratch"><img src="https://avatars3.githubusercontent.com/u/15194540?v=4" width="100px;" alt=""/><br /><sub><b>Bhavesh Desai</b></sub></a><br /><a href="https://github.com/react-rxjs/react-rxjs/pulls?q=is%3Apr+reviewed-by%3Abhavesh-desai-scratch" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=bhavesh-desai-scratch" title="Documentation">📖</a> <a href="https://github.com/react-rxjs/react-rxjs/commits?author=bhavesh-desai-scratch" title="Tests">⚠️</a></td>
   </tr>
 </table>
 
