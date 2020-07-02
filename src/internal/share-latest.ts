@@ -3,13 +3,16 @@ import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
+import { COMPLETE } from "./COMPLETE"
 
-const shareLatest = <T>(complete = true, teardown = noop) => (
+const shareLatest = <T>(
   source$: Observable<T>,
+  teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
   let subscription: Subscription | undefined
   let refCount = 0
+  let isDone = false
   let currentValue: { value: T }
 
   const result = new Observable<T>(subscriber => {
@@ -28,16 +31,17 @@ const shareLatest = <T>(complete = true, teardown = noop) => (
           subject!.error(err)
         },
         complete() {
-          if (complete) {
-            subscription = undefined
-            subject!.complete()
-          }
+          subject!.next(COMPLETE as any)
+          isDone = true
         },
       })
     } else {
       innerSub = subject.subscribe(subscriber)
       if (currentValue.value !== EMPTY_VALUE) {
         subscriber.next(currentValue.value)
+        if (isDone) {
+          subscriber.next(COMPLETE as any)
+        }
       }
     }
 

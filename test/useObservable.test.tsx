@@ -11,7 +11,7 @@ import { BehaviorObservable } from "../src/internal/BehaviorObservable"
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 const enhancer = <T extends any>(source$: Observable<T>) =>
-  reactEnhancer<T>(source$.pipe(shareLatest(false)), 20)
+  reactEnhancer<T>(shareLatest(source$), 20)
 
 describe("useObservable", () => {
   it("works", async () => {

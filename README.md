@@ -73,9 +73,9 @@ Returns `[1, 2]`
 Observable doesn't synchronously emit a value upon the first subscription, then
 the hook will leverage React Suspense while it's waiting for the first value.
 
-2. A `sharedLatest` version of the observable that does not complete. It can be
-used for composing other streams that depend on it. The shared subscription is
-closed as soon as there are no subscribers to that observable.
+2. A `sharedLatest` version of the observable. It can be used for composing other
+streams that depend on it. The shared subscription is closed as soon as there
+are no subscribers to that observable.
 
 ### connectFactoryObservable
 ```tsx
@@ -103,9 +103,9 @@ will yield the latest update from the observable returned from the factory funct
 If the Observable doesn't synchronously emit a value upon the first subscription, then
 the hook will leverage React Suspense while it's waiting for the first value.
 
-2. A `sharedLatest` version of the observable returned by the factory function that
-does not complete. It can be used for composing other streams that depend on it.
-The shared subscription is closed as soon as there are no subscribers to that observable.
+2. A `sharedLatest` version of the observable returned by the factory function. It
+can be used for composing other streams that depend on it. The shared subscription
+is closed as soon as there are no subscribers to that observable.
 
 ### shareLatest
 ```ts
@@ -128,8 +128,7 @@ const shareLatest = <T>(): Observable<T> =>
 ```
 
 The enhanced observables returned from `connectObservable` and `connectFactoryObservable` 
-have been enhanced with this operator, but do not complete. Meaning that the latest
-emitted value will be available until the `refCount` drops to zero.
+have been enhanced with this operator.
 
 ### SUSPENSE
 
