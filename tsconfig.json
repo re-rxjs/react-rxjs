@@ -7,7 +7,7 @@
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDirs": ["./src", "./test"],
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,

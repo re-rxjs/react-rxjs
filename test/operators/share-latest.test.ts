@@ -1,8 +1,6 @@
-import { SUSPENSE, shareLatest } from "../../src"
-import shareLatestInternal from "../../src/internal/share-latest"
-import { EMPTY_VALUE } from "../../src/internal/empty-value"
+import { shareLatest } from "../../src"
 import { TestScheduler } from "rxjs/testing"
-import { Subject, from } from "rxjs"
+import { from } from "rxjs"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -63,53 +61,5 @@ describe("shareLatest", () => {
       expectObservable(shared, sub1).toBe(expected1);
     })
   })
-  })
-
-  describe("shareLatest Internal: Returns a BehaviorObservable which exposes a getValue function", () => {
-    it("getValue returns the latest emitted value", () => {
-      const input = new Subject<string>()
-      const obs$ = shareLatestInternal(input)
-
-      const subscription = obs$.subscribe()
-
-      input.next("foo")
-      expect(obs$.getValue()).toBe("foo")
-
-      input.next("bar")
-      expect(obs$.getValue()).toBe("bar")
-
-      subscription.unsubscribe()
-    })
-
-    it("getValue throws EMPTY_VALUE if nothing has been emitted", () => {
-      const input = new Subject<string>()
-      const obs$ = shareLatestInternal(input)
-
-      const subscription = obs$.subscribe()
-      let error: any
-      try {
-        obs$.getValue()
-      } catch (e) {
-        error = e
-      }
-      expect(error).toBe(EMPTY_VALUE)
-      subscription.unsubscribe()
-    })
-
-    it("getValue throws SUSPENSE if the latest emitted value is SUSPENSE", () => {
-      const input = new Subject<any>()
-      const obs$ = shareLatestInternal(input)
-
-      const subscription = obs$.subscribe()
-      input.next(SUSPENSE)
-      let error: any
-      try {
-        obs$.getValue()
-      } catch (e) {
-        error = e
-      }
-      expect(error).toBe(SUSPENSE)
-      subscription.unsubscribe()
-    })
   })
 })
