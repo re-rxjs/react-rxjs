@@ -1,10 +1,16 @@
 import { connectFactoryObservable } from "../src"
+import { TestErrorBoundary } from "../test/TestErrorBoundary"
 import { from, of, defer, concat, BehaviorSubject, throwError } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { render, act } from "@testing-library/react"
-import { switchMap } from "rxjs/operators"
-import { Component, ErrorInfo, FC } from "react"
+import { switchMap, delay } from "rxjs/operators"
+import { FC, Suspense, useState } from "react"
 import React from "react"
+import {
+  act as componentAct,
+  fireEvent,
+  screen,
+  render,
+} from "@testing-library/react"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -38,6 +44,29 @@ describe("connectFactoryObservable", () => {
       expect(result.current).toBe(3)
     })
 
+    it("suspends the component when the observable hasn't emitted yet.", async () => {
+      const source$ = of(1).pipe(delay(100))
+      const [useDelayedNumber] = connectFactoryObservable(() => source$)
+      const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
+      const TestSuspense: React.FC = () => {
+        return (
+          <Suspense fallback={<span>Waiting</span>}>
+            <Result />
+          </Suspense>
+        )
+      }
+
+      render(<TestSuspense />)
+
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
+
+      await wait(110)
+
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+    })
+
     it("shares the multicasted subscription with all of the components that use the same parameters", async () => {
       let subscriberCount = 0
       const observable$ = defer(() => {
@@ -67,6 +96,75 @@ describe("connectFactoryObservable", () => {
 
       renderHook(() => useLatestNumber(2, 2))
       expect(subscriberCount).toBe(3)
+    })
+
+    it("returns the value of next new Observable when the arguments change", () => {
+      const [useNumber] = connectFactoryObservable((x: number) => of(x))
+      const { result, rerender } = renderHook(({ input }) => useNumber(input), {
+        initialProps: { input: 0 },
+      })
+      expect(result.current).toBe(0)
+
+      actHook(() => {
+        rerender({ input: 1 })
+      })
+      expect(result.current).toBe(1)
+
+      actHook(() => {
+        rerender({ input: 2 })
+      })
+      expect(result.current).toBe(2)
+    })
+
+    it("suspends the component when the factory-observable hasn't emitted yet.", async () => {
+      const [useDelayedNumber] = connectFactoryObservable((x: number) =>
+        of(x).pipe(delay(50)),
+      )
+      const Result: React.FC<{ input: number }> = p => (
+        <div>Result {useDelayedNumber(p.input)}</div>
+      )
+      const TestSuspense: React.FC = () => {
+        const [input, setInput] = useState(0)
+        return (
+          <>
+            <Suspense fallback={<span>Waiting</span>}>
+              <Result input={input} />
+            </Suspense>
+            <button onClick={() => setInput(x => x + 1)}>increase</button>
+          </>
+        )
+      }
+
+      render(<TestSuspense />)
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
+      await componentAct(async () => {
+        await wait(60)
+      })
+      expect(screen.queryByText("Result 0")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+
+      componentAct(() => {
+        fireEvent.click(screen.getByText(/increase/i))
+      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
+      await componentAct(async () => {
+        await wait(60)
+      })
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+
+      componentAct(() => {
+        fireEvent.click(screen.getByText(/increase/i))
+      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
+      await componentAct(async () => {
+        await wait(60)
+      })
+      expect(screen.queryByText("Result 2")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
     })
 
     it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
@@ -115,7 +213,7 @@ describe("connectFactoryObservable", () => {
         </TestErrorBoundary>,
       )
 
-      act(() => {
+      componentAct(() => {
         errStream.error("controlled error")
       })
 
@@ -153,7 +251,7 @@ describe("connectFactoryObservable", () => {
         </TestErrorBoundary>,
       )
 
-      act(() => {
+      componentAct(() => {
         valueStream.next(2)
       })
 
@@ -217,32 +315,3 @@ describe("connectFactoryObservable", () => {
     })
   })
 })
-
-class TestErrorBoundary extends Component<
-  {
-    onError: (error: Error, errorInfo: ErrorInfo) => void
-  },
-  {
-    hasError: boolean
-  }
-> {
-  state = {
-    hasError: false,
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.props.onError(error, errorInfo)
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return "error"
-    }
-
-    return this.props.children
-  }
-}
