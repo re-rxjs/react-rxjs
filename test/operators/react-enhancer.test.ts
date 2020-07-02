@@ -1,5 +1,6 @@
 import reactEnhancer from "../../src/internal/react-enhancer"
-import { shareLatest, SUSPENSE } from "../../src"
+import { SUSPENSE } from "../../src"
+import shareLatest from "../../src/internal/share-latest"
 import { BehaviorObservable } from "../../src/internal/BehaviorObservable"
 import { TestScheduler } from "rxjs/testing"
 import { Subject } from "rxjs"
@@ -73,10 +74,9 @@ describe("operators/reactEnhancer", () => {
   describe("Returns a BehaviorObservable which exposes a getValue function", () => {
     it("getValue returns the latest emitted value", () => {
       const input = new Subject<string>()
-      const obs$ = reactEnhancer(
-        input.pipe(shareLatest()),
-        0,
-      ) as BehaviorObservable<string>
+      const obs$ = reactEnhancer(shareLatest(input), 0) as BehaviorObservable<
+        string
+      >
 
       const subscription = obs$.subscribe()
 
@@ -91,10 +91,9 @@ describe("operators/reactEnhancer", () => {
 
     it("if nothing has been emitted, then getValue throws a promise that will resolve when the first value is emitted", async () => {
       const input = new Subject<string>()
-      const obs$ = reactEnhancer(
-        input.pipe(shareLatest()),
-        0,
-      ) as BehaviorObservable<string>
+      const obs$ = reactEnhancer(shareLatest(input), 0) as BehaviorObservable<
+        string
+      >
 
       const subscription = obs$.subscribe()
       let error: any
@@ -114,10 +113,9 @@ describe("operators/reactEnhancer", () => {
 
     it("if the latest emitted value is SUSPENSE, then getValue throws a promise that will resolve when the next non SUSPENSE value is emitted", async () => {
       const input = new Subject<any>()
-      const obs$ = reactEnhancer(
-        input.pipe(shareLatest()),
-        0,
-      ) as BehaviorObservable<any>
+      const obs$ = reactEnhancer(shareLatest(input), 0) as BehaviorObservable<
+        any
+      >
 
       const subscription = obs$.subscribe()
       let error: any

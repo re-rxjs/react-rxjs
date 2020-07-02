@@ -32,9 +32,7 @@ const createInput_ = <T>(defaultValue: T = empty) => {
     if (defaultValue !== empty) {
       subject.next((current.latest = defaultValue))
     }
-    const source = shareLatest(true, () => cache.delete(key))(
-      subject,
-    ) as Observable<T>
+    const source = shareLatest(subject, () => cache.delete(key))
     result = [subject, current, source]
     cache.set(key, result)
     return result

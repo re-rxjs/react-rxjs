@@ -4,6 +4,7 @@ import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
+import { COMPLETE } from "./COMPLETE"
 
 const IS_SSR =
   typeof window === "undefined" ||
@@ -21,7 +22,11 @@ const reactEnhancer = <T>(
     let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe({
       next(value) {
-        if (isActive && !Object.is(latestValue, value)) {
+        if (
+          isActive &&
+          value !== (COMPLETE as any) &&
+          !Object.is(latestValue, value)
+        ) {
           subscriber.next((latestValue = value))
         }
       },

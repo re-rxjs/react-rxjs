@@ -161,17 +161,15 @@ describe("connectFactoryObservable", () => {
     })
   })
   describe("observable", () => {
-    it("returns a factory of BehaviorObservables", () => {
-      const [, getShared] = connectFactoryObservable((x: number) => of(x))
-      expect((getShared(0) as any).getValue).toBeInstanceOf(Function)
-    })
-
-    it("if the source observable completes it keeps emitting the latest value until there are no more subscriptions", () => {
+    it("it completes when the source observable completes, regardless of mounted componentes being subscribed to the source", async () => {
       let diff = -1
-      const [, getShared] = connectFactoryObservable((_: number) => {
-        diff++
-        return from([1, 2, 3, 4].map(val => val + diff))
-      })
+      const [useLatestNumber, getShared] = connectFactoryObservable(
+        (_: number) => {
+          diff++
+          return from([1, 2, 3, 4].map(val => val + diff))
+        },
+        0,
+      )
 
       let latestValue1: number = 0
       let nUpdates = 0
@@ -181,17 +179,20 @@ describe("connectFactoryObservable", () => {
       })
       expect(latestValue1).toBe(4)
       expect(nUpdates).toBe(4)
+      expect(sub1.closed).toBe(true)
+
+      const { result, unmount } = renderHook(() => useLatestNumber(0))
+      expect(result.current).toBe(5)
+      expect(nUpdates).toBe(4)
 
       let latestValue2: number = 0
       const sub2 = getShared(0).subscribe(x => {
         latestValue2 = x
         nUpdates += 1
       })
-      expect(latestValue2).toBe(4)
+      expect(latestValue2).toBe(5)
       expect(nUpdates).toBe(5)
-
-      sub1.unsubscribe()
-      sub2.unsubscribe()
+      expect(sub2.closed).toBe(true)
 
       let latestValue3: number = 0
       const sub3 = getShared(0).subscribe(x => {
@@ -199,8 +200,20 @@ describe("connectFactoryObservable", () => {
         nUpdates += 1
       })
       expect(latestValue3).toBe(5)
-      expect(nUpdates).toBe(9)
-      sub3.unsubscribe()
+      expect(nUpdates).toBe(6)
+      expect(sub3.closed).toBe(true)
+
+      unmount()
+      await wait(10)
+
+      let latestValue4: number = 0
+      const sub4 = getShared(0).subscribe(x => {
+        latestValue4 = x
+        nUpdates += 1
+      })
+      expect(latestValue4).toBe(6)
+      expect(nUpdates).toBe(10)
+      expect(sub4.closed).toBe(true)
     })
   })
 })

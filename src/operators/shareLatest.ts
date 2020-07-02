@@ -1,5 +1,6 @@
+import { Observable } from "rxjs"
 import internalShareLatest from "../internal/share-latest"
-import { MonoTypeOperatorFunction } from "rxjs"
+import { takeUntilComplete } from "../internal/take-until-complete"
 
 /**
  * A RxJS pipeable operator which shares and replays the latest emitted value.
@@ -13,9 +14,7 @@ import { MonoTypeOperatorFunction } from "rxjs"
  * ```
  *
  * @remarks The enhanced observables returned from `connectObservable` and
- * `connectFactoryObservable` have been enhanced with this operator, but do not
- * complete. Meaning that the latest emitted value will be available until the
- * `refCount` drops to zero.
+ * `connectFactoryObservable` have been enhanced with this operator.
  */
-export const shareLatest = <T>() =>
-  internalShareLatest<T>() as MonoTypeOperatorFunction<T>
+export const shareLatest = <T>() => (source$: Observable<T>) =>
+  takeUntilComplete(internalShareLatest(source$))
