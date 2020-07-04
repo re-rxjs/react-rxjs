@@ -47,7 +47,7 @@ Main features
     - [suspended](#suspended)
     - [switchMapSuspended](#switchMapSuspended)
   - Utils
-    - [createInput](#createInput)
+    - [subjectFactory](#subjectFactory)
 - [Examples](#examples)
 
 
@@ -177,52 +177,39 @@ const story$ = selectedStoryId$.pipe(
 
 Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
 
-### createInput
-
-A couple examples are worth a thousand words:
+### subjectFactory
 
 ```tsx
-const [getCounter$, setCounter] = createInput(0)
+const getCounterActions$ = subjectFactory<string, 'INC' | 'DEC'>()
 
-const useCounter = connectFactoryObservable((id: string) => getCounter$(id))
+const onInc = (id: string) => getCounterActions$(id).push('INC')
+const onDec = (id: string) => getCounterActions$(id).push('DEC')
 
-const Counter: React.FC<{id: string}> = ({id}) => {
-  const counter = useCounter(id);
-
-  return (
-    <button onClick={() => setCounter$(id, x => x - 1)} />-</button>
-    {counter}
-    <button onClick={() => setCounter$(id, x => x + 1)} />+</button
-  )
-}
-```
-
-or:
-
-```tsx
-const [getUpClicks$, onUpClick] = createInput()
-const [getDownClicks$, onDownClick] = createInput()
-
-const useCounter = connectFactoryObservable((id: string) =>
-  merge(
-    getUpClicks$(id).pipe(mapTo(1)),
-    getDownClicks$(id).pipe(mapTo(-1)),
-  ).pipe(
-    scan((a, b) => a + b, 0),
-    startWith(0)
+const useCounter = connectFactoryObservable(
+  (id: string) => getCounterActions$(id).pipe(
+    map(type => type === 'INC' ? 1 : -1)
+    startWith(0),
+    scan((a, b) => a + b)
   )
 )
 
 const Counter: React.FC<{id: string}> = ({id}) => {
   const counter = useCounter(id);
-
   return (
-    <button onClick={onDownClick} />-</button>
+    <button onClick={onDec(id)} />-</button>
     {counter}
-    <button onClick={onUpClick} />+</button
+    <button onClick={onInc(id)} />+</button
   )
 }
 ```
+
+Creates a pool of Subjects identified by key, and returns:
+- A function that accepts a key and returns the Subject linked to that key.
+
+Strictly speaking the returned value is not a real Subject. It's in fact a
+multicasted Observable that it's also an Observer. That's because in order to
+prevent memory-leaks this cached Observable will be removed from the cache when
+it finalizes.
 
 ## Examples
 - [This is a contrived example](https://codesandbox.io/s/crazy-wood-vn7gg?file=/src/fakeApi.js) based on [this example](https://reactjs.org/docs/concurrent-mode-patterns.html#reviewing-the-changes) from the React docs.
