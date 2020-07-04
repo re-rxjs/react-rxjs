@@ -11,3 +11,4 @@ export { switchMapSuspended } from "./operators/switchMapSuspended"
 // utils
 export { shareLatest } from "./operators/shareLatest"
 export { createInput } from "./createInput"
+export { connectDispatcher } from "./connectDispatcher"

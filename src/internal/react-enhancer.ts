@@ -6,6 +6,8 @@ import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
+export const cache = new WeakMap<Observable<any>, BehaviorObservable<any>>()
+
 const IS_SSR =
   typeof window === "undefined" ||
   typeof window.document === "undefined" ||
@@ -84,6 +86,7 @@ const reactEnhancer = <T>(
     throw promise
   }
 
+  cache.set(source$, result)
   result.getValue = getValue as () => T
   return result
 }

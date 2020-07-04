@@ -5,6 +5,8 @@ import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
+export const cache = new WeakSet<Observable<any>>()
+
 const shareLatest = <T>(
   source$: Observable<T>,
   teardown = noop,
@@ -60,6 +62,7 @@ const shareLatest = <T>(
       }
     }
   }) as BehaviorObservable<T>
+
   result.getValue = () => {
     if (currentValue === EMPTY_VALUE || currentValue === (SUSPENSE as any)) {
       throw currentValue
@@ -67,6 +70,7 @@ const shareLatest = <T>(
     return currentValue
   }
 
+  cache.add(result)
   return result
 }
 export default shareLatest
