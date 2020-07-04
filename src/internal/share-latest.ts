@@ -12,34 +12,35 @@ const shareLatest = <T>(
   let subject: Subject<T> | undefined
   let subscription: Subscription | undefined
   let refCount = 0
-  let isDone = false
-  let currentValue: { value: T }
+  let currentValue: T = EMPTY_VALUE
 
   const result = new Observable<T>(subscriber => {
     refCount++
     let innerSub: Subscription
     if (!subject) {
-      currentValue = { value: EMPTY_VALUE }
       subject = new Subject<T>()
       innerSub = subject.subscribe(subscriber)
       subscription = source$.subscribe({
         next(value) {
-          subject!.next((currentValue.value = value))
+          subject!.next((currentValue = value))
         },
         error(err) {
+          const subjectError = subject!.error.bind(subject)
           subscription = undefined
-          subject!.error(err)
+          subject = undefined
+          subjectError(err)
         },
         complete() {
+          subscription = undefined
           subject!.next(COMPLETE as any)
-          isDone = true
         },
       })
+      if (subscription.closed) subscription = undefined
     } else {
       innerSub = subject.subscribe(subscriber)
-      if (currentValue.value !== EMPTY_VALUE) {
-        subscriber.next(currentValue.value)
-        if (isDone) {
+      if (currentValue !== EMPTY_VALUE) {
+        subscriber.next(currentValue)
+        if (!subscription) {
           subscriber.next(COMPLETE as any)
         }
       }
@@ -49,7 +50,7 @@ const shareLatest = <T>(
       refCount--
       innerSub.unsubscribe()
       if (refCount === 0) {
-        currentValue.value = EMPTY_VALUE
+        currentValue = EMPTY_VALUE
         subject = undefined
         teardown()
         if (subscription) {
@@ -60,13 +61,10 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
   result.getValue = () => {
-    if (
-      currentValue.value === EMPTY_VALUE ||
-      currentValue.value === (SUSPENSE as any)
-    ) {
-      throw currentValue.value
+    if (currentValue === EMPTY_VALUE || currentValue === (SUSPENSE as any)) {
+      throw currentValue
     }
-    return currentValue.value
+    return currentValue
   }
 
   return result
