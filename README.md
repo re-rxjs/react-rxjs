@@ -182,8 +182,8 @@ Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
 ```tsx
 const getCounterActions$ = subjectFactory<string, 'INC' | 'DEC'>()
 
-const onInc = (id: string) => getCounterActions$(id).push('INC')
-const onDec = (id: string) => getCounterActions$(id).push('DEC')
+const onInc = (id: string) => getCounterActions$(id).next('INC')
+const onDec = (id: string) => getCounterActions$(id).next('DEC')
 
 const useCounter = connectFactoryObservable(
   (id: string) => getCounterActions$(id).pipe(
