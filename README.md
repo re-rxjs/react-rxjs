@@ -24,16 +24,18 @@
 - [Installation](#installation)
 - [API](#api)
   - Core
-    - [connectObservable](#connectObservable)
-    - [connectFactoryObservable](#connectFactoryObservable)
-    - [shareLatest](#shareLatest)
+    - [connectObservable](#connectobservable)
+    - [connectFactoryObservable](#connectfactoryobservable)
+    - [shareLatest](#sharelatest)
   - React Suspense Support
-    - [SUSPENSE](#SUSPENSE)
+    - [SUSPENSE](#suspense)
     - [suspend](#suspend)
     - [suspended](#suspended)
-    - [switchMapSuspended](#switchMapSuspended)
+    - [switchMapSuspended](#switchmapsuspended)
   - Utils
-    - [subjectFactory](#subjectFactory)
+    - [subjectFactory](#subjectfactory)
+    - [useSubscribe](#usesubscribe)
+    - [Subscribe](#subscribe)
 - [Examples](#examples)
 
 
