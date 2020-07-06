@@ -10,6 +10,6 @@ export { switchMapSuspended } from "./operators/switchMapSuspended"
 
 // utils
 export { shareLatest } from "./operators/shareLatest"
-export { createInput } from "./createInput"
 export { useSubscribe } from "./useSubscribe"
 export { Subscribe } from "./Subscribe"
+export { subjectFactory } from "./subjectFactory"
