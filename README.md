@@ -197,6 +197,31 @@ multicasted Observable that it's also an Observer. That's because in order to
 prevent memory-leaks this cached Observable will be removed from the cache when
 it finalizes.
 
+### useSubscribe
+
+A React hook that creates a subscription to the provided observable once the
+component mounts and it unsubscribes when the component unmounts.
+
+Arguments:
+ - `source$`: Source observable that the hook will subscribe to.
+ - `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
+ unsubscribing from the source observable after it unmounts (default = 200).
+
+Important: This hook doesn't trigger any updates.
+
+### Subscribe
+
+A React Component that creates a subscription to the provided observable once
+the component mounts and it unsubscribes from it when the component unmounts.
+
+Properties:
+ - `source$`: Source observable that the Component will subscribe to.
+ - `graceTime`: an optional property that describes the amount of time in ms
+ that the Component should wait before unsubscribing from the source observable
+ after it unmounts (default = 200).
+
+Important: This Component doesn't trigger any updates.
+
 ## Examples
 - [This is a contrived example](https://codesandbox.io/s/crazy-wood-vn7gg?file=/src/fakeApi.js) based on [this example](https://reactjs.org/docs/concurrent-mode-patterns.html#reviewing-the-changes) from the React docs.
 
