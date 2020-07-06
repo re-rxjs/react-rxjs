@@ -1,18 +1,4 @@
-<div align="center">
-  <h1>React-RxJS</h1>
-
-<img
-  height="86"
-  width="86"
-  alt="React-RxJS Logo"
-  src="https://raw.githubusercontent.com/re-rxjs/react-rxjs/main/assets/logo-128.png"
-/>
-
-<p>React bindings for RxJS</p>
-
-</div>
-
-<hr />
+# <img height="86" width="86" alt="React-RxJS Logo" src="assets/logo-128.png" /> React-RxJS: React bindings for RxJS
 
 <!-- prettier-ignore-start -->
 [![Build Status](https://img.shields.io/travis/re-rxjs/react-rxjs.svg?style=flat-square)](https://travis-ci.org/re-rxjs/react-rxjs)
@@ -24,8 +10,8 @@
 [![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/CODE_OF_CONDUCT.md)
 <!-- prettier-ignore-end -->
 
-Main features
--------------
+## Main features
+
 - :cyclone: Truly Reactive
 - :zap: Highly performant and free of memory-leaks
 - :twisted_rightwards_arrows: First class support for React Suspense and [ready for Concurrent Mode](https://github.com/dai-shi/will-this-react-global-state-work-in-concurrent-mode#results)
