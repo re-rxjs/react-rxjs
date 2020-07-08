@@ -1,5 +1,5 @@
 import { Observable, of, Subscription, Subject, race } from "rxjs"
-import { delay, takeUntil, take, filter, tap } from "rxjs/operators"
+import { delay, takeUntil, take, filter, tap, catchError } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
@@ -57,7 +57,12 @@ const reactEnhancer = <T>(
   }) as BehaviorObservable<T>
 
   let promise: any
+  let hasError = false
+  let error: unknown = undefined
   const getValue = () => {
+    if (hasError) {
+      throw error
+    }
     try {
       return (source$ as BehaviorObservable<T>).getValue()
     } catch (e) {
@@ -65,7 +70,10 @@ const reactEnhancer = <T>(
 
       if (!IS_SSR && e !== SUSPENSE) {
         source$
-          .pipe(takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))))
+          .pipe(
+            takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))),
+            catchError(() => of(true)),
+          )
           .subscribe()
         try {
           return (source$ as BehaviorObservable<T>).getValue()
@@ -76,9 +84,15 @@ const reactEnhancer = <T>(
       .pipe(
         filter(value => value !== (SUSPENSE as any)),
         take(1),
-        tap(() => {
-          promise = undefined
-        }),
+        tap(
+          () => {
+            promise = undefined
+          },
+          err => {
+            hasError = true
+            error = err
+          },
+        ),
       )
       .toPromise()
     throw promise

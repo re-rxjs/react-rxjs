@@ -266,7 +266,7 @@ describe("connectObservable", () => {
     )
   })
 
-  it("allows errors to be caught in error boundaries with suspense", () => {
+  it("allows errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
     const [useError] = connectObservable(errStream)
 
@@ -287,6 +287,10 @@ describe("connectObservable", () => {
 
     componentAct(() => {
       errStream.error("controlled error")
+    })
+
+    await componentAct(async () => {
+      await wait(0)
     })
 
     expect(errorCallback).toHaveBeenCalledWith(
