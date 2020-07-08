@@ -266,6 +266,35 @@ describe("connectObservable", () => {
     )
   })
 
+  it("allows errors to be caught in error boundaries with suspense", () => {
+    const errStream = new Subject()
+    const [useError] = connectObservable(errStream)
+
+    const ErrorComponent = () => {
+      const value = useError()
+
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Suspense>
+      </TestErrorBoundary>,
+    )
+
+    componentAct(() => {
+      errStream.error("controlled error")
+    })
+
+    expect(errorCallback).toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+  })
+
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
     const valueStream = new BehaviorSubject(1)
     const [useValue, value$] = connectObservable(valueStream)
