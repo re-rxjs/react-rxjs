@@ -1,25 +1,19 @@
-import { Observable, of, Subscription, Subject, race } from "rxjs"
-import { delay, takeUntil, take, filter, tap } from "rxjs/operators"
+import { Observable, of, Subscription } from "rxjs"
+import { delay, take, filter, tap } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
-const IS_SSR =
-  typeof window === "undefined" ||
-  typeof window.document === "undefined" ||
-  typeof window.document.createElement === "undefined"
-
 const reactEnhancer = <T>(
   source$: Observable<T>,
   delayTime: number,
 ): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
-  const onSubscribe = new Subject()
+  let latestValue = EMPTY_VALUE
   const result = new Observable<T>(subscriber => {
     let isActive = true
-    let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe({
       next(value) {
         if (
@@ -34,7 +28,6 @@ const reactEnhancer = <T>(
         subscriber.error(e)
       },
     })
-    onSubscribe.next()
     finalizeLastUnsubscription()
     return () => {
       finalizeLastUnsubscription()
@@ -57,34 +50,67 @@ const reactEnhancer = <T>(
   }) as BehaviorObservable<T>
 
   let promise: any
+  let error = EMPTY_VALUE
+  let valueResult: { type: "v"; payload: any } | undefined
   const getValue = () => {
-    try {
-      return (source$ as BehaviorObservable<T>).getValue()
-    } catch (e) {
-      if (promise) throw promise
-
-      if (!IS_SSR && e !== SUSPENSE) {
-        source$
-          .pipe(takeUntil(race(onSubscribe, of(true).pipe(delay(60000)))))
-          .subscribe()
-        try {
-          return (source$ as BehaviorObservable<T>).getValue()
-        } catch (e) {}
-      }
+    if (error !== EMPTY_VALUE) {
+      throw error
     }
-    promise = source$
-      .pipe(
-        filter(value => value !== (SUSPENSE as any)),
-        take(1),
-        tap(() => {
-          promise = undefined
-        }),
-      )
-      .toPromise()
-    throw promise
+
+    try {
+      const latest = (source$ as BehaviorObservable<T>).getValue()
+      return valueResult && Object.is(valueResult.payload, latest)
+        ? valueResult
+        : (valueResult = { type: "v", payload: latest })
+    } catch (e) {
+      if (promise) return promise
+
+      let value = EMPTY_VALUE
+      let isSyncError = false
+      promise = {
+        type: "s",
+        payload: reactEnhancer(source$, delayTime)
+          .pipe(
+            filter(value => value !== (SUSPENSE as any)),
+            take(1),
+            tap({
+              next(v) {
+                value = v
+              },
+              error(e) {
+                error = e
+                setTimeout(() => {
+                  error = EMPTY_VALUE
+                }, 200)
+              },
+            }),
+          )
+          .toPromise()
+          .catch(e => {
+            if (isSyncError) return
+            throw e
+          })
+          .finally(() => {
+            promise = undefined
+            valueResult = undefined
+          }),
+      }
+
+      if (value !== EMPTY_VALUE) {
+        latestValue = value
+        return (valueResult = { type: "v", payload: value })
+      }
+
+      if (error !== EMPTY_VALUE) {
+        isSyncError = true
+        throw error
+      }
+
+      return promise
+    }
   }
 
-  result.getValue = getValue as () => T
+  result.getValue = getValue as () => T | Promise<T>
   return result
 }
 

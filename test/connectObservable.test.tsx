@@ -6,7 +6,15 @@ import {
 } from "@testing-library/react"
 import { act, renderHook } from "@testing-library/react-hooks"
 import React, { Suspense, useEffect, FC } from "react"
-import { BehaviorSubject, defer, from, of, Subject, throwError } from "rxjs"
+import {
+  BehaviorSubject,
+  defer,
+  from,
+  of,
+  Subject,
+  throwError,
+  Observable,
+} from "rxjs"
 import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
 import { connectObservable, SUSPENSE } from "../src"
 import { TestErrorBoundary } from "../test/TestErrorBoundary"
@@ -245,7 +253,6 @@ describe("connectObservable", () => {
 
     const ErrorComponent = () => {
       const value = useError()
-
       return <>{value}</>
     }
 
@@ -266,18 +273,19 @@ describe("connectObservable", () => {
     )
   })
 
-  it("allows errors to be caught in error boundaries with suspense", () => {
-    const errStream = new Subject()
+  it("allows sync errors to be caught in error boundaries with suspense", () => {
+    const errStream = new Observable(observer =>
+      observer.error("controlled error"),
+    )
     const [useError] = connectObservable(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
-
       return <>{value}</>
     }
 
     const errorCallback = jest.fn()
-    render(
+    const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Suspense fallback={<div>Loading...</div>}>
           <ErrorComponent />
@@ -285,14 +293,105 @@ describe("connectObservable", () => {
       </TestErrorBoundary>,
     )
 
-    componentAct(() => {
+    expect(errorCallback).toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+    unmount()
+  })
+
+  it("allows async errors to be caught in error boundaries with suspense", async () => {
+    const errStream = new Subject()
+    const [useError] = connectObservable(errStream)
+
+    const ErrorComponent = () => {
+      const value = useError()
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    const { unmount } = render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Suspense>
+      </TestErrorBoundary>,
+    )
+
+    await componentAct(async () => {
       errStream.error("controlled error")
+      await wait(0)
     })
 
     expect(errorCallback).toHaveBeenCalledWith(
       "controlled error",
       expect.any(Object),
     )
+    unmount()
+  })
+
+  it("allows to retry the errored observable after a grace period of time", async () => {
+    let errStream = new Subject<string>()
+    const [useError] = connectObservable(
+      defer(() => {
+        return (errStream = new Subject<string>())
+      }),
+    )
+
+    const ErrorComponent = () => {
+      const value = useError()
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    const { unmount } = render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Suspense>
+      </TestErrorBoundary>,
+    )
+
+    expect(screen.queryByText("Loading...")).not.toBeNull()
+    expect(screen.queryByText("ALL GOOD")).toBeNull()
+
+    await componentAct(async () => {
+      errStream.error("controlled error")
+      await wait(0)
+    })
+
+    expect(screen.queryByText("Loading...")).toBeNull()
+    expect(screen.queryByText("ALL GOOD")).toBeNull()
+    expect(errorCallback).toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+    unmount()
+
+    errorCallback.mockReset()
+    await componentAct(async () => {
+      await wait(250)
+    })
+
+    render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Suspense>
+      </TestErrorBoundary>,
+    )
+    expect(screen.queryByText("Loading...")).not.toBeNull()
+
+    await componentAct(async () => {
+      errStream.next("ALL GOOD")
+      await wait(50)
+    })
+
+    expect(errorCallback).not.toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+    expect(screen.queryByText("ALL GOOD")).not.toBeNull()
   })
 
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {

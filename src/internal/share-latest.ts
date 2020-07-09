@@ -51,8 +51,12 @@ const shareLatest = <T>(
       innerSub.unsubscribe()
       if (refCount === 0) {
         currentValue = EMPTY_VALUE
+        if (subject !== undefined) {
+          teardown()
+        } else {
+          setTimeout(teardown, 200)
+        }
         subject = undefined
-        teardown()
         if (subscription) {
           subscription.unsubscribe()
           subscription = undefined

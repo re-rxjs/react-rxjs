@@ -2,22 +2,22 @@ import { useEffect, useReducer } from "react"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
 
+const ERROR: "e" = "e"
+const VALUE: "v" = "v"
+const SUSP: "s" = "s"
+type Action = "e" | "v" | "s"
+
 const reducer = (
-  _: any,
-  { type, payload }: { type: "next" | "error"; payload: any },
+  _: { type: Action; payload: any },
+  action: { type: Action; payload: any },
 ) => {
-  if (type === "error") {
-    throw payload
+  if (action.type === ERROR) {
+    throw action.payload
   }
-  return payload
+  return action
 }
-const init = (source$: BehaviorObservable<any>) => {
-  try {
-    return source$.getValue()
-  } catch (e) {
-    return SUSPENSE
-  }
-}
+
+const init = (source$: BehaviorObservable<any>) => source$.getValue()
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
@@ -26,30 +26,32 @@ export const useObservable = <O>(
 
   useEffect(() => {
     try {
-      dispatch({
-        type: "next",
-        payload: source$.getValue(),
-      })
+      dispatch(source$.getValue())
     } catch (e) {
-      dispatch({
-        type: "next",
-        payload: SUSPENSE,
-      })
+      return dispatch({ type: ERROR, payload: e })
     }
     const subscription = source$.subscribe(
-      value =>
-        dispatch({
-          type: "next",
-          payload: value,
-        }),
+      value => {
+        if ((value as any) === SUSPENSE) {
+          dispatch(source$.getValue())
+        } else {
+          dispatch({
+            type: VALUE,
+            payload: value,
+          })
+        }
+      },
       error =>
         dispatch({
-          type: "error",
+          type: ERROR,
           payload: error,
         }),
     )
     return () => subscription.unsubscribe()
   }, [source$])
 
-  return state !== (SUSPENSE as any) ? (state as any) : source$.getValue()
+  if (state.type === SUSP) {
+    throw state.payload
+  }
+  return state.payload
 }

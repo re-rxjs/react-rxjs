@@ -1,6 +1,15 @@
 import { connectFactoryObservable } from "../src"
 import { TestErrorBoundary } from "../test/TestErrorBoundary"
-import { from, of, defer, concat, BehaviorSubject, throwError } from "rxjs"
+import {
+  from,
+  of,
+  defer,
+  concat,
+  BehaviorSubject,
+  throwError,
+  Observable,
+  Subject,
+} from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
 import { switchMap, delay } from "rxjs/operators"
 import { FC, Suspense, useState } from "react"
@@ -223,6 +232,119 @@ describe("connectFactoryObservable", () => {
       )
     })
 
+    it("allows sync errors to be caught in error boundaries with suspense", () => {
+      const errStream = new Observable(observer =>
+        observer.error("controlled error"),
+      )
+      const [useError] = connectFactoryObservable((_: string) => errStream)
+
+      const ErrorComponent = () => {
+        const value = useError("foo")
+
+        return <>{value}</>
+      }
+
+      const errorCallback = jest.fn()
+      const { unmount } = render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <ErrorComponent />
+          </Suspense>
+        </TestErrorBoundary>,
+      )
+
+      expect(errorCallback).toHaveBeenCalledWith(
+        "controlled error",
+        expect.any(Object),
+      )
+      unmount()
+    })
+
+    it("allows async errors to be caught in error boundaries with suspense", async () => {
+      const errStream = new Subject()
+      const [useError] = connectFactoryObservable((_: string) => errStream)
+
+      const ErrorComponent = () => {
+        const value = useError("foo")
+
+        return <>{value}</>
+      }
+
+      const errorCallback = jest.fn()
+      const { unmount } = render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <ErrorComponent />
+          </Suspense>
+        </TestErrorBoundary>,
+      )
+
+      await componentAct(async () => {
+        errStream.error("controlled error")
+        await wait(0)
+      })
+
+      expect(errorCallback).toHaveBeenCalledWith(
+        "controlled error",
+        expect.any(Object),
+      )
+      unmount()
+    })
+
+    it(
+      "the errror-boundary can capture errors that are produced when changing the " +
+        "key of the hook to an observable that throws synchronously",
+      async () => {
+        const normal$ = new Subject<string>()
+        const errored$ = new Observable<string>(observer => {
+          observer.error("controlled error")
+        })
+
+        const [useOkKo] = connectFactoryObservable((ok: boolean) =>
+          ok ? normal$ : errored$,
+        )
+
+        const ErrorComponent = () => {
+          const [ok, setOk] = useState(true)
+          const value = useOkKo(ok)
+
+          return <span onClick={() => setOk(false)}>{value}</span>
+        }
+
+        const errorCallback = jest.fn()
+        const { unmount } = render(
+          <TestErrorBoundary onError={errorCallback}>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ErrorComponent />
+            </Suspense>
+          </TestErrorBoundary>,
+        )
+
+        expect(screen.queryByText("ALL GOOD")).toBeNull()
+        expect(screen.queryByText("Loading...")).not.toBeNull()
+
+        await componentAct(async () => {
+          normal$.next("ALL GOOD")
+          await wait(50)
+        })
+
+        expect(screen.queryByText("ALL GOOD")).not.toBeNull()
+        expect(screen.queryByText("Loading...")).toBeNull()
+        expect(errorCallback).not.toHaveBeenCalled()
+
+        componentAct(() => {
+          fireEvent.click(screen.getByText(/GOOD/i))
+        })
+
+        expect(errorCallback).toHaveBeenCalledWith(
+          "controlled error",
+          expect.any(Object),
+        )
+
+        unmount()
+      },
+    )
+
     it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
       const valueStream = new BehaviorSubject(1)
       const [useValue, value$] = connectFactoryObservable(() => valueStream)
@@ -258,6 +380,7 @@ describe("connectFactoryObservable", () => {
       expect(errorCallback).not.toHaveBeenCalled()
     })
   })
+
   describe("observable", () => {
     it("it completes when the source observable completes, regardless of mounted componentes being subscribed to the source", async () => {
       let diff = -1
