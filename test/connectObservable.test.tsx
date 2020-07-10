@@ -130,12 +130,12 @@ describe("connectObservable", () => {
     unmount2()
     unmount3()
 
-    await wait(90)
+    await wait(85)
     const { unmount: unmount4 } = renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(1)
     unmount4()
 
-    await wait(110)
+    await wait(125)
     renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(2)
   })
@@ -320,7 +320,7 @@ describe("connectObservable", () => {
 
     await componentAct(async () => {
       errStream.error("controlled error")
-      await wait(0)
+      await wait(50)
     })
 
     expect(errorCallback).toHaveBeenCalledWith(
@@ -357,7 +357,7 @@ describe("connectObservable", () => {
 
     await componentAct(async () => {
       errStream.error("controlled error")
-      await wait(0)
+      await wait(50)
     })
 
     expect(screen.queryByText("Loading...")).toBeNull()
