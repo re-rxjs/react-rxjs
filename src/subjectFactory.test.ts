@@ -1,6 +1,6 @@
-import { subjectFactory } from "../src"
 import { scan } from "rxjs/operators"
-import { EMPTY_VALUE } from "../src/internal/empty-value"
+import { EMPTY_VALUE } from "./internal/empty-value"
+import { subjectFactory } from "./"
 
 describe("createSubjectsFactory", () => {
   test("it releasess the subject when is no longer needed", () => {

@@ -1,7 +1,7 @@
 import { defer, Subject } from "rxjs"
 import { share, finalize } from "rxjs/operators"
-import { useSubscribe } from "../src"
 import { renderHook } from "@testing-library/react-hooks"
+import { useSubscribe } from "./"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 

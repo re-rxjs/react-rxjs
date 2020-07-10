@@ -1,6 +1,6 @@
-import { shareLatest } from "../../src"
 import { TestScheduler } from "rxjs/testing"
 import { from } from "rxjs"
+import { shareLatest } from "../"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

@@ -1,5 +1,3 @@
-import { connectFactoryObservable } from "../src"
-import { TestErrorBoundary } from "../test/TestErrorBoundary"
 import {
   from,
   of,
@@ -20,6 +18,8 @@ import {
   screen,
   render,
 } from "@testing-library/react"
+import { connectFactoryObservable } from "./"
+import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 

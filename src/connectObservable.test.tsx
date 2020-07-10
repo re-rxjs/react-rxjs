@@ -16,8 +16,8 @@ import {
   Observable,
 } from "rxjs"
 import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
-import { connectObservable, SUSPENSE } from "../src"
-import { TestErrorBoundary } from "../test/TestErrorBoundary"
+import { connectObservable, SUSPENSE } from "./"
+import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 

@@ -2,7 +2,7 @@ import React from "react"
 import { render } from "@testing-library/react"
 import { defer, Subject } from "rxjs"
 import { share, finalize } from "rxjs/operators"
-import { Subscribe } from "../src"
+import { Subscribe } from "./"
 
 const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 

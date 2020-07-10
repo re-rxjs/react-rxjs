@@ -1,5 +1,5 @@
 import React from "react"
-import { useSubscribe } from "./"
+import { useSubscribe } from "./useSubscribe"
 import { Observable } from "rxjs"
 
 /**
