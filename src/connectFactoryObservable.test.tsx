@@ -9,7 +9,7 @@ import {
   Subject,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { switchMap, delay } from "rxjs/operators"
+import { switchMap, delay, map } from "rxjs/operators"
 import { FC, Suspense, useState } from "react"
 import React from "react"
 import {
@@ -378,6 +378,74 @@ describe("connectFactoryObservable", () => {
       })
 
       expect(errorCallback).not.toHaveBeenCalled()
+    })
+
+    test("can take an object as the key", async () => {
+      const obj1 = {
+        foo: "foo",
+      }
+      const obj2 = {
+        foo: "foo2",
+      }
+      const obj3 = {
+        foo: "foo3",
+      }
+
+      let count = 0
+
+      const [useFoo] = connectFactoryObservable((obj: { foo: string }) =>
+        defer(() => {
+          count++
+          return of(obj.foo).pipe(map(text => [text, count].join(".")))
+        }),
+      )
+
+      const firstMount = renderHook(
+        (props: { obj: { foo: string } }) => useFoo(props.obj),
+        { initialProps: { obj: obj1 } },
+      )
+      expect(firstMount.result.current).toBe("foo.1")
+
+      firstMount.rerender({ obj: obj2 })
+      expect(firstMount.result.current).toBe("foo2.2")
+
+      firstMount.rerender({ obj: obj3 })
+      expect(firstMount.result.current).toBe("foo3.3")
+
+      firstMount.rerender({ obj: obj1 })
+      expect(firstMount.result.current).toBe("foo.1")
+
+      firstMount.rerender({ obj: obj2 })
+      expect(firstMount.result.current).toBe("foo2.2")
+
+      firstMount.rerender({ obj: obj3 })
+      expect(firstMount.result.current).toBe("foo3.3")
+
+      firstMount.unmount()
+      await wait(210)
+
+      const secondMount = renderHook(
+        (props: { obj: { foo: string } }) => useFoo(props.obj),
+        { initialProps: { obj: obj1 } },
+      )
+      expect(secondMount.result.current).toBe("foo.4")
+
+      secondMount.rerender({ obj: obj2 })
+      expect(secondMount.result.current).toBe("foo2.5")
+
+      secondMount.rerender({ obj: obj3 })
+      expect(secondMount.result.current).toBe("foo3.6")
+
+      secondMount.rerender({ obj: obj1 })
+      expect(secondMount.result.current).toBe("foo.4")
+
+      secondMount.rerender({ obj: obj2 })
+      expect(secondMount.result.current).toBe("foo2.5")
+
+      secondMount.rerender({ obj: obj3 })
+      expect(secondMount.result.current).toBe("foo3.6")
+
+      secondMount.unmount()
     })
   })
 

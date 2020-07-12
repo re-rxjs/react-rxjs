@@ -6,6 +6,23 @@ import { useObservable } from "./internal/useObservable"
 import { SUSPENSE } from "./SUSPENSE"
 import { takeUntilComplete } from "./internal/take-until-complete"
 
+interface ConnectFactoryObservable {
+  <A extends (number | string | boolean | null)[], O>(
+    getObservable: (...args: A) => Observable<O>,
+    unsubscribeGraceTime?: number,
+  ): readonly [
+    (...args: A) => Exclude<O, typeof SUSPENSE>,
+    (...args: A) => Observable<O>,
+  ]
+  <A extends Object, O>(
+    getObservable: (key: A) => Observable<O>,
+    unsubscribeGraceTime?: number,
+  ): readonly [
+    (key: A) => Exclude<O, typeof SUSPENSE>,
+    (key: A) => Observable<O>,
+  ]
+}
+
 /**
  * Accepts: A factory function that returns an Observable.
  *
@@ -28,25 +45,25 @@ import { takeUntilComplete } from "./internal/take-until-complete"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export function connectFactoryObservable<
-  A extends (number | string | boolean | null)[],
-  O
->(
-  getObservable: (...args: A) => Observable<O>,
+export const connectFactoryObservable: ConnectFactoryObservable = <O>(
+  getObservable: (...args: any) => Observable<O>,
   unsubscribeGraceTime = 200,
-): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => Observable<O>,
-] {
-  const cache = new Map<string, [Observable<O>, BehaviorObservable<O>]>()
+) => {
+  const cache = new Map<
+    string | Object,
+    [Observable<O>, BehaviorObservable<O>]
+  >()
 
   const getSharedObservables$ = (
-    ...input: A
+    ...input: any
   ): [Observable<O>, BehaviorObservable<O>] => {
-    const key = JSON.stringify(input)
+    const key =
+      input.length === 1 && typeof input[0] === "object" && input[0] !== null
+        ? input[0]
+        : JSON.stringify(input)
     const cachedVal = cache.get(key)
 
-    if (cachedVal !== undefined) {
+    if (cachedVal) {
       return cachedVal
     }
 
@@ -69,7 +86,7 @@ export function connectFactoryObservable<
   }
 
   return [
-    (...input: A) => useObservable(getSharedObservables$(...input)[1]),
-    (...input: A) => getSharedObservables$(...input)[0],
-  ]
+    (...input: any) => useObservable(getSharedObservables$(...input)[1]),
+    (...input: any) => getSharedObservables$(...input)[0],
+  ] as const
 }
