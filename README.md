@@ -184,9 +184,9 @@ const useCounter = connectFactoryObservable(
 const Counter: React.FC<{id: string}> = ({id}) => {
   const counter = useCounter(id);
   return (
-    <button onClick={onDec(id)} />-</button>
+    <button onClick={() => onDec(id)} />-</button>
     {counter}
-    <button onClick={onInc(id)} />+</button
+    <button onClick={() => onInc(id)} />+</button
   )
 }
 ```
