@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0-alpha.4",
+  "version": "3.0.0-alpha.5",
   "bundlesize": [
     {
       "path": "./dist/react-rxjs.cjs.production.min.js",
