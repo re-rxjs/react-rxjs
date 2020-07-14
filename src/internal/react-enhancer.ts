@@ -11,9 +11,9 @@ const reactEnhancer = <T>(
   delayTime: number,
 ): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
-  let latestValue = EMPTY_VALUE
   const result = new Observable<T>(subscriber => {
     let isActive = true
+    let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe({
       next(value) {
         if (
@@ -97,7 +97,6 @@ const reactEnhancer = <T>(
       }
 
       if (value !== EMPTY_VALUE) {
-        latestValue = value
         return (valueResult = { type: "v", payload: value })
       }
 

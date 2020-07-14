@@ -8,13 +8,16 @@ const SUSP: "s" = "s"
 type Action = "e" | "v" | "s"
 
 const reducer = (
-  _: { type: Action; payload: any },
+  current: { type: Action; payload: any },
   action: { type: Action; payload: any },
 ) => {
   if (action.type === ERROR) {
     throw action.payload
   }
-  return action
+  return Object.is(current.payload, action.payload) &&
+    current.type === action.type
+    ? current
+    : action
 }
 
 const init = (source$: BehaviorObservable<any>) => source$.getValue()
