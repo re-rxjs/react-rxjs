@@ -83,6 +83,48 @@ describe("connectObservable", () => {
     expect(result.current).toBe(2)
   })
 
+  it("updates more than one component", async () => {
+    const value = new Subject<number>()
+    const [useValue] = connectObservable(value.pipe(startWith(0)), 50)
+    const { result: result1, unmount: unmount1 } = renderHook(() => useValue())
+    const { result: result2, unmount: unmount2 } = renderHook(() => useValue())
+    const { result: result3, unmount: unmount3 } = renderHook(() => useValue())
+    const { result: result4, unmount: unmount4 } = renderHook(() => useValue())
+
+    expect(result1.current).toBe(0)
+    expect(result2.current).toBe(0)
+    expect(result3.current).toBe(0)
+    expect(result4.current).toBe(0)
+
+    act(() => {
+      value.next(1)
+    })
+
+    expect(result1.current).toBe(1)
+    expect(result2.current).toBe(1)
+    expect(result3.current).toBe(1)
+    expect(result4.current).toBe(1)
+
+    unmount1()
+    unmount2()
+    unmount3()
+    unmount4()
+
+    await act(async () => {
+      await wait(60)
+    })
+
+    const { result: result2_1 } = renderHook(() => useValue())
+    const { result: result2_2 } = renderHook(() => useValue())
+    const { result: result2_3 } = renderHook(() => useValue())
+    const { result: result2_4 } = renderHook(() => useValue())
+
+    expect(result2_1.current).toBe(0)
+    expect(result2_2.current).toBe(0)
+    expect(result2_3.current).toBe(0)
+    expect(result2_4.current).toBe(0)
+  })
+
   it("allows React to batch synchronous updates", async () => {
     const numberStream = new BehaviorSubject(1)
     const stringStream = new BehaviorSubject("a")
