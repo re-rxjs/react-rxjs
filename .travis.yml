@@ -1,5 +1,5 @@
 language: node_js
 node_js: node
-cache: npm
+cache: yarn
 script:
-  - npm run test:ci
+  - yarn test:ci
