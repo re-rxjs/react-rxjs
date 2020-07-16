@@ -3,6 +3,14 @@ import { map, mergeMap, scan } from "rxjs/operators"
 import continuousGroupBy from "./continuousGroupBy"
 
 const DELETE = Symbol("DELETE")
+
+/**
+ * Groups all values by key and emits a Map that hold the latest value for each
+ * key.
+ * 
+ * @param keyGetter Key getter.
+ * @param projection Projection function for each group.
+ */
 export const groupInMap = <T, K, V>(
   keyGetter: (x: T) => K,
   projection: (x: GroupedObservable<K, T>) => Observable<V>,
