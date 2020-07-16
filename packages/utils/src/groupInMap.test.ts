@@ -1,6 +1,6 @@
 import { map, takeWhile } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { groupInMap } from "./groupInMap"
+import { groupInMap } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -25,7 +25,7 @@ describe("groupInMap", () => {
         },
       }
       const source = cold("a-b-c-|", values)
-      const expected = "   m-n-o-(pq|)"
+      const expected = "   m-n-o-(p|)"
 
       const result = source.pipe(
         groupInMap(
@@ -43,8 +43,46 @@ describe("groupInMap", () => {
         m: "group1:1",
         n: "group1:1,group2:2",
         o: "group1:3,group2:2",
-        p: "group2:2", // TODO - I don't think this should be expected
-        q: "",
+        p: "",
+      })
+    })
+  })
+
+  it("propates errors", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const values = {
+        a: {
+          key: "group1",
+          quantity: 1,
+        },
+        b: {
+          key: "group2",
+          quantity: 2,
+        },
+        c: {
+          key: "group1",
+          quantity: 3,
+        },
+      }
+      const source = cold("a-b-c-#", values)
+      const expected = "   m-n-o-#"
+
+      const result = source.pipe(
+        groupInMap(
+          (value) => value.key,
+          (value$) => value$.pipe(map((value) => value.quantity)),
+        ),
+        map((groups) =>
+          Array.from(groups.entries())
+            .map(([key, value]) => `${key}:${value}`)
+            .join(","),
+        ),
+      )
+
+      expectObservable(result).toBe(expected, {
+        m: "group1:1",
+        n: "group1:1,group2:2",
+        o: "group1:3,group2:2",
       })
     })
   })

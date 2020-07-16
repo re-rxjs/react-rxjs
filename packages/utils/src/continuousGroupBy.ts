@@ -1,35 +1,41 @@
-import { Observable, Subject, GroupedObservable, BehaviorSubject } from 'rxjs';
-import { finalize, takeUntil, share } from 'rxjs/operators';
+import { Observable, Subject, GroupedObservable, BehaviorSubject } from "rxjs"
+import { finalize, share } from "rxjs/operators"
 
 const continuousGroupBy = <I, O>(mapper: (x: I) => O) => (
-  stream: Observable<I>
+  stream: Observable<I>,
 ) =>
-  new Observable<GroupedObservable<O, I>>(subscriber => {
-    const groups: Map<O, Subject<I>> = new Map();
-    const sourceSubscriptionEnd: Subject<undefined> = new Subject();
+  new Observable<GroupedObservable<O, I>>((subscriber) => {
+    const groups: Map<O, Subject<I>> = new Map()
 
-    return stream
-      .subscribe(x => {
-        const key = mapper(x);
+    return stream.subscribe(
+      (x) => {
+        const key = mapper(x)
         if (groups.has(key)) {
-          return groups.get(key)!.next(x);
+          return groups.get(key)!.next(x)
         }
 
-        const subject = new BehaviorSubject<I>(x);
-        groups.set(key, subject);
+        const subject = new BehaviorSubject<I>(x)
+        groups.set(key, subject)
 
         const res = subject.pipe(
           finalize(() => groups.delete(key)),
-          takeUntil(sourceSubscriptionEnd),
-          share()
-        ) as GroupedObservable<O, I>;
-        res.key = key;
+          share(),
+        ) as GroupedObservable<O, I>
+        res.key = key
 
-        subscriber.next(res);
-      }, subscriber.error.bind(subscriber), subscriber.complete.bind(subscriber))
-      .add(() => {
-        sourceSubscriptionEnd.next();
-      });
-  });
+        subscriber.next(res)
+      },
+      (e) => {
+        subscriber.error(e)
+        /* istanbul ignore next */
+        groups.forEach((g) => g.error(e))
+      },
+      () => {
+        subscriber.complete()
+        /* istanbul ignore next */
+        groups.forEach((g) => g.complete())
+      },
+    )
+  })
 
-export default continuousGroupBy;
+export default continuousGroupBy
