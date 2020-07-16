@@ -26,7 +26,7 @@ const continuousGroupBy = <I, O>(mapper: (x: I) => O) => (
         res.key = key;
 
         subscriber.next(res);
-      })
+      }, subscriber.error.bind(subscriber), subscriber.complete.bind(subscriber))
       .add(() => {
         sourceSubscriptionEnd.next();
       });
