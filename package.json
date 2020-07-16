@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build:ci": "wsrun build:ci",
     "build": "wsrun build",
     "lint": "wsrun lint",
     "test:ci": "cross-env CI=true wsrun test:ci"
