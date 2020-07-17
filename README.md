@@ -77,7 +77,7 @@ const Story: React.FC<{id: number}> = ({id}) => {
   return (
     <article>
       <h1>{story.title}</h1>
-      <p>{story.description</p>
+      <p>{story.description}</p>
     </article>
   )
 }
@@ -184,9 +184,11 @@ const useCounter = connectFactoryObservable(
 const Counter: React.FC<{id: string}> = ({id}) => {
   const counter = useCounter(id);
   return (
-    <button onClick={() => onDec(id)} />-</button>
-    {counter}
-    <button onClick={() => onInc(id)} />+</button
+    <>
+      <button onClick={() => onDec(id)}>-</button>
+      {counter}
+      <button onClick={() => onInc(id)}>+</button>
+    </>
   )
 }
 ```
@@ -277,7 +279,7 @@ function Repos() {
   }
 
   if (repos.length === 0) {
-    return <div>No results were found.</div>
+    return <p>No results were found.</p>
   }
 
   return (
@@ -312,9 +314,9 @@ function MostRecentlyUpdatedRepo() {
 
   const { id, name } = mostRecent
   return (
-    <div>
+    <p>
       The most recently updated repo is <a href={`#${id}`}>{name}</a>
-    </div>
+    </p>
   )
 }
 
