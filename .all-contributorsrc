@@ -60,10 +60,19 @@
         "doc",
         "test"
       ]
+    },
+    {
+      "login": "mattmischuk",
+      "name": "Matt Mischuk",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3485831?v=4",
+      "profile": "https://m1x.io",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
-  "projectName": "re-rxjs",
+  "projectName": "react-rxjs",
   "projectOwner": "re-rxjs",
   "repoType": "github",
   "repoHost": "https://github.com",
