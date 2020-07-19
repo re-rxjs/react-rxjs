@@ -1,8 +1,6 @@
 import { Observable } from "rxjs"
 import { unstable_batchedUpdates } from "react-dom"
 
-const noop = () => {}
-
 /**
  * A RxJS pipeable operator which observes the source observable on
  * an asapScheduler and uses `ReactDom.unstable_batchedUpdates` to emmit the
@@ -17,37 +15,28 @@ const noop = () => {}
 export const batchUpdates = <T>() => (
   source$: Observable<T>,
 ): Observable<T> => {
-  return new Observable<T>(observer => {
-    let next: any = observer.next.bind(observer)
-    let queue: T[] = []
+  return new Observable<T>((observer) => {
+    const obs = {
+      n: (v: T) => observer.next(v),
+      c: () => observer.complete(),
+      e: (e: any) => observer.error(e),
+    }
+    let queue: ["n" | "c" | "e", any?][] = []
     let promise: Promise<void> | null = null
     const flush = () => {
       promise = null
       const originalQueue = queue
       queue = []
       unstable_batchedUpdates(() => {
-        originalQueue.forEach(x => next(x))
+        originalQueue.forEach(([prop, val]) => obs[prop](val))
       })
     }
-    const subscription = source$.subscribe({
-      next(v) {
-        queue.push(v)
-        if (!promise) {
-          promise = Promise.resolve().then(flush)
-        }
-      },
-      complete() {
-        next = noop
-        observer.complete()
-      },
-      error(e) {
-        next = noop
-        observer.error(e)
-      },
-    })
-    return () => {
-      next = noop
-      subscription.unsubscribe()
+    const push = (type: "n" | "c" | "e") => (val?: any) => {
+      queue.push([type, val])
+      if (!promise) {
+        promise = Promise.resolve().then(flush)
+      }
     }
+    return source$.subscribe(push("n"), push("e"), push("c"))
   })
 }
