@@ -4,7 +4,7 @@ import { map } from "rxjs/operators"
 /**
  * Emits the values from all the streams of the provided object, in a result
  * which provides the key of the stream of that emission.
- * 
+ *
  * @param input object of streams
  */
 export const mergeWithKey: <
@@ -23,7 +23,9 @@ export const mergeWithKey: <
     ...(Object.entries(input)
       .map(
         ([type, stream]) =>
-          from(stream).pipe(map(payload => ({ type, payload } as any))) as any,
+          from(stream).pipe(
+            map((payload) => ({ type, payload } as any)),
+          ) as any,
       )
       .concat(optionalArgs) as any[]),
   )
