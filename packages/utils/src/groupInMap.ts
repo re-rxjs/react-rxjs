@@ -12,10 +12,10 @@ import continuousGroupBy from "./continuousGroupBy"
 const DELETE = Symbol("DELETE")
 
 /**
- * Groups all values by key and emits a Map that hold the latest value for each
+ * Groups all values by key and emits a Map that holds the latest value for each
  * key.
  *
- * @param keyGetter Key getter.
+ * @param keyGetter A function that extracts the key for each item.
  * @param projection Projection function for each group.
  */
 export const groupInMap = <T, K, V>(

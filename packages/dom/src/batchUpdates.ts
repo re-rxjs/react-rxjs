@@ -3,13 +3,13 @@ import { unstable_batchedUpdates } from "react-dom"
 
 /**
  * A RxJS pipeable operator which observes the source observable on
- * an asapScheduler and uses `ReactDom.unstable_batchedUpdates` to emmit the
+ * an asapScheduler and uses `ReactDom.unstable_batchedUpdates` to emit the
  * values. It's useful for observing streams of events that come from outside
  * of ReactDom event-handlers.
  *
  * @remarks This operator will be deprecated when React 17 is released
- * (or whnever React CM is released). The reason being that React Concurrent Mode
- * automatically batches all synchrous updates. Meaning that with React CM,
+ * (or whenever React CM is released). The reason being that React Concurrent Mode
+ * automatically batches all synchronous updates. Meaning that with React CM,
  * observing a stream through the asapScheduler accomplishes the same thing.
  */
 export const batchUpdates = <T>() => (

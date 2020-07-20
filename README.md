@@ -32,15 +32,11 @@
     - [suspend](#suspend)
     - [suspended](#suspended)
     - [switchMapSuspended](#switchmapsuspended)
-  - Utils
-    - [subjectFactory](#subjectfactory)
-    - [useSubscribe](#usesubscribe)
-    - [Subscribe](#subscribe)
 - [Examples](#examples)
 
 
 ## Installation
-    npm install react-rxjs
+    npm install @react-rxjs/core
 
 ## API
 
@@ -164,67 +160,6 @@ const story$ = selectedStoryId$.pipe(
 ```
 
 Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
-
-### subjectFactory
-
-```tsx
-const getCounterActions$ = subjectFactory<string, 'INC' | 'DEC'>()
-
-const onInc = (id: string) => getCounterActions$(id).next('INC')
-const onDec = (id: string) => getCounterActions$(id).next('DEC')
-
-const useCounter = connectFactoryObservable(
-  (id: string) => getCounterActions$(id).pipe(
-    map(type => type === 'INC' ? 1 : -1)
-    startWith(0),
-    scan((a, b) => a + b)
-  )
-)
-
-const Counter: React.FC<{id: string}> = ({id}) => {
-  const counter = useCounter(id);
-  return (
-    <>
-      <button onClick={() => onDec(id)}>-</button>
-      {counter}
-      <button onClick={() => onInc(id)}>+</button>
-    </>
-  )
-}
-```
-
-Creates a pool of Subjects identified by key, and returns:
-- A function that accepts a key and returns the Subject linked to that key.
-
-Strictly speaking the returned value is not a real Subject. It's in fact a
-multicasted Observable that it's also an Observer. That's because in order to
-prevent memory-leaks this cached Observable will be removed from the cache when
-it finalizes.
-
-### useSubscribe
-
-A React hook that creates a subscription to the provided observable once the
-component mounts and it unsubscribes when the component unmounts.
-
-Arguments:
- - `source$`: Source observable that the hook will subscribe to.
- - `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
- unsubscribing from the source observable after it unmounts (default = 200).
-
-Important: This hook doesn't trigger any updates.
-
-### Subscribe
-
-A React Component that creates a subscription to the provided observable once
-the component mounts and it unsubscribes from it when the component unmounts.
-
-Properties:
- - `source$`: Source observable that the Component will subscribe to.
- - `graceTime`: an optional property that describes the amount of time in ms
- that the Component should wait before unsubscribing from the source observable
- after it unmounts (default = 200).
-
-Important: This Component doesn't trigger any updates.
 
 ## Examples
 - [This is a contrived example](https://codesandbox.io/s/crazy-wood-vn7gg?file=/src/fakeApi.js) based on [this example](https://reactjs.org/docs/concurrent-mode-patterns.html#reviewing-the-changes) from the React docs.
