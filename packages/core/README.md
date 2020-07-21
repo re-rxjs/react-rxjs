@@ -5,9 +5,11 @@
 
 ## API
 
-### connectObservable
+### bind
+
+#### Observable overload
 ```ts
-const [useCounter, sharedCounter$] = connectObservable(
+const [useCounter, sharedCounter$] = bind(
   clicks$.pipe(
     scan(prev => prev + 1, 0),
     startWith(0),
@@ -26,9 +28,9 @@ the hook will leverage React Suspense while it's waiting for the first value.
 streams that depend on it. The shared subscription is closed as soon as there
 are no subscribers to that observable.
 
-### connectFactoryObservable
+#### Factory Observables overload
 ```tsx
-const [useStory, getStory$] = connectFactoryObservable(
+const [useStory, getStory$] = bind(
   (storyId: number) => getStoryWithUpdates$(storyId)
 )
 
@@ -76,8 +78,7 @@ const shareLatest = <T>(): Observable<T> =>
   )
 ```
 
-The enhanced observables returned from `connectObservable` and `connectFactoryObservable` 
-have been enhanced with this operator.
+The enhanced observables returned from `bind` have been enhanced with this operator.
 
 ### SUSPENSE
 

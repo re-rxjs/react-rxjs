@@ -18,8 +18,8 @@ import {
   screen,
   render,
 } from "@testing-library/react"
-import { connectFactoryObservable } from "./"
-import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
+import { bind } from "../"
+import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
@@ -43,7 +43,7 @@ describe("connectFactoryObservable", () => {
   describe("hook", () => {
     it("returns the latest emitted value", async () => {
       const valueStream = new BehaviorSubject(1)
-      const [useNumber] = connectFactoryObservable(() => valueStream)
+      const [useNumber] = bind(() => valueStream)
       const { result } = renderHook(() => useNumber())
       expect(result.current).toBe(1)
 
@@ -55,7 +55,7 @@ describe("connectFactoryObservable", () => {
 
     it("suspends the component when the observable hasn't emitted yet.", async () => {
       const source$ = of(1).pipe(delay(100))
-      const [useDelayedNumber] = connectFactoryObservable(() => source$)
+      const [useDelayedNumber] = bind(() => source$)
       const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
       const TestSuspense: React.FC = () => {
         return (
@@ -86,7 +86,7 @@ describe("connectFactoryObservable", () => {
       const [
         useLatestNumber,
         latestNumber$,
-      ] = connectFactoryObservable((id: number, value: number) =>
+      ] = bind((id: number, value: number) =>
         concat(observable$, of(id + value)),
       )
       expect(subscriberCount).toBe(0)
@@ -108,7 +108,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("returns the value of next new Observable when the arguments change", () => {
-      const [useNumber] = connectFactoryObservable((x: number) => of(x))
+      const [useNumber] = bind((x: number) => of(x))
       const { result, rerender } = renderHook(({ input }) => useNumber(input), {
         initialProps: { input: 0 },
       })
@@ -126,9 +126,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("suspends the component when the factory-observable hasn't emitted yet.", async () => {
-      const [useDelayedNumber] = connectFactoryObservable((x: number) =>
-        of(x).pipe(delay(50)),
-      )
+      const [useDelayedNumber] = bind((x: number) => of(x).pipe(delay(50)))
       const Result: React.FC<{ input: number }> = (p) => (
         <div>Result {useDelayedNumber(p.input)}</div>
       )
@@ -183,7 +181,7 @@ describe("connectFactoryObservable", () => {
         return from([1, 2, 3, 4, 5])
       })
 
-      const [useLatestNumber] = connectFactoryObservable(
+      const [useLatestNumber] = bind(
         (id: number) => concat(observable$, of(id)),
         100,
       )
@@ -207,7 +205,7 @@ describe("connectFactoryObservable", () => {
 
     it("allows errors to be caught in error boundaries", () => {
       const errStream = new BehaviorSubject(1)
-      const [useError] = connectFactoryObservable(() => errStream)
+      const [useError] = bind(() => errStream)
 
       const ErrorComponent = () => {
         const value = useError()
@@ -236,7 +234,7 @@ describe("connectFactoryObservable", () => {
       const errStream = new Observable((observer) =>
         observer.error("controlled error"),
       )
-      const [useError] = connectFactoryObservable((_: string) => errStream)
+      const [useError] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {
         const value = useError("foo")
@@ -262,7 +260,7 @@ describe("connectFactoryObservable", () => {
 
     it("allows async errors to be caught in error boundaries with suspense", async () => {
       const errStream = new Subject()
-      const [useError] = connectFactoryObservable((_: string) => errStream)
+      const [useError] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {
         const value = useError("foo")
@@ -300,9 +298,7 @@ describe("connectFactoryObservable", () => {
           observer.error("controlled error")
         })
 
-        const [useOkKo] = connectFactoryObservable((ok: boolean) =>
-          ok ? normal$ : errored$,
-        )
+        const [useOkKo] = bind((ok: boolean) => (ok ? normal$ : errored$))
 
         const ErrorComponent = () => {
           const [ok, setOk] = useState(true)
@@ -347,8 +343,8 @@ describe("connectFactoryObservable", () => {
 
     it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
       const valueStream = new BehaviorSubject(1)
-      const [useValue, value$] = connectFactoryObservable(() => valueStream)
-      const [useError] = connectFactoryObservable(() =>
+      const [useValue, value$] = bind(() => valueStream)
+      const [useError] = bind(() =>
         value$().pipe(
           switchMap((v) => (v === 1 ? of(v) : throwError("error"))),
         ),
@@ -386,13 +382,10 @@ describe("connectFactoryObservable", () => {
   describe("observable", () => {
     it("it completes when the source observable completes, regardless of mounted componentes being subscribed to the source", async () => {
       let diff = -1
-      const [useLatestNumber, getShared] = connectFactoryObservable(
-        (_: number) => {
-          diff++
-          return from([1, 2, 3, 4].map((val) => val + diff))
-        },
-        0,
-      )
+      const [useLatestNumber, getShared] = bind((_: number) => {
+        diff++
+        return from([1, 2, 3, 4].map((val) => val + diff))
+      }, 0)
 
       let latestValue1: number = 0
       let nUpdates = 0

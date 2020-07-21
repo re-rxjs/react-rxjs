@@ -24,8 +24,9 @@
 - [Installation](#installation)
 - [API](#api)
   - Core
-    - [connectObservable](#connectobservable)
-    - [connectFactoryObservable](#connectfactoryobservable)
+    - [bind](#bind)
+      - [Observable overload](#observable-overload)
+      - [Factory of Observables overload](#factory-of-observables-overload)
     - [shareLatest](#sharelatest)
   - React Suspense Support
     - [SUSPENSE](#suspense)
@@ -40,9 +41,11 @@
 
 ## API
 
-### connectObservable
+### bind
+
+#### Observable overload
 ```ts
-const [useCounter, sharedCounter$] = connectObservable(
+const [useCounter, sharedCounter$] = bind(
   clicks$.pipe(
     scan(prev => prev + 1, 0),
     startWith(0),
@@ -61,9 +64,9 @@ the hook will leverage React Suspense while it's waiting for the first value.
 streams that depend on it. The shared subscription is closed as soon as there
 are no subscribers to that observable.
 
-### connectFactoryObservable
+#### Factory of Observables overload
 ```tsx
-const [useStory, getStory$] = connectFactoryObservable(
+const [useStory, getStory$] = bind(
   (storyId: number) => getStoryWithUpdates$(storyId)
 )
 
@@ -111,8 +114,7 @@ const shareLatest = <T>(): Observable<T> =>
   )
 ```
 
-The enhanced observables returned from `connectObservable` and `connectFactoryObservable` 
-have been enhanced with this operator.
+The enhanced observables returned from `bind` have been enhanced with this operator.
 
 ### SUSPENSE
 
@@ -170,7 +172,7 @@ Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.
 import React, { Suspense } from "react"
 import { Subject } from "rxjs"
 import { startWith, map } from "rxjs/operators"
-import { connectObservable, switchMapSuspended } from "react-rxjs"
+import { bind, switchMapSuspended } from "@react-rxjs/core"
 import { Header, Search, LoadingResults, Repo } from "./components"
 
 interface Repo {
@@ -199,7 +201,7 @@ const findRepos = (query: string): Promise<Repo[]> =>
       })),
     )
 
-const [useRepos, repos$] = connectObservable(
+const [useRepos, repos$] = bind(
   searchInput$.pipe(
     switchMapSuspended(findRepos),
     startWith(null),
@@ -228,7 +230,7 @@ function Repos() {
   )
 }
 
-const [useMostRecentlyUpdatedRepo] = connectObservable(
+const [useMostRecentlyUpdatedRepo] = bind(
   repos$.pipe(
     map(repos =>
       Array.isArray(repos) && repos.length > 0

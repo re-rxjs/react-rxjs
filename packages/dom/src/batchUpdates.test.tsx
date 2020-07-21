@@ -1,13 +1,13 @@
 import React, { Component, ErrorInfo, useLayoutEffect } from "react"
 import { Observable, from, throwError } from "rxjs"
 import { delay, startWith } from "rxjs/operators"
-import { connectFactoryObservable } from "@react-rxjs/core"
+import { bind } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { render, screen } from "@testing-library/react"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-const [useLatestNumber] = connectFactoryObservable(
+const [useLatestNumber] = bind(
   (id: string, batched: boolean) =>
     (id === "error"
       ? throwError("controlled error")
