@@ -4,11 +4,30 @@
   "workspaces": [
     "packages/*"
   ],
+  "bundlesize": [
+    {
+      "path": "./packages/core/dist/core.cjs.production.min.js",
+      "maxSize": "4 kB",
+      "compression": "none"
+    },
+    {
+      "path": "./packages/dom/dist/dom.cjs.production.min.js",
+      "maxSize": "1 kB",
+      "compression": "none"
+    },
+    {
+      "path": "./packages/utils/dist/utils.cjs.production.min.js",
+      "maxSize": "4 kB",
+      "compression": "none"
+    }
+
+  ],
   "scripts": {
-    "build:ci": "wsrun build:ci",
     "build": "wsrun build",
+    "build:ci": "yarn build && bundlesize",
     "lint": "wsrun lint",
-    "test:ci": "cross-env CI=true wsrun test:ci"
+    "test:ci": "cross-env CI=true wsrun test:ci",
+    "ci": "yarn build:ci && yarn test:ci"
   },
   "prettier": {
     "printWidth": 80,
@@ -16,6 +35,7 @@
     "trailingComma": "all"
   },
   "devDependencies": {
+    "bundlesize": "^0.18.0",
     "cross-env": "^7.0.2",
     "prettier": "^2.0.5",
     "typescript": "^3.9.7",

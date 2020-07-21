@@ -1,12 +1,5 @@
 {
   "version": "0.1.0-alpha.0",
-  "bundlesize": [
-    {
-      "path": "./dist/core.cjs.production.min.js",
-      "maxSize": "5 kB",
-      "compression": "none"
-    }
-  ],
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -21,10 +14,8 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
-    "build:ci": "yarn build && bundlesize",
-    "coverage": "codecov",
-    "test": "tsdx test --passWithNoTests --coverage",
-    "test:ci": "yarn test && yarn coverage",
+    "test": "tsdx test --coverage",
+    "test:ci": "cross-env CI=true tsdx test --coverage && codecov --disable=gcov",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
@@ -51,8 +42,7 @@
     "@types/jest": "^26.0.5",
     "@types/react": "^16.9.43",
     "@types/react-dom": "^16.9.8",
-    "bundlesize": "^0.18.0",
-    "codecov": "^3.7.1",
+    "codecov": "3.7.0",
     "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
     "react": "^16.13.1",
