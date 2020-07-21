@@ -16,10 +16,10 @@ import {
   Observable,
 } from "rxjs"
 import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
-import { connectObservable, SUSPENSE } from "./"
-import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
+import { bind, SUSPENSE } from "../"
+import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
-const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 describe("connectObservable", () => {
   const originalError = console.error
@@ -42,7 +42,7 @@ describe("connectObservable", () => {
 
   it("sets the initial state synchronously if it's available", async () => {
     const observable$ = of(1)
-    const [useLatestNumber] = connectObservable(observable$)
+    const [useLatestNumber] = bind(observable$)
 
     const { result } = renderHook(() => useLatestNumber())
     expect(result.current).toEqual(1)
@@ -50,7 +50,7 @@ describe("connectObservable", () => {
 
   it("suspends the component when the observable hasn't emitted yet.", async () => {
     const source$ = of(1).pipe(delay(100))
-    const [useDelayedNumber] = connectObservable(source$)
+    const [useDelayedNumber] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
@@ -73,7 +73,7 @@ describe("connectObservable", () => {
 
   it("updates with the last emitted value", async () => {
     const numberStream = new BehaviorSubject(1)
-    const [useNumber] = connectObservable(numberStream)
+    const [useNumber] = bind(numberStream)
     const { result } = renderHook(() => useNumber())
     expect(result.current).toBe(1)
 
@@ -85,7 +85,7 @@ describe("connectObservable", () => {
 
   it("updates more than one component", async () => {
     const value = new Subject<number>()
-    const [useValue] = connectObservable(value.pipe(startWith(0)), 50)
+    const [useValue] = bind(value.pipe(startWith(0)), 50)
     const { result: result1, unmount: unmount1 } = renderHook(() => useValue())
     const { result: result2, unmount: unmount2 } = renderHook(() => useValue())
     const { result: result3, unmount: unmount3 } = renderHook(() => useValue())
@@ -128,8 +128,8 @@ describe("connectObservable", () => {
   it("allows React to batch synchronous updates", async () => {
     const numberStream = new BehaviorSubject(1)
     const stringStream = new BehaviorSubject("a")
-    const [useNumber] = connectObservable(numberStream)
-    const [useString] = connectObservable(stringStream)
+    const [useNumber] = bind(numberStream)
+    const [useString] = bind(stringStream)
 
     const BatchComponent: FC<{
       onUpdate: () => void
@@ -163,7 +163,7 @@ describe("connectObservable", () => {
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = connectObservable(observable$, 100)
+    const [useLatestNumber] = bind(observable$, 100)
     const { unmount } = renderHook(() => useLatestNumber())
     const { unmount: unmount2 } = renderHook(() => useLatestNumber())
     const { unmount: unmount3 } = renderHook(() => useLatestNumber())
@@ -189,7 +189,7 @@ describe("connectObservable", () => {
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = connectObservable(observable$, Infinity)
+    const [useLatestNumber] = bind(observable$, Infinity)
     const { unmount } = renderHook(() => useLatestNumber())
     const { unmount: unmount2 } = renderHook(() => useLatestNumber())
     const { unmount: unmount3 } = renderHook(() => useLatestNumber())
@@ -208,8 +208,8 @@ describe("connectObservable", () => {
   it("suspends the component when the observable emits SUSPENSE", async () => {
     const subject$ = new Subject()
     const source$ = subject$.pipe(
-      scan(a => a + 1, 0),
-      map(x => {
+      scan((a) => a + 1, 0),
+      map((x) => {
         if (x === 1) {
           return SUSPENSE
         }
@@ -217,7 +217,7 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber] = connectObservable(source$)
+    const [useDelayedNumber] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
@@ -248,8 +248,8 @@ describe("connectObservable", () => {
   it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
     const subject$ = new Subject()
     const source$ = subject$.pipe(
-      scan(a => a + 1, 0),
-      map(x => {
+      scan((a) => a + 1, 0),
+      map((x) => {
         if (x <= 2) {
           return SUSPENSE
         }
@@ -257,7 +257,7 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber] = connectObservable(source$)
+    const [useDelayedNumber] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
@@ -291,7 +291,7 @@ describe("connectObservable", () => {
 
   it("allows errors to be caught in error boundaries", () => {
     const errStream = new BehaviorSubject(1)
-    const [useError] = connectObservable(errStream)
+    const [useError] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -316,10 +316,10 @@ describe("connectObservable", () => {
   })
 
   it("allows sync errors to be caught in error boundaries with suspense", () => {
-    const errStream = new Observable(observer =>
+    const errStream = new Observable((observer) =>
       observer.error("controlled error"),
     )
-    const [useError] = connectObservable(errStream)
+    const [useError] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -344,7 +344,7 @@ describe("connectObservable", () => {
 
   it("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
-    const [useError] = connectObservable(errStream)
+    const [useError] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -374,7 +374,7 @@ describe("connectObservable", () => {
 
   it("allows to retry the errored observable after a grace period of time", async () => {
     let errStream = new Subject<string>()
-    const [useError] = connectObservable(
+    const [useError] = bind(
       defer(() => {
         return (errStream = new Subject<string>())
       }),
@@ -438,9 +438,9 @@ describe("connectObservable", () => {
 
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
     const valueStream = new BehaviorSubject(1)
-    const [useValue, value$] = connectObservable(valueStream)
-    const [useError] = connectObservable(
-      value$.pipe(switchMap(v => (v === 1 ? of(v) : throwError("error")))),
+    const [useValue, value$] = bind(valueStream)
+    const [useError] = bind(
+      value$.pipe(switchMap((v) => (v === 1 ? of(v) : throwError("error")))),
     )
 
     const ErrorComponent: FC = () => {

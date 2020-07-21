@@ -1,10 +1,10 @@
 import { Observable } from "rxjs"
-import shareLatest from "./internal/share-latest"
-import reactEnhancer from "./internal/react-enhancer"
-import { BehaviorObservable } from "./internal/BehaviorObservable"
-import { useObservable } from "./internal/useObservable"
-import { SUSPENSE } from "./SUSPENSE"
-import { takeUntilComplete } from "./internal/take-until-complete"
+import shareLatest from "../internal/share-latest"
+import reactEnhancer from "../internal/react-enhancer"
+import { BehaviorObservable } from "../internal/BehaviorObservable"
+import { useObservable } from "../internal/useObservable"
+import { SUSPENSE } from "../SUSPENSE"
+import { takeUntilComplete } from "../internal/take-until-complete"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -28,12 +28,12 @@ import { takeUntilComplete } from "./internal/take-until-complete"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export function connectFactoryObservable<
+export default function connectFactoryObservable<
   A extends (number | string | boolean | null)[],
   O
 >(
   getObservable: (...args: A) => Observable<O>,
-  unsubscribeGraceTime = 200,
+  unsubscribeGraceTime: number,
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,

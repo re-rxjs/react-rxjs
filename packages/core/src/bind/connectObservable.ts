@@ -1,8 +1,8 @@
 import { Observable } from "rxjs"
-import shareLatest from "./internal/share-latest"
-import reactEnhancer from "./internal/react-enhancer"
-import { useObservable } from "./internal/useObservable"
-import { takeUntilComplete } from "./internal/take-until-complete"
+import shareLatest from "../internal/share-latest"
+import reactEnhancer from "../internal/react-enhancer"
+import { useObservable } from "../internal/useObservable"
+import { takeUntilComplete } from "../internal/take-until-complete"
 
 /**
  * Accepts: An Observable.
@@ -22,9 +22,9 @@ import { takeUntilComplete } from "./internal/take-until-complete"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export function connectObservable<T>(
+export default function connectObservable<T>(
   observable: Observable<T>,
-  unsubscribeGraceTime = 200,
+  unsubscribeGraceTime: number,
 ) {
   const sharedObservable$ = shareLatest<T>(observable)
   const reactObservable$ = reactEnhancer(

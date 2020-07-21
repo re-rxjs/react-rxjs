@@ -1,6 +1,5 @@
 // core
-export { connectObservable } from "./connectObservable"
-export { connectFactoryObservable } from "./connectFactoryObservable"
+export { bind } from "./bind"
 export { shareLatest } from "./operators/shareLatest"
 
 // support for React Suspense
