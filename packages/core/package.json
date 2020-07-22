@@ -15,7 +15,7 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test --coverage",
-    "test:ci": "cross-env CI=true tsdx test --coverage && codecov --disable=gcov -f ./coverage/lcov.info",
+    "test:ci": "cross-env CI=true tsdx test --coverage && codecov --disable=gcov",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
@@ -42,7 +42,7 @@
     "@types/jest": "^26.0.5",
     "@types/react": "^16.9.43",
     "@types/react-dom": "^16.9.8",
-    "codecov": "3.7.1",
+    "codecov": "3.7.2",
     "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
     "react": "^16.13.1",
