@@ -33,7 +33,7 @@
   "author": "Josep M Sobrepere",
   "module": "dist/react-rxjs/dom.esm.js",
   "devDependencies": {
-    "@react-rxjs/core": "0.1.0-alpha.0",
+    "@react-rxjs/core": "0.1.0",
     "@testing-library/react": "^10.4.6",
     "@testing-library/react-hooks": "^3.3.0",
     "@types/jest": "^26.0.5",
