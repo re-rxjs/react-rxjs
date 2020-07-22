@@ -23,9 +23,7 @@ export const mergeWithKey: <
     ...(Object.entries(input)
       .map(
         ([type, stream]) =>
-          from(stream).pipe(
-            map((payload) => ({ type, payload } as any)),
-          ) as any,
+          from(stream).pipe(map(payload => ({ type, payload } as any))) as any,
       )
       .concat(optionalArgs) as any[]),
   )

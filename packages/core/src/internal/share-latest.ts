@@ -14,17 +14,17 @@ const shareLatest = <T>(
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
 
-  const result = new Observable<T>((subscriber) => {
+  const result = new Observable<T>(subscriber => {
     refCount++
     let innerSub: Subscription
     if (!subject) {
       subject = new Subject<T>()
       innerSub = subject.subscribe(subscriber)
       subscription = source$.subscribe(
-        (value) => {
+        value => {
           subject!.next((currentValue = value))
         },
-        (err) => {
+        err => {
           const subjectError = subject!.error.bind(subject)
           subscription = undefined
           subject = undefined

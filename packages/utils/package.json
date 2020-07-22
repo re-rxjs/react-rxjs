@@ -23,11 +23,6 @@
     "react": ">=16.8.0",
     "rxjs": ">=6"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
   "prettier": {
     "printWidth": 80,
     "semi": false,
@@ -43,7 +38,6 @@
     "@types/react": "^16.9.43",
     "@types/react-dom": "^16.9.8",
     "codecov": "3.7.2",
-    "husky": "^4.2.5",
     "jest-marbles": "^2.5.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

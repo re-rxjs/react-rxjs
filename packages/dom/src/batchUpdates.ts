@@ -15,7 +15,7 @@ import { unstable_batchedUpdates } from "react-dom"
 export const batchUpdates = <T>() => (
   source$: Observable<T>,
 ): Observable<T> => {
-  return new Observable<T>((observer) => {
+  return new Observable<T>(observer => {
     const obs = {
       n: (v: T) => observer.next(v),
       c: () => observer.complete(),

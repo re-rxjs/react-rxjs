@@ -5,7 +5,7 @@ import { bind } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { render, screen } from "@testing-library/react"
 
-const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
+const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 const [useLatestNumber] = bind(
   (id: string, batched: boolean) =>
@@ -60,7 +60,7 @@ const Grandson: React.FC<Props> = ({ onRender, batched, id }) => {
   return <div>Grandson {latestNumber}</div>
 }
 
-const Son: React.FC<Props> = (props) => {
+const Son: React.FC<Props> = props => {
   const latestNumber = useLatestNumber(props.id, props.batched)
   useLayoutEffect(props.onRender)
   return (
@@ -71,7 +71,7 @@ const Son: React.FC<Props> = (props) => {
   )
 }
 
-const Father: React.FC<Props> = (props) => {
+const Father: React.FC<Props> = props => {
   const latestNumber = useLatestNumber(props.id, props.batched)
   useLayoutEffect(props.onRender)
   return (
