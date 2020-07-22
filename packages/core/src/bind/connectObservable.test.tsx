@@ -19,7 +19,7 @@ import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
 import { bind, SUSPENSE } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
-const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
+const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 describe("connectObservable", () => {
   const originalError = console.error
@@ -208,8 +208,8 @@ describe("connectObservable", () => {
   it("suspends the component when the observable emits SUSPENSE", async () => {
     const subject$ = new Subject()
     const source$ = subject$.pipe(
-      scan((a) => a + 1, 0),
-      map((x) => {
+      scan(a => a + 1, 0),
+      map(x => {
         if (x === 1) {
           return SUSPENSE
         }
@@ -248,8 +248,8 @@ describe("connectObservable", () => {
   it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
     const subject$ = new Subject()
     const source$ = subject$.pipe(
-      scan((a) => a + 1, 0),
-      map((x) => {
+      scan(a => a + 1, 0),
+      map(x => {
         if (x <= 2) {
           return SUSPENSE
         }
@@ -316,7 +316,7 @@ describe("connectObservable", () => {
   })
 
   it("allows sync errors to be caught in error boundaries with suspense", () => {
-    const errStream = new Observable((observer) =>
+    const errStream = new Observable(observer =>
       observer.error("controlled error"),
     )
     const [useError] = bind(errStream)
@@ -440,7 +440,7 @@ describe("connectObservable", () => {
     const valueStream = new BehaviorSubject(1)
     const [useValue, value$] = bind(valueStream)
     const [useError] = bind(
-      value$.pipe(switchMap((v) => (v === 1 ? of(v) : throwError("error")))),
+      value$.pipe(switchMap(v => (v === 1 ? of(v) : throwError("error")))),
     )
 
     const ErrorComponent: FC = () => {

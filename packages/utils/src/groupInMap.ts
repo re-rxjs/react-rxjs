@@ -27,11 +27,11 @@ export const groupInMap = <T, K, V>(
   return concat(
     source$.pipe(
       continuousGroupBy(keyGetter),
-      publish((multicasted$) => {
+      publish(multicasted$ => {
         return multicasted$.pipe(
-          mergeMap((inner$) =>
+          mergeMap(inner$ =>
             concat(
-              projection(inner$).pipe(map((v) => [inner$.key, v] as const)),
+              projection(inner$).pipe(map(v => [inner$.key, v] as const)),
               of([inner$.key, DELETE] as const),
             ),
           ),

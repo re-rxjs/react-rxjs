@@ -31,7 +31,7 @@
     "build:ci": "yarn build && bundlewatch",
     "lint": "wsrun lint",
     "test:ci": "cross-env CI=true wsrun test:ci",
-    "ci": "yarn build:ci && yarn test:ci"
+    "ci": "yarn lint && yarn build:ci && yarn test:ci"
   },
   "prettier": {
     "printWidth": 80,
@@ -41,8 +41,14 @@
   "devDependencies": {
     "bundlewatch": "^0.2.7",
     "cross-env": "^7.0.2",
+    "husky": "^4.2.5",
     "prettier": "^2.0.5",
     "typescript": "^3.9.7",
     "wsrun": "^5.2.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint"
+    }
   }
 }
