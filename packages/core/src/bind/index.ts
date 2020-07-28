@@ -4,18 +4,17 @@ import connectFactoryObservable from "./connectFactoryObservable"
 import connectObservable from "./connectObservable"
 
 /**
- * Accepts: An Observable.
- *
- * Returns [1, 2]
- * 1. A React Hook that yields the latest emitted value of the observable
- * 2. A `sharedLatest` version of the observable. It can be used for composing
- * other streams that depend on it. The shared subscription is closed as soon as
- * there are no subscribers to that observable.
+ * Binds an observable to React
  *
  * @param observable Source observable to be used by the hook.
  * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
  * observable should wait before unsubscribing from the source observable when
  * there are no new subscribers.
+ * @returns [1, 2]
+ * 1. A React Hook that yields the latest emitted value of the observable
+ * 2. A `sharedLatest` version of the observable. It can be used for composing
+ * other streams that depend on it. The shared subscription is closed as soon as
+ * there are no subscribers to that observable.
  *
  * @remarks If the Observable doesn't synchronously emit a value upon the first
  * subscription, then the hook will leverage React Suspense while it's waiting
@@ -27,9 +26,14 @@ export function bind<T>(
 ): [() => Exclude<T, typeof SUSPENSE>, Observable<T>]
 
 /**
- * Accepts: A factory function that returns an Observable.
+ * Binds a factory observable to React
  *
- * Returns [1, 2]
+ * @param getObservable Factory of observables. The arguments of this function
+ *  will be the ones used in the hook.
+ * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
+ *  observable should wait before unsubscribing from the source observable when
+ *  there are no new subscribers.
+ * @returns [1, 2]
  * 1. A React Hook function with the same parameters as the factory function.
  *  This hook will yield the latest update from the observable returned from
  *  the factory function.
@@ -37,12 +41,6 @@ export function bind<T>(
  *  function that can be used for composing other streams that depend on it.
  *  The shared subscription is closed as soon as there are no subscribers to
  *  that observable.
- *
- * @param getObservable Factory of observables. The arguments of this function
- *  will be the ones used in the hook.
- * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
- *  observable should wait before unsubscribing from the source observable when
- *  there are no new subscribers.
  *
  * @remarks If the Observable doesn't synchronously emit a value upon the first
  * subscription, then the hook will leverage React Suspense while it's waiting

@@ -8,6 +8,7 @@ import { useEffect } from "react"
  * @param source$ Source observable that the hook will subscribe to.
  * @param unsubscribeGraceTime (= 200): Amount of time in ms that the hook
  * should wait before unsubscribing from the source observable after it unmounts.
+ * @returns void
  *
  * @remarks This hook doesn't trigger any updates.
  */
