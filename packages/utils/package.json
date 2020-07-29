@@ -1,11 +1,12 @@
 {
-  "version": "0.1.0",
-  "sideEffects": false,
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
   },
   "license": "MIT",
+  "sideEffects": false,
+  "module": "dist/utils.esm.js",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -30,7 +31,6 @@
   },
   "name": "@react-rxjs/utils",
   "author": "Josep M Sobrepere",
-  "module": "dist/react-rxjs/utils.esm.js",
   "devDependencies": {
     "@testing-library/react": "^10.4.6",
     "@testing-library/react-hooks": "^3.3.0",
