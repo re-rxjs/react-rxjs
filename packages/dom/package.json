@@ -33,7 +33,7 @@
   "name": "@react-rxjs/dom",
   "author": "Josep M Sobrepere",
   "devDependencies": {
-    "@react-rxjs/core": "0.1.0",
+    "@react-rxjs/core": "0.1.2",
     "@testing-library/react": "^10.4.6",
     "@testing-library/react-hooks": "^3.3.0",
     "@types/jest": "^26.0.5",
