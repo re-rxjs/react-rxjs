@@ -10,7 +10,7 @@ const shareLatest = <T>(
   teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
-  let subscription: Subscription | undefined
+  let subscription: Subscription | undefined | null
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
 
@@ -20,6 +20,7 @@ const shareLatest = <T>(
     if (!subject) {
       subject = new Subject<T>()
       innerSub = subject.subscribe(subscriber)
+      subscription = null
       subscription = source$.subscribe(
         (value) => {
           subject!.next((currentValue = value))
@@ -40,7 +41,7 @@ const shareLatest = <T>(
       innerSub = subject.subscribe(subscriber)
       if (currentValue !== EMPTY_VALUE) {
         subscriber.next(currentValue)
-        if (!subscription) {
+        if (subscription === undefined) {
           subscriber.next(COMPLETE as any)
         }
       }
@@ -59,8 +60,8 @@ const shareLatest = <T>(
         subject = undefined
         if (subscription) {
           subscription.unsubscribe()
-          subscription = undefined
         }
+        subscription = undefined
       }
     }
   }) as BehaviorObservable<T>
