@@ -1,6 +1,7 @@
 import { TestScheduler } from "rxjs/testing"
-import { from } from "rxjs"
+import { from, merge, defer } from "rxjs"
 import { shareLatest } from "../"
+import { withLatestFrom, startWith, map } from "rxjs/operators"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -46,6 +47,29 @@ describe("shareLatest", () => {
       expectObservable(shared, sub1).toBe(expected1);
       expectObservable(shared, sub2).toBe(expected2);
       expectSubscriptions(source.subscriptions).toBe(sourceSubs);
+    })
+    })
+
+    // prettier-ignore
+    it("should be able to handle recursively synchronous subscriptions", () => {
+    scheduler().run(({ expectObservable, hot }) => {
+      const values$ = hot('----b-c-d---')
+      const latest$ = hot('----------x-')
+      const expected = '   a---b-c-d-d-'
+      const input$ = merge(
+        values$,
+        latest$.pipe(
+          withLatestFrom(defer(() => result$)),
+          map(([, latest]) => latest)
+        )
+      )
+
+      const result$ = input$.pipe(
+        startWith('a'),
+        shareLatest()
+      )
+
+      expectObservable(result$, '^').toBe(expected)
     })
     })
 
