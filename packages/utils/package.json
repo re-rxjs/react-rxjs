@@ -32,19 +32,19 @@
   "name": "@react-rxjs/utils",
   "author": "Josep M Sobrepere",
   "devDependencies": {
-    "@testing-library/react": "^10.4.6",
-    "@testing-library/react-hooks": "^3.3.0",
-    "@types/jest": "^26.0.5",
-    "@types/react": "^16.9.43",
+    "@testing-library/react": "^10.4.8",
+    "@testing-library/react-hooks": "^3.4.1",
+    "@types/jest": "^26.0.9",
+    "@types/react": "^16.9.46",
     "@types/react-dom": "^16.9.8",
     "codecov": "3.7.2",
     "jest-marbles": "^2.5.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-test-renderer": "^16.13.1",
-    "rxjs": "^6.6.0",
+    "rxjs": "^6.6.2",
     "tsdx": "^0.13.2",
-    "tslib": "^2.0.0",
+    "tslib": "^2.0.1",
     "typescript": "^3.9.7"
   }
 }
