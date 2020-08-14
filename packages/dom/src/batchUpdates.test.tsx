@@ -5,20 +5,25 @@ import { bind } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { render, screen } from "@testing-library/react"
 
-const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-const [useLatestNumber] = bind(
-  (id: string, batched: boolean) =>
-    (id === "error"
-      ? throwError("controlled error")
-      : from([1, 2, 3, 4, 5])
-    ).pipe(
-      delay(5),
-      batched ? batchUpdates() : (x: Observable<number>) => x,
-      startWith(0),
-    ),
-  0,
-)
+const parseKey = (key: string): [string, boolean] => {
+  return JSON.parse(key)
+}
+
+const getKey = (id: string, batched: boolean) => JSON.stringify([id, batched])
+
+const [useLatestNumber] = bind((key: string) => {
+  const [id, batched] = parseKey(key)
+  return (id === "error"
+    ? throwError("controlled error")
+    : from([1, 2, 3, 4, 5])
+  ).pipe(
+    delay(5),
+    batched ? batchUpdates() : (x: Observable<number>) => x,
+    startWith(0),
+  )
+}, 0)
 
 class TestErrorBoundary extends Component<
   {
@@ -55,13 +60,13 @@ interface Props {
   id: string
 }
 const Grandson: React.FC<Props> = ({ onRender, batched, id }) => {
-  const latestNumber = useLatestNumber(id, batched)
+  const latestNumber = useLatestNumber(getKey(id, batched))
   useLayoutEffect(onRender)
   return <div>Grandson {latestNumber}</div>
 }
 
-const Son: React.FC<Props> = props => {
-  const latestNumber = useLatestNumber(props.id, props.batched)
+const Son: React.FC<Props> = (props) => {
+  const latestNumber = useLatestNumber(getKey(props.id, props.batched))
   useLayoutEffect(props.onRender)
   return (
     <div>
@@ -71,8 +76,8 @@ const Son: React.FC<Props> = props => {
   )
 }
 
-const Father: React.FC<Props> = props => {
-  const latestNumber = useLatestNumber(props.id, props.batched)
+const Father: React.FC<Props> = (props) => {
+  const latestNumber = useLatestNumber(getKey(props.id, props.batched))
   useLayoutEffect(props.onRender)
   return (
     <div>

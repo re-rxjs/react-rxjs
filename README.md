@@ -81,11 +81,11 @@ const Story: React.FC<{id: number}> = ({id}) => {
   )
 }
 ```
-Accepts: A factory function that returns an Observable.
+Accepts: A factory function that receives a key and returns an Observable.
 
 Returns `[1, 2]`
 
-1. A React Hook function with the same parameters as the factory function. This hook
+1. A React Hook function that takes a key as a parameter. This hook
 will yield the latest update from the observable returned from the factory function.
 If the Observable doesn't synchronously emit a value upon the first subscription, then
 the hook will leverage React Suspense while it's waiting for the first value.
