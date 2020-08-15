@@ -127,6 +127,13 @@ describe("connectFactoryObservable", () => {
       expect(result.current).toBe(2)
     })
 
+    it("handles optional args correctly", () => {
+      const [, getNumber$] = bind((x: number, y?: number) => of(x + (y ?? 0)))
+
+      expect(getNumber$(5)).toBe(getNumber$(5, undefined))
+      expect(getNumber$(6, undefined)).toBe(getNumber$(6))
+    })
+
     it("suspends the component when the factory-observable hasn't emitted yet.", async () => {
       const [useDelayedNumber] = bind((x: number) => of(x).pipe(delay(50)))
       const Result: React.FC<{ input: number }> = (p) => (
