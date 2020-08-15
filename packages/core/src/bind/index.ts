@@ -46,12 +46,18 @@ export function bind<T>(
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export function bind<A extends (number | string | boolean | null)[], O>(
+export function bind<
+  A extends (number | string | boolean | null | Object | Symbol)[],
+  O
+>(
   getObservable: (...args: A) => Observable<O>,
   unsubscribeGraceTime?: number,
 ): [(...args: A) => Exclude<O, typeof SUSPENSE>, (...args: A) => Observable<O>]
 
-export function bind<A extends (number | string | boolean | null)[], O>(
+export function bind<
+  A extends (number | string | boolean | null | Object | Symbol)[],
+  O
+>(
   obs: ((...args: A) => Observable<O>) | Observable<O>,
   unsubscribeGraceTime = 200,
 ) {

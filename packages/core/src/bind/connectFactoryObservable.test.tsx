@@ -21,7 +21,7 @@ import {
 import { bind } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
-const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 describe("connectFactoryObservable", () => {
   const originalError = console.error
@@ -86,24 +86,26 @@ describe("connectFactoryObservable", () => {
       const [
         useLatestNumber,
         latestNumber$,
-      ] = bind((id: number, value: number) =>
-        concat(observable$, of(id + value)),
+      ] = bind((id: number, value: { val: number }) =>
+        concat(observable$, of(id + value.val)),
       )
       expect(subscriberCount).toBe(0)
 
-      renderHook(() => useLatestNumber(1, 1))
+      const first = { val: 1 }
+      renderHook(() => useLatestNumber(1, first))
       expect(subscriberCount).toBe(1)
 
-      renderHook(() => useLatestNumber(1, 1))
+      renderHook(() => useLatestNumber(1, first))
       expect(subscriberCount).toBe(1)
 
-      latestNumber$(1, 1).subscribe()
+      latestNumber$(1, first).subscribe()
       expect(subscriberCount).toBe(1)
 
-      renderHook(() => useLatestNumber(1, 2))
+      const second = { val: 2 }
+      renderHook(() => useLatestNumber(1, second))
       expect(subscriberCount).toBe(2)
 
-      renderHook(() => useLatestNumber(2, 2))
+      renderHook(() => useLatestNumber(2, second))
       expect(subscriberCount).toBe(3)
     })
 
@@ -127,7 +129,7 @@ describe("connectFactoryObservable", () => {
 
     it("suspends the component when the factory-observable hasn't emitted yet.", async () => {
       const [useDelayedNumber] = bind((x: number) => of(x).pipe(delay(50)))
-      const Result: React.FC<{ input: number }> = p => (
+      const Result: React.FC<{ input: number }> = (p) => (
         <div>Result {useDelayedNumber(p.input)}</div>
       )
       const TestSuspense: React.FC = () => {
@@ -137,7 +139,7 @@ describe("connectFactoryObservable", () => {
             <Suspense fallback={<span>Waiting</span>}>
               <Result input={input} />
             </Suspense>
-            <button onClick={() => setInput(x => x + 1)}>increase</button>
+            <button onClick={() => setInput((x) => x + 1)}>increase</button>
           </>
         )
       }
@@ -231,7 +233,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows sync errors to be caught in error boundaries with suspense", () => {
-      const errStream = new Observable(observer =>
+      const errStream = new Observable((observer) =>
         observer.error("controlled error"),
       )
       const [useError] = bind((_: string) => errStream)
@@ -294,7 +296,7 @@ describe("connectFactoryObservable", () => {
         "key of the hook to an observable that throws synchronously",
       async () => {
         const normal$ = new Subject<string>()
-        const errored$ = new Observable<string>(observer => {
+        const errored$ = new Observable<string>((observer) => {
           observer.error("controlled error")
         })
 
@@ -345,7 +347,9 @@ describe("connectFactoryObservable", () => {
       const valueStream = new BehaviorSubject(1)
       const [useValue, value$] = bind(() => valueStream)
       const [useError] = bind(() =>
-        value$().pipe(switchMap(v => (v === 1 ? of(v) : throwError("error")))),
+        value$().pipe(
+          switchMap((v) => (v === 1 ? of(v) : throwError("error"))),
+        ),
       )
 
       const ErrorComponent: FC = () => {
@@ -382,12 +386,12 @@ describe("connectFactoryObservable", () => {
       let diff = -1
       const [useLatestNumber, getShared] = bind((_: number) => {
         diff++
-        return from([1, 2, 3, 4].map(val => val + diff))
+        return from([1, 2, 3, 4].map((val) => val + diff))
       }, 0)
 
       let latestValue1: number = 0
       let nUpdates = 0
-      const sub1 = getShared(0).subscribe(x => {
+      const sub1 = getShared(0).subscribe((x) => {
         latestValue1 = x
         nUpdates += 1
       })
@@ -400,7 +404,7 @@ describe("connectFactoryObservable", () => {
       expect(nUpdates).toBe(4)
 
       let latestValue2: number = 0
-      const sub2 = getShared(0).subscribe(x => {
+      const sub2 = getShared(0).subscribe((x) => {
         latestValue2 = x
         nUpdates += 1
       })
@@ -409,7 +413,7 @@ describe("connectFactoryObservable", () => {
       expect(sub2.closed).toBe(true)
 
       let latestValue3: number = 0
-      const sub3 = getShared(0).subscribe(x => {
+      const sub3 = getShared(0).subscribe((x) => {
         latestValue3 = x
         nUpdates += 1
       })
@@ -421,7 +425,7 @@ describe("connectFactoryObservable", () => {
       await wait(10)
 
       let latestValue4: number = 0
-      const sub4 = getShared(0).subscribe(x => {
+      const sub4 = getShared(0).subscribe((x) => {
         latestValue4 = x
         nUpdates += 1
       })
