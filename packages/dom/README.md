@@ -1,6 +1,7 @@
 # @react-rxjs/dom
 
 ## Installation
+
     npm install @react-rxjs/dom
 
 ## API
@@ -18,7 +19,5 @@ automatically batches all synchronous updates. Meaning that with React CM,
 observing a stream through the asapScheduler accomplishes the same thing.
 
 ```ts
-const marketUpdates$ = defer(() => api.getMarketUpdates()).pipe(
-  batchUpdates()
-)
+const marketUpdates$ = defer(() => api.getMarketUpdates()).pipe(batchUpdates())
 ```

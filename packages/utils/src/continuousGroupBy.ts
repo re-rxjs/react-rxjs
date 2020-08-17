@@ -4,11 +4,11 @@ import { finalize, share } from "rxjs/operators"
 const continuousGroupBy = <I, O>(mapper: (x: I) => O) => (
   stream: Observable<I>,
 ) =>
-  new Observable<GroupedObservable<O, I>>(subscriber => {
+  new Observable<GroupedObservable<O, I>>((subscriber) => {
     const groups: Map<O, Subject<I>> = new Map()
 
     return stream.subscribe(
-      x => {
+      (x) => {
         const key = mapper(x)
         if (groups.has(key)) {
           return groups.get(key)!.next(x)
@@ -25,15 +25,15 @@ const continuousGroupBy = <I, O>(mapper: (x: I) => O) => (
 
         subscriber.next(res)
       },
-      e => {
+      (e) => {
         subscriber.error(e)
         /* istanbul ignore next */
-        groups.forEach(g => g.error(e))
+        groups.forEach((g) => g.error(e))
       },
       () => {
         subscriber.complete()
         /* istanbul ignore next */
-        groups.forEach(g => g.complete())
+        groups.forEach((g) => g.complete())
       },
     )
   })

@@ -1,6 +1,7 @@
 # @react-rxjs/utils
 
 ## Installation
+
     npm install @react-rxjs/utils
 
 ## API
@@ -11,9 +12,10 @@ A React hook that creates a subscription to the provided observable once the
 component mounts and it unsubscribes when the component unmounts.
 
 Arguments:
- - `source$`: Source observable that the hook will subscribe to.
- - `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
- unsubscribing from the source observable after it unmounts (default = 200).
+
+- `source$`: Source observable that the hook will subscribe to.
+- `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
+  unsubscribing from the source observable after it unmounts (default = 200).
 
 Important: This hook doesn't trigger any updates.
 
@@ -23,10 +25,11 @@ A React Component that creates a subscription to the provided observable once
 the component mounts and it unsubscribes from it when the component unmounts.
 
 Properties:
- - `source$`: Source observable that the Component will subscribe to.
- - `graceTime`: an optional property that describes the amount of time in ms
- that the Component should wait before unsubscribing from the source observable
- after it unmounts (default = 200).
+
+- `source$`: Source observable that the Component will subscribe to.
+- `graceTime`: an optional property that describes the amount of time in ms
+  that the Component should wait before unsubscribing from the source observable
+  after it unmounts (default = 200).
 
 Important: This Component doesn't trigger any updates.
 
@@ -36,51 +39,53 @@ A RxJS pipeable operator which groups all values by key and emits a Map that
 holds the latest value for each key
 
 Arguments:
-  - `keyGetter`: A function that extracts the key for each item.
-  - `projection`: Projection function for each group.
+
+- `keyGetter`: A function that extracts the key for each item.
+- `projection`: Projection function for each group.
 
 ```ts
-const votesByKey$ = new Subject<{key: string}>()
+const votesByKey$ = new Subject<{ key: string }>()
 const counters$ = votesByKey$.pipe(
   groupInMap(
-    vote => vote.key,
-    votes$ => votes$.pipe(
-      mapTo(1),
-      scan(count => count + 1),
-      takeWhile(count => count < 3)
-    )
-  )
+    (vote) => vote.key,
+    (votes$) =>
+      votes$.pipe(
+        mapTo(1),
+        scan((count) => count + 1),
+        takeWhile((count) => count < 3),
+      ),
+  ),
 )
 
-counters$.subscribe(counters => {
-  console.log('counters$:')
+counters$.subscribe((counters) => {
+  console.log("counters$:")
   counters.forEach((value, key) => {
-    console.log(`${key}: ${value}`);
+    console.log(`${key}: ${value}`)
   })
 })
 
-votesByKey$.next({key: 'foo'})
+votesByKey$.next({ key: "foo" })
 // > counters$:
 // > foo: 1
 
-votesByKey$.next({key: 'foo'})
+votesByKey$.next({ key: "foo" })
 // > counters$:
 // > foo: 2
 
-votesByKey$.next({key: 'bar'})
+votesByKey$.next({ key: "bar" })
 // > counters$:
 // > foo: 2
 // > bar: 1
 
-votesByKey$.next({key: 'foo'})
+votesByKey$.next({ key: "foo" })
 // > counters$:
 // > bar: 1
 
-votesByKey$.next({key: 'bar'})
+votesByKey$.next({ key: "bar" })
 // > counters$:
 // > bar: 2
 //
-votesByKey$.next({key: 'bar'})
+votesByKey$.next({ key: "bar" })
 // > counters$:
 ```
 
@@ -90,7 +95,8 @@ Emits the values from all the streams of the provided object, in a result
 which provides the key of the stream of that emission.
 
 Arguments:
-  - `inputObject`: Object of streams
+
+- `inputObject`: Object of streams
 
 ```ts
 const inc$ = new Subject()

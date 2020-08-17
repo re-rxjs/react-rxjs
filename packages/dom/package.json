@@ -17,7 +17,8 @@
     "build": "tsdx build",
     "test": "tsdx test --coverage",
     "test:ci": "cross-env CI=true tsdx test --coverage && codecov --disable=gcov",
-    "lint": "tsdx lint",
+    "lint": "prettier --check README.md && tsdx lint src",
+    "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "tsdx build"
   },
   "peerDependencies": {

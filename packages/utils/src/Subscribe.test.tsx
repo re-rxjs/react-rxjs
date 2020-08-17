@@ -4,7 +4,7 @@ import { defer, Subject } from "rxjs"
 import { share, finalize } from "rxjs/operators"
 import { Subscribe } from "./"
 
-const wait = (ms: number) => new Promise(res => setTimeout(res, ms))
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 describe("Subscribe", () => {
   it("subscribes to the provided observable and remains subscribed until it's unmounted", async () => {

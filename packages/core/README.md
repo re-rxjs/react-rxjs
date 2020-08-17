@@ -1,6 +1,7 @@
 # @react-rxjs/core
 
 ## Installation
+
     npm install @react-rxjs/core
 
 ## API
@@ -8,34 +9,37 @@
 ### bind
 
 #### Observable overload
+
 ```ts
 const [useCounter, sharedCounter$] = bind(
   clicks$.pipe(
-    scan(prev => prev + 1, 0),
+    scan((prev) => prev + 1, 0),
     startWith(0),
-  )
+  ),
 )
 ```
+
 Accepts: An Observable.
 
 Returns `[1, 2]`
 
 1. A React Hook that yields the latest emitted value of the observable. If the
-Observable doesn't synchronously emit a value upon the first subscription, then
-the hook will leverage React Suspense while it's waiting for the first value.
+   Observable doesn't synchronously emit a value upon the first subscription, then
+   the hook will leverage React Suspense while it's waiting for the first value.
 
 2. A `sharedLatest` version of the observable. It can be used for composing other
-streams that depend on it. The shared subscription is closed as soon as there
-are no subscribers to that observable.
+   streams that depend on it. The shared subscription is closed as soon as there
+   are no subscribers to that observable.
 
 #### Factory Observables overload
+
 ```tsx
-const [useStory, getStory$] = bind(
-  (storyId: number) => getStoryWithUpdates$(storyId)
+const [useStory, getStory$] = bind((storyId: number) =>
+  getStoryWithUpdates$(storyId),
 )
 
-const Story: React.FC<{id: number}> = ({id}) => {
-  const story = useStory(id);
+const Story: React.FC<{ id: number }> = ({ id }) => {
+  const story = useStory(id)
 
   return (
     <article>
@@ -45,25 +49,27 @@ const Story: React.FC<{id: number}> = ({id}) => {
   )
 }
 ```
+
 Accepts: A factory function that returns an Observable.
 
 Returns `[1, 2]`
 
 1. A React Hook function with the same parameters as the factory function. This hook
-will yield the latest update from the observable returned from the factory function.
-If the Observable doesn't synchronously emit a value upon the first subscription, then
-the hook will leverage React Suspense while it's waiting for the first value.
+   will yield the latest update from the observable returned from the factory function.
+   If the Observable doesn't synchronously emit a value upon the first subscription, then
+   the hook will leverage React Suspense while it's waiting for the first value.
 
 2. A `sharedLatest` version of the observable returned by the factory function. It
-can be used for composing other streams that depend on it. The shared subscription
-is closed as soon as there are no subscribers to that observable.
+   can be used for composing other streams that depend on it. The shared subscription
+   is closed as soon as there are no subscribers to that observable.
 
 ### shareLatest
+
 ```ts
 const activePlanetName$ = planet$.pipe(
-  filter(planet => planet.isActive),
-  map(planet => planet.name),
-  shareLatest()
+  filter((planet) => planet.isActive),
+  map((planet) => planet.name),
+  shareLatest(),
 )
 ```
 
@@ -84,10 +90,7 @@ The enhanced observables returned from `bind` have been enhanced with this opera
 
 ```ts
 const story$ = selectedStoryId$.pipe(
-  switchMap(id => concat(
-    SUSPENSE,
-    getStory$(id)
-  ))
+  switchMap((id) => concat(SUSPENSE, getStory$(id))),
 )
 ```
 
@@ -109,9 +112,7 @@ A RxJS creation operator that prepends a `SUSPENSE` on the source observable.
 
 ```ts
 const story$ = selectedStoryId$.pipe(
-  switchMap(id => getStory$(id).pipe(
-    suspended()
-  ))
+  switchMap((id) => getStory$(id).pipe(suspended())),
 )
 ```
 
@@ -120,9 +121,7 @@ The pipeable version of `suspend`
 ### switchMapSuspended
 
 ```ts
-const story$ = selectedStoryId$.pipe(
-  switchMapSuspended(getStory$)
-)
+const story$ = selectedStoryId$.pipe(switchMapSuspended(getStory$))
 ```
 
 Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.

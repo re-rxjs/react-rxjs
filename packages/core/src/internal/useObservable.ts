@@ -34,7 +34,7 @@ export const useObservable = <O>(
       return dispatch({ type: ERROR, payload: e })
     }
     const subscription = source$.subscribe(
-      value => {
+      (value) => {
         if ((value as any) === SUSPENSE) {
           dispatch(source$.getValue())
         } else {
@@ -44,7 +44,7 @@ export const useObservable = <O>(
           })
         }
       },
-      error =>
+      (error) =>
         dispatch({
           type: ERROR,
           payload: error,

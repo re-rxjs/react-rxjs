@@ -11,11 +11,11 @@ const reactEnhancer = <T>(
   delayTime: number,
 ): BehaviorObservable<T> => {
   let finalizeLastUnsubscription = noop
-  const result = new Observable<T>(subscriber => {
+  const result = new Observable<T>((subscriber) => {
     let isActive = true
     let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe(
-      value => {
+      (value) => {
         if (
           isActive &&
           value !== (COMPLETE as any) &&
@@ -24,7 +24,7 @@ const reactEnhancer = <T>(
           subscriber.next((latestValue = value))
         }
       },
-      e => {
+      (e) => {
         subscriber.error(e)
       },
     )
@@ -71,7 +71,7 @@ const reactEnhancer = <T>(
         type: "s",
         payload: reactEnhancer(source$, delayTime)
           .pipe(
-            filter(value => value !== (SUSPENSE as any)),
+            filter((value) => value !== (SUSPENSE as any)),
             take(1),
             tap({
               next(v) {
@@ -86,7 +86,7 @@ const reactEnhancer = <T>(
             }),
           )
           .toPromise()
-          .catch(e => {
+          .catch((e) => {
             if (isSyncError) return
             throw e
           })

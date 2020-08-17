@@ -29,10 +29,10 @@ describe("groupInMap", () => {
 
       const result = source.pipe(
         groupInMap(
-          value => value.key,
-          value$ => value$.pipe(map(value => value.quantity)),
+          (value) => value.key,
+          (value$) => value$.pipe(map((value) => value.quantity)),
         ),
-        map(groups =>
+        map((groups) =>
           Array.from(groups.entries())
             .map(([key, value]) => `${key}:${value}`)
             .join(","),
@@ -69,10 +69,10 @@ describe("groupInMap", () => {
 
       const result = source.pipe(
         groupInMap(
-          value => value.key,
-          value$ => value$.pipe(map(value => value.quantity)),
+          (value) => value.key,
+          (value$) => value$.pipe(map((value) => value.quantity)),
         ),
-        map(groups =>
+        map((groups) =>
           Array.from(groups.entries())
             .map(([key, value]) => `${key}:${value}`)
             .join(","),
@@ -108,14 +108,14 @@ describe("groupInMap", () => {
 
       const result = source.pipe(
         groupInMap(
-          value => value.key,
-          value$ =>
+          (value) => value.key,
+          (value$) =>
             value$.pipe(
-              map(value => value.quantity),
-              takeWhile(v => v < 3),
+              map((value) => value.quantity),
+              takeWhile((v) => v < 3),
             ),
         ),
-        map(groups =>
+        map((groups) =>
           Array.from(groups.entries())
             .map(([key, value]) => `${key}:${value}`)
             .join(","),
