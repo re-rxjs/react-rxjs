@@ -1,5 +1,5 @@
 export { useSubscribe } from "./useSubscribe"
 export { Subscribe } from "./Subscribe"
-export { groupInMap } from "./groupInMap"
+export { collectValues } from "./collectValues"
 export { mergeWithKey } from "./mergeWithKey"
 export { split } from "./split"

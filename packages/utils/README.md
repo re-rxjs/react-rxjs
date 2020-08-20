@@ -33,20 +33,15 @@ Properties:
 
 Important: This Component doesn't trigger any updates.
 
-### groupInMap
+### collectValues
 
-A RxJS pipeable operator which groups all values by key and emits a Map that
-holds the latest value for each key
-
-Arguments:
-
-- `keyGetter`: A function that extracts the key for each item.
-- `projection`: Projection function for each group.
+A pipeable operator that collects all the GroupedObservables emitted by
+the source and emits a Map with the latest values of the inner observables.
 
 ```ts
 const votesByKey$ = new Subject<{ key: string }>()
 const counters$ = votesByKey$.pipe(
-  groupInMap(
+  split(
     (vote) => vote.key,
     (votes$) =>
       votes$.pipe(
@@ -55,6 +50,7 @@ const counters$ = votesByKey$.pipe(
         takeWhile((count) => count < 3),
       ),
   ),
+  collectValues(),
 )
 
 counters$.subscribe((counters) => {
