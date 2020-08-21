@@ -45,12 +45,12 @@ export function split<K, T, R>(
           subscriber.next(res)
         },
         (e) => {
-          groups.forEach((g) => g.error(e))
           subscriber.error(e)
+          groups.forEach((g) => g.error(e))
         },
         () => {
-          groups.forEach((g) => g.complete())
           subscriber.complete()
+          groups.forEach((g) => g.complete())
         },
       )
 
