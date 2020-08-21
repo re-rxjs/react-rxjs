@@ -1,6 +1,8 @@
 import { Observable, GroupedObservable, Subject, ReplaySubject } from "rxjs"
 import { shareReplay } from "rxjs/operators"
 
+const emptyError = {}
+
 export function split<K, T>(
   keySelector: (value: T) => K,
 ): (stream: Observable<T>) => Observable<GroupedObservable<K, T>>
@@ -18,6 +20,7 @@ export function split<K, T, R>(
     new Observable<GroupedObservable<K, R>>((subscriber) => {
       const groups: Map<K, Subject<T>> = new Map()
 
+      let error = emptyError
       const sub = stream.subscribe(
         (x) => {
           const key = keySelector(x)
@@ -45,18 +48,18 @@ export function split<K, T, R>(
           subscriber.next(res)
         },
         (e) => {
-          subscriber.error(e)
-          groups.forEach((g) => g.error(e))
+          subscriber.error((error = e))
         },
         () => {
           subscriber.complete()
-          groups.forEach((g) => g.complete())
         },
       )
 
       return () => {
         sub.unsubscribe()
-        groups.forEach((g) => g.complete())
+        groups.forEach(
+          error === emptyError ? (g) => g.complete() : (g) => g.error(error),
+        )
       }
     })
 }
