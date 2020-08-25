@@ -5,6 +5,9 @@
     "packages/*"
   ],
   "bundlewatch": {
+    "trackBranches": [
+      "main"
+    ],
     "files": [
       {
         "path": "./packages/core/dist/core.cjs.production.min.js",
@@ -21,9 +24,6 @@
         "maxSize": "4 kB",
         "compression": "none"
       }
-    ],
-    "trackBranches": [
-      "main"
     ]
   },
   "scripts": {
