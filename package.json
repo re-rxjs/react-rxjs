@@ -30,11 +30,9 @@
   },
   "scripts": {
     "build": "wsrun build",
-    "build:ci": "yarn build && bundlewatch",
     "lint": "wsrun lint",
     "format": "wsrun format",
-    "test:ci": "cross-env CI=true wsrun test:ci",
-    "ci": "yarn lint && yarn build:ci && yarn test:ci"
+    "test": "wsrun test"
   },
   "prettier": {
     "printWidth": 80,
@@ -42,7 +40,6 @@
     "trailingComma": "all"
   },
   "devDependencies": {
-    "bundlewatch": "^0.2.7",
     "cross-env": "^7.0.2",
     "eslint-plugin-prettier": "^3.1.4",
     "husky": "^4.2.5",
