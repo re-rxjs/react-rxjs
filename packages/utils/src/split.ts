@@ -3,10 +3,23 @@ import { shareReplay } from "rxjs/operators"
 
 const emptyError = {}
 
+/**
+ * Groups the items emitted by the source based on the keySelector function,
+ * emitting one Observable for each group.
+ *
+ * @param keySelector Function to define the group of an item
+ */
 export function split<K, T>(
   keySelector: (value: T) => K,
 ): (stream: Observable<T>) => Observable<GroupedObservable<K, T>>
 
+/**
+ * Groups the items emitted by the source based on the keySelector function,
+ * emitting one Observable for each group.
+ *
+ * @param keySelector Function to define the group of an item
+ * @param streamSelector Function to apply to each resulting group
+ */
 export function split<K, T, R>(
   keySelector: (value: T) => K,
   streamSelector: (grouped: Observable<T>, key: K) => Observable<R>,
