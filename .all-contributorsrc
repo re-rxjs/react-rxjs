@@ -69,6 +69,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "rikoe",
+      "name": "Riko Eksteen",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3295115?v=4",
+      "profile": "https://github.com/rikoe",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
