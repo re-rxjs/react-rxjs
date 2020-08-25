@@ -22,11 +22,9 @@
         "compression": "none"
       }
     ],
-    "ci": {
-      "trackBranches": [
-        "main"
-      ]
-    }
+    "trackBranches": [
+      "main"
+    ]
   },
   "scripts": {
     "build": "wsrun build",
