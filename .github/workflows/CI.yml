@@ -31,5 +31,5 @@ jobs:
     - name: Code Coverage
       uses: codecov/codecov-action@v1
       with:
-        files: ./packages/core/coverage/lcov.info, ./packages/utils/coverage/lcov.info, ./packages/dom/coverage/lcov.info
+        files: ./packages/core/coverage/lcov.info,./packages/utils/coverage/lcov.info,./packages/dom/coverage/lcov.info
         fail_ci_if_error: true
