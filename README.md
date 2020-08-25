@@ -1,7 +1,7 @@
 # <img height="86" width="86" alt="React-RxJS Logo" src="assets/logo-128.png" /> React-RxJS: React bindings for RxJS
 
 <!-- prettier-ignore-start -->
-[![Build Status](https://img.shields.io/travis/re-rxjs/react-rxjs.svg?style=flat-square)](https://travis-ci.org/re-rxjs/react-rxjs)
+[![Build Status](https://img.shields.io/github/workflow/status/re-rxjs/react-rxjs/CI?style=flat-square)](https://github.com/re-rxjs/react-rxjs/actions)
 [![codecov](https://img.shields.io/codecov/c/github/re-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/react-rxjs)
 [![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/react-rxjs)
 [![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/LICENSE)
