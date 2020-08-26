@@ -1,25 +1,16 @@
 import { GroupedObservable, Observable } from "rxjs"
 import {
-  takeUntil,
-  takeLast,
   startWith,
   endWith,
   ignoreElements,
-  publish,
-  mergeMap,
   map,
   distinctUntilChanged,
   skipWhile,
 } from "rxjs/operators"
-import { shareLatest } from "@react-rxjs/core"
-import { scanWithDefaultValue } from "./internal-utils"
+import { set, del, collector } from "./internal-utils"
 
 const defaultFilter = (source$: Observable<any>) =>
   source$.pipe(ignoreElements(), startWith(true), endWith(false))
-
-const set = "s" as const
-const del = "d" as const
-const complete = "c" as const
 
 /**
  * A pipeable operator that collects all the GroupedObservables emitted by
@@ -42,27 +33,7 @@ export const collect = <K, V>(
     : defaultFilter
 
   return (source$: Observable<GroupedObservable<K, V>>) =>
-    source$.pipe(
-      publish((multicasted$) =>
-        multicasted$.pipe(
-          mergeMap((o) => map((x) => ({ t: x ? set : del, o }))(enhancer(o))),
-          takeUntil(takeLast(1)(multicasted$)),
-        ),
-      ),
-      endWith({ t: complete }),
-      scanWithDefaultValue(
-        (acc, val) => {
-          if (val.t === set) {
-            acc.set(val.o.key, val.o)
-          } else if (val.t === del) {
-            acc.delete(val.o.key)
-          } else {
-            acc.clear()
-          }
-          return acc
-        },
-        () => new Map<K, GroupedObservable<K, V>>(),
-      ),
-      shareLatest(),
+    collector(source$, (o) =>
+      map((x) => ({ t: x ? set : del, k: o.key, v: o }))(enhancer(o)),
     )
 }
