@@ -97,31 +97,3 @@ const story$ = selectedStoryId$.pipe(
 This is a special symbol that can be emitted from our observables to let the react hook
 know that there is a value on its way, and that we want to leverage React Suspense
 while we are waiting for that value.
-
-### suspend
-
-```ts
-const story$ = selectedStoryId$.pipe(
-  switchMap(id => suspend(getStory$(id))
-)
-```
-
-A RxJS creation operator that prepends a `SUSPENSE` on the source observable.
-
-### suspended
-
-```ts
-const story$ = selectedStoryId$.pipe(
-  switchMap((id) => getStory$(id).pipe(suspended())),
-)
-```
-
-The pipeable version of `suspend`
-
-### switchMapSuspended
-
-```ts
-const story$ = selectedStoryId$.pipe(switchMapSuspended(getStory$))
-```
-
-Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.

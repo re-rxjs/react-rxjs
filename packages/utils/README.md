@@ -146,3 +146,31 @@ const counter$ = mergeWithKey({
   startWith(0),
 )
 ```
+
+### suspend
+
+```ts
+const story$ = selectedStoryId$.pipe(
+  switchMap(id => suspend(getStory$(id))
+)
+```
+
+A RxJS creation operator that prepends a `SUSPENSE` on the source observable.
+
+### suspended
+
+```ts
+const story$ = selectedStoryId$.pipe(
+  switchMap((id) => getStory$(id).pipe(suspended())),
+)
+```
+
+The pipeable version of `suspend`
+
+### switchMapSuspended
+
+```ts
+const story$ = selectedStoryId$.pipe(switchMapSuspended(getStory$))
+```
+
+Like `switchMap` but applying a `startWith(SUSPENSE)` to the inner observable.

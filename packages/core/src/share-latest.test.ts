@@ -1,6 +1,6 @@
 import { TestScheduler } from "rxjs/testing"
 import { from, merge, defer } from "rxjs"
-import { shareLatest } from "../"
+import { shareLatest } from "./"
 import { withLatestFrom, startWith, map } from "rxjs/operators"
 
 const scheduler = () =>
