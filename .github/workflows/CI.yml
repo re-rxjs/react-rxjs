@@ -21,6 +21,8 @@ jobs:
 
     - name: Build & Bundlewatch
       uses: jackyef/bundlewatch-gh-action@master
+      env:
+        CI_BRANCH_BASE: main
       with:
         build-script: yarn build
         bundlewatch-github-token: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
