@@ -11,6 +11,7 @@ import {
   distinctUntilChanged,
   skipWhile,
 } from "rxjs/operators"
+import { shareLatest } from "@react-rxjs/core"
 import { scanWithDefaultValue } from "./internal-utils"
 
 const defaultFilter = (source$: Observable<any>) =>
@@ -62,5 +63,6 @@ export const collect = <K, V>(
         },
         () => new Map<K, GroupedObservable<K, V>>(),
       ),
+      shareLatest(),
     )
 }

@@ -7,6 +7,7 @@ import {
   takeLast,
   takeUntil,
 } from "rxjs/operators"
+import { shareLatest } from "@react-rxjs/core"
 import { scanWithDefaultValue } from "./internal-utils"
 
 /**
@@ -42,4 +43,5 @@ export const collectValues = <K, V>() => (
       },
       () => new Map<K, V>(),
     ),
+    shareLatest(),
   )
