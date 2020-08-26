@@ -27,7 +27,7 @@
     ]
   },
   "scripts": {
-    "build": "wsrun build",
+    "build": "wsrun -t build",
     "lint": "wsrun lint",
     "format": "wsrun format",
     "test": "wsrun test"
