@@ -1,20 +1,21 @@
 import { TestScheduler } from "rxjs/testing"
-import { suspend, SUSPENSE } from "../"
+import { SUSPENSE } from "@react-rxjs/core"
+import { suspended } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected)
   })
 
-describe("operators/suspend", () => {
-  it("prepends the source stream with SUSPENSE", () => {
+describe("operators/suspended", () => {
+  it("prepends the stream with SUSPENSE", () => {
     scheduler().run(({ expectObservable, cold }) => {
       const source = cold("----a")
       const expected = "   s---a"
 
-      const suspended = suspend(source)
+      const result$ = source.pipe(suspended())
 
-      expectObservable(suspended).toBe(expected, {
+      expectObservable(result$).toBe(expected, {
         s: SUSPENSE,
         a: "a",
       })

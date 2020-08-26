@@ -1,6 +1,6 @@
 import { Observable } from "rxjs"
-import internalShareLatest from "../internal/share-latest"
-import { takeUntilComplete } from "../internal/take-until-complete"
+import internalShareLatest from "./internal/share-latest"
+import { takeUntilComplete } from "./internal/take-until-complete"
 
 /**
  * A RxJS pipeable operator which shares and replays the latest emitted value.
