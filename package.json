@@ -5,9 +5,11 @@
     "packages/*"
   ],
   "bundlewatch": {
-    "trackBranches": [
-      "main"
-    ],
+    "ci": {
+      "trackBranches": [
+        "main"
+      ]
+    },
     "files": [
       {
         "path": "./packages/core/dist/core.cjs.production.min.js",
