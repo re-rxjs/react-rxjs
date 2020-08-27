@@ -20,7 +20,7 @@ describe("useSubscribe", () => {
 
     expect(nSubscriptions).toBe(0)
 
-    const { unmount } = renderHook(() => useSubscribe(source$))
+    const { unmount } = renderHook(() => useSubscribe(source$, 201))
 
     expect(nSubscriptions).toBe(1)
 
@@ -29,28 +29,6 @@ describe("useSubscribe", () => {
 
     await wait(250)
 
-    expect(nSubscriptions).toBe(0)
-  })
-
-  it("unsubscribes synchronously if the graceTime is zero", async () => {
-    let nSubscriptions = 0
-    const source$ = defer(() => {
-      nSubscriptions++
-      return new Subject()
-    }).pipe(
-      finalize(() => {
-        nSubscriptions--
-      }),
-      share(),
-    )
-
-    expect(nSubscriptions).toBe(0)
-
-    const { unmount } = renderHook(() => useSubscribe(source$, 0))
-
-    expect(nSubscriptions).toBe(1)
-
-    unmount()
     expect(nSubscriptions).toBe(0)
   })
 })

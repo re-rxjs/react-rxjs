@@ -6,33 +6,6 @@
 
 ## API
 
-### useSubscribe
-
-A React hook that creates a subscription to the provided observable once the
-component mounts and it unsubscribes when the component unmounts.
-
-Arguments:
-
-- `source$`: Source observable that the hook will subscribe to.
-- `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
-  unsubscribing from the source observable after it unmounts (default = 200).
-
-Important: This hook doesn't trigger any updates.
-
-### Subscribe
-
-A React Component that creates a subscription to the provided observable once
-the component mounts and it unsubscribes from it when the component unmounts.
-
-Properties:
-
-- `source$`: Source observable that the Component will subscribe to.
-- `graceTime`: an optional property that describes the amount of time in ms
-  that the Component should wait before unsubscribing from the source observable
-  after it unmounts (default = 200).
-
-Important: This Component doesn't trigger any updates.
-
 ### split
 
 A RxJS operator that groups the items emitted by the source based on the
