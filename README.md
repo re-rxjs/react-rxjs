@@ -29,6 +29,8 @@
       - [Factory of Observables overload](#factory-of-observables-overload)
     - [shareLatest](#sharelatest)
     - [SUSPENSE](#suspense)
+    - [useSubscribe](#usesubscribe)
+    - [Subscribe](#subscribe)
 - [Examples](#examples)
 
 ## Installation
@@ -128,6 +130,33 @@ const story$ = selectedStoryId$.pipe(
 This is a special symbol that can be emitted from our observables to let the react hook
 know that there is a value on its way, and that we want to leverage React Suspense
 while we are waiting for that value.
+
+### useSubscribe
+
+A React hook that creates a subscription to the provided observable once the
+component mounts and it unsubscribes when the component unmounts.
+
+Arguments:
+
+- `source$`: Source observable that the hook will subscribe to.
+- `unsubscribeGraceTime`: Amount of time in ms that the hook should wait before
+  unsubscribing from the source observable after it unmounts (default = 200).
+
+Important: This hook doesn't trigger any updates.
+
+### Subscribe
+
+A React Component that creates a subscription to the provided observable once
+the component mounts and it unsubscribes from it when the component unmounts.
+
+Properties:
+
+- `source$`: Source observable that the Component will subscribe to.
+- `graceTime`: an optional property that describes the amount of time in ms
+  that the Component should wait before unsubscribing from the source observable
+  after it unmounts (default = 200).
+
+Important: This Component doesn't trigger any updates.
 
 ## Examples
 

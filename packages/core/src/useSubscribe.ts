@@ -19,12 +19,11 @@ export const useSubscribe = <T>(
   useEffect(() => {
     const subscription = source$.subscribe()
     return () => {
-      if (unsubscribeGraceTime === 0) {
-        return subscription.unsubscribe()
-      }
-      setTimeout(() => {
-        subscription.unsubscribe()
-      }, unsubscribeGraceTime)
+      /* istanbul ignore else */
+      if (unsubscribeGraceTime !== Infinity)
+        setTimeout(() => {
+          subscription.unsubscribe()
+        }, unsubscribeGraceTime)
     }
   }, [source$, unsubscribeGraceTime])
 }

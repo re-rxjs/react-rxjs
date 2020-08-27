@@ -34,30 +34,4 @@ describe("Subscribe", () => {
 
     expect(nSubscriptions).toBe(0)
   })
-
-  it("unsubscribes synchronously if the graceTime is zero", async () => {
-    let nSubscriptions = 0
-    const source$ = defer(() => {
-      nSubscriptions++
-      return new Subject()
-    }).pipe(
-      finalize(() => {
-        nSubscriptions--
-      }),
-      share(),
-    )
-
-    const TestSubscribe: React.FC = () => (
-      <Subscribe source$={source$} graceTime={0} />
-    )
-
-    expect(nSubscriptions).toBe(0)
-
-    const { unmount } = render(<TestSubscribe />)
-
-    expect(nSubscriptions).toBe(1)
-
-    unmount()
-    expect(nSubscriptions).toBe(0)
-  })
 })
