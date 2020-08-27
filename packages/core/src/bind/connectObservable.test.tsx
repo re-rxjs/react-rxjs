@@ -14,6 +14,7 @@ import {
   Subject,
   throwError,
   Observable,
+  concat,
 } from "rxjs"
 import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
 import { bind, SUSPENSE } from "../"
@@ -469,5 +470,43 @@ describe("connectObservable", () => {
     })
 
     expect(errorCallback).not.toHaveBeenCalled()
+  })
+
+  it("handles combined Suspended components that resolve at different times", async () => {
+    let nSideEffects = 0
+    const fast$ = defer(() => {
+      nSideEffects++
+      return of("fast")
+    }).pipe(delay(5))
+    const slow$ = defer(() => {
+      nSideEffects++
+      return of("slow")
+    }).pipe(delay(2500))
+
+    const [useFast] = bind(concat(of(SUSPENSE), fast$))
+    const [useSlow] = bind(concat(of(SUSPENSE), slow$))
+
+    const Fast: React.FC = () => <>{useFast()}</>
+    const Slow: React.FC = () => <>{useSlow()}</>
+
+    expect(nSideEffects).toBe(0)
+
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <Slow />
+        <Fast />
+      </Suspense>,
+    )
+
+    expect(screen.queryByText("Loading...")).not.toBeNull()
+
+    expect(nSideEffects).toBe(2)
+
+    await componentAct(async () => {
+      await wait(2600)
+    })
+
+    expect(screen.queryByText("Loading...")).toBeNull()
+    expect(nSideEffects).toBe(2)
   })
 })
