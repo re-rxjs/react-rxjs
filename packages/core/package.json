@@ -30,7 +30,10 @@
     "trailingComma": "all"
   },
   "name": "@react-rxjs/core",
-  "author": "Josep M Sobrepere",
+  "authors": [
+    "Josep M Sobrepere (https://github.com/josepot)",
+    "Victor Oliva (https://github.com/voliva)"
+  ],
   "devDependencies": {
     "@testing-library/react": "^10.4.9",
     "@testing-library/react-hooks": "^3.4.1",
