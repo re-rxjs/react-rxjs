@@ -52,19 +52,16 @@ const shareLatest = <T>(
       innerSub.unsubscribe()
       if (refCount === 0) {
         currentValue = EMPTY_VALUE
-        if (subject !== undefined) {
-          teardown()
-        } else {
-          setTimeout(teardown, 200)
-        }
-        subject = undefined
         if (subscription) {
           subscription.unsubscribe()
         }
+        teardown()
+        subject = undefined
         subscription = undefined
       }
     }
   }) as BehaviorObservable<T>
+
   result.getValue = () => {
     if (currentValue === EMPTY_VALUE || currentValue === (SUSPENSE as any)) {
       throw currentValue
