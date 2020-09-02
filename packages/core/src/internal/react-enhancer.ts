@@ -1,17 +1,17 @@
-import { Observable, of, Subscription } from "rxjs"
-import { delay, take, filter, tap } from "rxjs/operators"
+import { Observable } from "rxjs"
+import { take, filter, tap } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
-const reactEnhancer = <T>(
-  source$: Observable<T>,
-  delayTime: number,
-): BehaviorObservable<T> => {
+const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
+  let refCount = 0
   let finalizeLastUnsubscription = noop
+
   const result = new Observable<T>((subscriber) => {
+    refCount++
     let isActive = true
     let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe(
@@ -30,19 +30,18 @@ const reactEnhancer = <T>(
     )
     finalizeLastUnsubscription()
     return () => {
-      finalizeLastUnsubscription()
+      refCount--
+      if (refCount > 0 || subscription.closed) {
+        return subscription.unsubscribe()
+      }
+
       isActive = false
-      let timeoutSub: Subscription | undefined =
-        delayTime < Infinity
-          ? of(null)
-              .pipe(delay(delayTime))
-              .subscribe(() => {
-                timeoutSub = undefined
-                subscription.unsubscribe()
-              })
-          : undefined
+      const timeoutToken = setTimeout(() => {
+        finalizeLastUnsubscription()
+      }, 250)
+
       finalizeLastUnsubscription = () => {
-        timeoutSub?.unsubscribe()
+        clearTimeout(timeoutToken)
         subscription.unsubscribe()
         finalizeLastUnsubscription = noop
       }
@@ -53,7 +52,12 @@ const reactEnhancer = <T>(
   let error = EMPTY_VALUE
   let valueResult: { type: "v"; payload: any } | undefined
   const getValue = () => {
+    let timeoutToken
     if (error !== EMPTY_VALUE) {
+      clearTimeout(timeoutToken)
+      timeoutToken = setTimeout(() => {
+        error = EMPTY_VALUE
+      }, 50)
       throw error
     }
 
@@ -69,7 +73,7 @@ const reactEnhancer = <T>(
       let isSyncError = false
       promise = {
         type: "s",
-        payload: reactEnhancer(source$, delayTime)
+        payload: result
           .pipe(
             filter((value) => value !== (SUSPENSE as any)),
             take(1),
@@ -79,9 +83,9 @@ const reactEnhancer = <T>(
               },
               error(e) {
                 error = e
-                setTimeout(() => {
+                timeoutToken = setTimeout(() => {
                   error = EMPTY_VALUE
-                }, 200)
+                }, 50)
               },
             }),
           )
@@ -108,7 +112,6 @@ const reactEnhancer = <T>(
       return promise
     }
   }
-
   result.getValue = getValue as () => T | Promise<T>
   return result
 }

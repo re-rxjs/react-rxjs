@@ -36,7 +36,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@react-rxjs/core": "0.2.0",
+    "@react-rxjs/core": "0.3.0",
     "@testing-library/react": "^10.4.9",
     "@testing-library/react-hooks": "^3.4.1",
     "@types/jest": "^26.0.10",

@@ -190,9 +190,8 @@ describe("connectFactoryObservable", () => {
         return from([1, 2, 3, 4, 5])
       })
 
-      const [useLatestNumber] = bind(
-        (id: number) => concat(observable$, of(id)),
-        100,
+      const [useLatestNumber] = bind((id: number) =>
+        concat(observable$, of(id)),
       )
       const { unmount } = renderHook(() => useLatestNumber(6))
       const { unmount: unmount2 } = renderHook(() => useLatestNumber(6))
@@ -202,12 +201,13 @@ describe("connectFactoryObservable", () => {
       unmount2()
       unmount3()
 
-      await wait(90)
+      await wait(230)
       const { unmount: unmount4 } = renderHook(() => useLatestNumber(6))
       expect(nInitCount).toBe(1)
-      unmount4()
 
-      await wait(110)
+      unmount4()
+      await wait(270)
+
       renderHook(() => useLatestNumber(6))
       expect(nInitCount).toBe(2)
     })
@@ -394,7 +394,7 @@ describe("connectFactoryObservable", () => {
       const [useLatestNumber, getShared] = bind((_: number) => {
         diff++
         return from([1, 2, 3, 4].map((val) => val + diff))
-      }, 0)
+      })
 
       let latestValue1: number = 0
       let nUpdates = 0
@@ -429,7 +429,7 @@ describe("connectFactoryObservable", () => {
       expect(sub3.closed).toBe(true)
 
       unmount()
-      await wait(10)
+      await wait(260)
 
       let latestValue4: number = 0
       const sub4 = getShared(0).subscribe((x) => {
