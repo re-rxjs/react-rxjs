@@ -86,7 +86,7 @@ describe("connectObservable", () => {
 
   it("updates more than one component", async () => {
     const value = new Subject<number>()
-    const [useValue] = bind(value.pipe(startWith(0)), 50)
+    const [useValue] = bind(value.pipe(startWith(0)))
     const { result: result1, unmount: unmount1 } = renderHook(() => useValue())
     const { result: result2, unmount: unmount2 } = renderHook(() => useValue())
     const { result: result3, unmount: unmount3 } = renderHook(() => useValue())
@@ -112,7 +112,7 @@ describe("connectObservable", () => {
     unmount4()
 
     await act(async () => {
-      await wait(60)
+      await wait(260)
     })
 
     const { result: result2_1 } = renderHook(() => useValue())
@@ -164,7 +164,7 @@ describe("connectObservable", () => {
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = bind(observable$, 100)
+    const [useLatestNumber] = bind(observable$)
     const { unmount } = renderHook(() => useLatestNumber())
     const { unmount: unmount2 } = renderHook(() => useLatestNumber())
     const { unmount: unmount3 } = renderHook(() => useLatestNumber())
@@ -173,37 +173,14 @@ describe("connectObservable", () => {
     unmount2()
     unmount3()
 
-    await wait(85)
+    await wait(230)
     const { unmount: unmount4 } = renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(1)
     unmount4()
 
-    await wait(125)
+    await wait(270)
     renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(2)
-  })
-
-  it("it never closes the last subscription when the grace-period is Infinity", async () => {
-    let nInitCount = 0
-    const observable$ = defer(() => {
-      nInitCount += 1
-      return from([1, 2, 3, 4, 5])
-    })
-
-    const [useLatestNumber] = bind(observable$, Infinity)
-    const { unmount } = renderHook(() => useLatestNumber())
-    const { unmount: unmount2 } = renderHook(() => useLatestNumber())
-    const { unmount: unmount3 } = renderHook(() => useLatestNumber())
-    const { unmount: unmount4 } = renderHook(() => useLatestNumber())
-    expect(nInitCount).toBe(1)
-    unmount()
-    unmount2()
-    unmount3()
-    unmount4()
-
-    await wait(300)
-    renderHook(() => useLatestNumber())
-    expect(nInitCount).toBe(1)
   })
 
   it("suspends the component when the observable emits SUSPENSE", async () => {
