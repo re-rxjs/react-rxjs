@@ -14,23 +14,14 @@ import { takeUntilComplete } from "../internal/take-until-complete"
  * there are no subscribers to that observable.
  *
  * @param observable Source observable to be used by the hook.
- * @param unsubscribeGraceTime (= 200): Amount of time in ms that the shared
- * observable should wait before unsubscribing from the source observable when
- * there are no new subscribers.
  *
  * @remarks If the Observable doesn't synchronously emit a value upon the first
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export default function connectObservable<T>(
-  observable: Observable<T>,
-  unsubscribeGraceTime: number,
-) {
+export default function connectObservable<T>(observable: Observable<T>) {
   const sharedObservable$ = shareLatest<T>(observable)
-  const reactObservable$ = reactEnhancer(
-    sharedObservable$,
-    unsubscribeGraceTime,
-  )
+  const reactObservable$ = reactEnhancer(sharedObservable$)
   const outputObservable$ = takeUntilComplete(sharedObservable$)
   const useStaticObservable = () => useObservable(reactObservable$)
   return [useStaticObservable, outputObservable$] as const

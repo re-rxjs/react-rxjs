@@ -7,17 +7,15 @@ import { render, screen } from "@testing-library/react"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-const [useLatestNumber] = bind(
-  (id: string, batched: boolean) =>
-    (id === "error"
-      ? throwError("controlled error")
-      : from([1, 2, 3, 4, 5])
-    ).pipe(
-      delay(5),
-      batched ? batchUpdates() : (x: Observable<number>) => x,
-      startWith(0),
-    ),
-  0,
+const [useLatestNumber] = bind((id: string, batched: boolean) =>
+  (id === "error"
+    ? throwError("controlled error")
+    : from([1, 2, 3, 4, 5])
+  ).pipe(
+    delay(5),
+    batched ? batchUpdates() : (x: Observable<number>) => x,
+    startWith(0),
+  ),
 )
 
 class TestErrorBoundary extends Component<
