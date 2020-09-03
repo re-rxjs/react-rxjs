@@ -1,4 +1,10 @@
-import { Observable, GroupedObservable, Subject, ReplaySubject } from "rxjs"
+import {
+  Observable,
+  GroupedObservable,
+  Subject,
+  ReplaySubject,
+  OperatorFunction,
+} from "rxjs"
 import { shareReplay } from "rxjs/operators"
 
 const emptyError = {}
@@ -9,9 +15,9 @@ const emptyError = {}
  *
  * @param keySelector Function to define the group of an item
  */
-export function split<K, T>(
+export function split<T, K>(
   keySelector: (value: T) => K,
-): (stream: Observable<T>) => Observable<GroupedObservable<K, T>>
+): OperatorFunction<T, GroupedObservable<K, T>>
 
 /**
  * Groups the items emitted by the source based on the keySelector function,
@@ -20,15 +26,15 @@ export function split<K, T>(
  * @param keySelector Function to define the group of an item
  * @param streamSelector Function to apply to each resulting group
  */
-export function split<K, T, R>(
+export function split<T, K, R>(
   keySelector: (value: T) => K,
   streamSelector: (grouped: Observable<T>, key: K) => Observable<R>,
-): (stream: Observable<T>) => Observable<GroupedObservable<K, R>>
+): OperatorFunction<T, GroupedObservable<K, R>>
 
-export function split<K, T, R>(
+export function split<T, K, R>(
   keySelector: (value: T) => K,
   streamSelector?: (grouped: Observable<T>, key: K) => Observable<R>,
-) {
+): OperatorFunction<T, GroupedObservable<K, R>> {
   return (stream: Observable<T>) =>
     new Observable<GroupedObservable<K, R>>((subscriber) => {
       const groups: Map<K, Subject<T>> = new Map()

@@ -1,4 +1,4 @@
-import { GroupedObservable, Observable } from "rxjs"
+import { GroupedObservable, Observable, OperatorFunction } from "rxjs"
 import {
   startWith,
   endWith,
@@ -22,7 +22,10 @@ const defaultFilter = (source$: Observable<any>) =>
  */
 export const collect = <K, V>(
   filter?: (source$: GroupedObservable<K, V>) => Observable<boolean>,
-) => {
+): OperatorFunction<
+  GroupedObservable<K, V>,
+  Map<K, GroupedObservable<K, V>>
+> => {
   const enhancer = filter
     ? (source$: GroupedObservable<K, V>) =>
         filter(source$).pipe(

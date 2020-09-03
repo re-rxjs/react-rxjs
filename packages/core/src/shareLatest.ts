@@ -1,4 +1,4 @@
-import { Observable } from "rxjs"
+import { Observable, MonoTypeOperatorFunction } from "rxjs"
 import internalShareLatest from "./internal/share-latest"
 import { takeUntilComplete } from "./internal/take-until-complete"
 
@@ -16,5 +16,6 @@ import { takeUntilComplete } from "./internal/take-until-complete"
  * @remarks The enhanced observables returned from `connectObservable` and
  * `connectFactoryObservable` have been enhanced with this operator.
  */
-export const shareLatest = <T>() => (source$: Observable<T>) =>
-  takeUntilComplete(internalShareLatest(source$))
+export const shareLatest = <T>(): MonoTypeOperatorFunction<T> => (
+  source$: Observable<T>,
+) => takeUntilComplete(internalShareLatest(source$))
