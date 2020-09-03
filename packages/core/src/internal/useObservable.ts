@@ -10,15 +10,10 @@ type Action = "e" | "v" | "s"
 const reducer = (
   current: { type: Action; payload: any },
   action: { type: Action; payload: any },
-) => {
-  if (action.type === ERROR) {
-    throw action.payload
-  }
-  return Object.is(current.payload, action.payload) &&
-    current.type === action.type
+) =>
+  Object.is(current.payload, action.payload) && current.type === action.type
     ? current
     : action
-}
 
 const init = (source$: BehaviorObservable<any>) => source$.getValue()
 
@@ -26,13 +21,10 @@ export const useObservable = <O>(
   source$: BehaviorObservable<O>,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, dispatch] = useReducer(reducer, source$, init)
+  if (state.type === ERROR) throw state.payload
 
   useEffect(() => {
-    try {
-      dispatch(source$.getValue())
-    } catch (e) {
-      return dispatch({ type: ERROR, payload: e })
-    }
+    dispatch(source$.getValue())
     const subscription = source$.subscribe(
       (value) => {
         if ((value as any) === SUSPENSE) {
