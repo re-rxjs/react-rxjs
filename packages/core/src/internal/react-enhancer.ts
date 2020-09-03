@@ -50,7 +50,6 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
 
   let promise: any
   let error = EMPTY_VALUE
-  let valueResult: { type: "v"; payload: any } | undefined
   const getValue = () => {
     let timeoutToken
     if (error !== EMPTY_VALUE) {
@@ -62,10 +61,10 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
     }
 
     try {
-      const latest = (source$ as BehaviorObservable<T>).getValue()
-      return valueResult && Object.is(valueResult.payload, latest)
-        ? valueResult
-        : (valueResult = { type: "v", payload: latest })
+      return {
+        type: "v",
+        payload: (source$ as BehaviorObservable<T>).getValue(),
+      }
     } catch (e) {
       if (promise) return promise
 
@@ -74,11 +73,11 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
         type: "s",
         payload: result
           .pipe(
-            filter((value) => value !== (SUSPENSE as any)),
+            filter((x) => x !== (SUSPENSE as any)),
             take(1),
             tap({
               next(v) {
-                value = v
+                value = { type: "v", payload: v }
               },
               error(e) {
                 error = { type: "e", payload: e }
@@ -92,12 +91,11 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
           .catch(() => {})
           .finally(() => {
             promise = undefined
-            valueResult = undefined
           }),
       }
 
       if (value !== EMPTY_VALUE) {
-        return (valueResult = { type: "v", payload: value })
+        return value
       }
 
       if (error !== EMPTY_VALUE) {
