@@ -58,7 +58,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
       timeoutToken = setTimeout(() => {
         error = EMPTY_VALUE
       }, 50)
-      throw error
+      return error
     }
 
     try {
@@ -70,7 +70,6 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
       if (promise) return promise
 
       let value = EMPTY_VALUE
-      let isSyncError = false
       promise = {
         type: "s",
         payload: result
@@ -82,7 +81,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
                 value = v
               },
               error(e) {
-                error = e
+                error = { type: "e", payload: e }
                 timeoutToken = setTimeout(() => {
                   error = EMPTY_VALUE
                 }, 50)
@@ -90,10 +89,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
             }),
           )
           .toPromise()
-          .catch((e) => {
-            if (isSyncError) return
-            throw e
-          })
+          .catch(() => {})
           .finally(() => {
             promise = undefined
             valueResult = undefined
@@ -105,8 +101,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
       }
 
       if (error !== EMPTY_VALUE) {
-        isSyncError = true
-        throw error
+        return error
       }
 
       return promise
