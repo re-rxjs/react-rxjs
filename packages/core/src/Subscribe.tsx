@@ -7,15 +7,12 @@ import { Observable } from "rxjs"
  * the component mounts and it unsubscribes when the component unmounts.
  *
  * @param source$ Source observable that the Component will subscribe to.
- * @param graceTime (= 200): Amount of time in ms that the Component should wait
- * before unsubscribing from the source observable after it unmounts.
  *
  * @remarks This Component doesn't trigger any updates.
  */
 export const Subscribe: React.FC<{
   source$: Observable<any>
-  graceTime?: number
-}> = ({ source$, graceTime, children }) => {
-  useSubscribe(source$, graceTime)
+}> = ({ source$, children }) => {
+  useSubscribe(source$)
   return <>{children}</>
 }

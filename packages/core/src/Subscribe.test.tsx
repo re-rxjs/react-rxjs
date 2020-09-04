@@ -4,10 +4,8 @@ import { defer, Subject } from "rxjs"
 import { share, finalize } from "rxjs/operators"
 import { Subscribe } from "./"
 
-const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
-
 describe("Subscribe", () => {
-  it("subscribes to the provided observable and remains subscribed until it's unmounted", async () => {
+  it("subscribes to the provided observable and remains subscribed until it's unmounted", () => {
     let nSubscriptions = 0
     const source$ = defer(() => {
       nSubscriptions++
@@ -28,10 +26,6 @@ describe("Subscribe", () => {
     expect(nSubscriptions).toBe(1)
 
     unmount()
-    expect(nSubscriptions).toBe(1)
-
-    await wait(250)
-
     expect(nSubscriptions).toBe(0)
   })
 })
