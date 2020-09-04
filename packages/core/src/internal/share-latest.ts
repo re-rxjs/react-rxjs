@@ -1,8 +1,7 @@
-import { Observable, Subscription, Subject } from "rxjs"
+import { Observable, Subscription, Subject, noop } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
-import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
 const shareLatest = <T>(
