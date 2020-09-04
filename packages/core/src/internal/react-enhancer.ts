@@ -1,9 +1,8 @@
-import { Observable } from "rxjs"
+import { Observable, noop } from "rxjs"
 import { take, filter, tap } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
-import { noop } from "./noop"
 import { COMPLETE } from "./COMPLETE"
 
 const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
