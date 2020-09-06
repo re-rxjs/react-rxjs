@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import { useEffect } from "react"
+import useLayoutEffect from "./useLayoutEffect"
 
 /**
  * A React hook that creates a subscription to the provided observable once the
@@ -11,7 +11,7 @@ import { useEffect } from "react"
  * @remarks This hook doesn't trigger any updates.
  */
 export const useSubscribe = <T>(source$: Observable<T>) => {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const subscription = source$.subscribe()
     return () => subscription.unsubscribe()
   }, [source$])
