@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Observable } from "rxjs"
+import useLayoutEffect from "./useLayoutEffect"
 
 /**
  * A React Component that creates a subscription to the provided observable once
@@ -15,7 +16,7 @@ export const Subscribe: React.FC<{
   fallback?: null | JSX.Element
 }> = ({ source$, children, fallback }) => {
   const [mounted, setMounted] = useState(0)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const subscription = source$.subscribe()
     setMounted(1)
     return () => subscription.unsubscribe()
