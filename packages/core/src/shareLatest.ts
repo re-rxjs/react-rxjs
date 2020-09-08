@@ -1,6 +1,5 @@
 import { Observable, MonoTypeOperatorFunction } from "rxjs"
 import internalShareLatest from "./internal/share-latest"
-import { takeUntilComplete } from "./internal/take-until-complete"
 
 /**
  * A RxJS pipeable operator which shares and replays the latest emitted value.
@@ -18,4 +17,4 @@ import { takeUntilComplete } from "./internal/take-until-complete"
  */
 export const shareLatest = <T>(): MonoTypeOperatorFunction<T> => (
   source$: Observable<T>,
-) => takeUntilComplete(internalShareLatest(source$))
+) => internalShareLatest(source$)

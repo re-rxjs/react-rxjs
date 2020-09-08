@@ -4,7 +4,6 @@ import reactEnhancer from "../internal/react-enhancer"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { useObservable } from "../internal/useObservable"
 import { SUSPENSE } from "../SUSPENSE"
-import { takeUntilComplete } from "../internal/take-until-complete"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -46,14 +45,18 @@ export default function connectFactoryObservable<A extends [], O>(
       return cachedVal
     }
 
-    const sharedObservable$ = shareLatest(getObservable(...input), () => {
-      cache.delete(keys)
-    })
+    const sharedObservable$ = shareLatest(
+      getObservable(...input),
+      false,
+      () => {
+        cache.delete(keys)
+      },
+    )
 
     const reactObservable$ = reactEnhancer(sharedObservable$)
 
     const result: [Observable<O>, BehaviorObservable<O>] = [
-      takeUntilComplete(sharedObservable$),
+      sharedObservable$,
       reactObservable$,
     ]
 

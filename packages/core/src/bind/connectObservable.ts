@@ -2,7 +2,6 @@ import { Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import reactEnhancer from "../internal/react-enhancer"
 import { useObservable } from "../internal/useObservable"
-import { takeUntilComplete } from "../internal/take-until-complete"
 
 /**
  * Accepts: An Observable.
@@ -20,9 +19,8 @@ import { takeUntilComplete } from "../internal/take-until-complete"
  * for the first value.
  */
 export default function connectObservable<T>(observable: Observable<T>) {
-  const sharedObservable$ = shareLatest<T>(observable)
+  const sharedObservable$ = shareLatest<T>(observable, false)
   const reactObservable$ = reactEnhancer(sharedObservable$)
-  const outputObservable$ = takeUntilComplete(sharedObservable$)
   const useStaticObservable = () => useObservable(reactObservable$)
-  return [useStaticObservable, outputObservable$] as const
+  return [useStaticObservable, sharedObservable$] as const
 }
