@@ -389,7 +389,7 @@ describe("connectFactoryObservable", () => {
   })
 
   describe("observable", () => {
-    it("it completes when the source observable completes, regardless of mounted componentes being subscribed to the source", async () => {
+    it("it does not complete when the source observable completes", async () => {
       let diff = -1
       const [useLatestNumber, getShared] = bind((_: number) => {
         diff++
@@ -404,7 +404,8 @@ describe("connectFactoryObservable", () => {
       })
       expect(latestValue1).toBe(4)
       expect(nUpdates).toBe(4)
-      expect(sub1.closed).toBe(true)
+      expect(sub1.closed).toBe(false)
+      sub1.unsubscribe()
 
       const { result, unmount } = renderHook(() => useLatestNumber(0))
       expect(result.current).toBe(5)
@@ -417,7 +418,8 @@ describe("connectFactoryObservable", () => {
       })
       expect(latestValue2).toBe(5)
       expect(nUpdates).toBe(5)
-      expect(sub2.closed).toBe(true)
+      expect(sub2.closed).toBe(false)
+      sub2.unsubscribe()
 
       let latestValue3: number = 0
       const sub3 = getShared(0).subscribe((x) => {
@@ -426,7 +428,8 @@ describe("connectFactoryObservable", () => {
       })
       expect(latestValue3).toBe(5)
       expect(nUpdates).toBe(6)
-      expect(sub3.closed).toBe(true)
+      expect(sub3.closed).toBe(false)
+      sub3.unsubscribe()
 
       unmount()
       await wait(260)
@@ -438,7 +441,8 @@ describe("connectFactoryObservable", () => {
       })
       expect(latestValue4).toBe(6)
       expect(nUpdates).toBe(10)
-      expect(sub4.closed).toBe(true)
+      expect(sub4.closed).toBe(false)
+      sub4.unsubscribe()
     })
   })
 })

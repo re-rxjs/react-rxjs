@@ -2,10 +2,10 @@ import { Observable, Subscription, Subject, noop } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
-import { COMPLETE } from "./COMPLETE"
 
 const shareLatest = <T>(
   source$: Observable<T>,
+  shouldComplete = true,
   teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | undefined
@@ -32,7 +32,7 @@ const shareLatest = <T>(
         },
         () => {
           subscription = undefined
-          subject!.next(COMPLETE as any)
+          shouldComplete && subject!.complete()
         },
       )
       if (subscription.closed) subscription = undefined
@@ -40,9 +40,6 @@ const shareLatest = <T>(
       innerSub = subject.subscribe(subscriber)
       if (currentValue !== EMPTY_VALUE) {
         subscriber.next(currentValue)
-        if (subscription === undefined) {
-          subscriber.next(COMPLETE as any)
-        }
       }
     }
 

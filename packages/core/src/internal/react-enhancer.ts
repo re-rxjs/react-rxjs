@@ -3,7 +3,6 @@ import { take, filter, tap } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
-import { COMPLETE } from "./COMPLETE"
 
 const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
   let refCount = 0
@@ -15,11 +14,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
     let latestValue = EMPTY_VALUE
     const subscription = source$.subscribe(
       (value) => {
-        if (
-          isActive &&
-          value !== (COMPLETE as any) &&
-          !Object.is(latestValue, value)
-        ) {
+        if (isActive && !Object.is(latestValue, value)) {
           subscriber.next((latestValue = value))
         }
       },
