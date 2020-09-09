@@ -3,9 +3,9 @@
 <!-- prettier-ignore-start -->
 [![Build Status](https://img.shields.io/github/workflow/status/re-rxjs/react-rxjs/CI?style=flat-square)](https://github.com/re-rxjs/react-rxjs/actions)
 [![codecov](https://img.shields.io/codecov/c/github/re-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/react-rxjs)
-[![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/react-rxjs)
+[![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/@react-rxjs/core)
 [![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/LICENSE)
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Code of Conduct](https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/CODE_OF_CONDUCT.md)
 <!-- prettier-ignore-end -->
@@ -48,6 +48,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
