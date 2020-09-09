@@ -79,7 +79,9 @@
       "contributions": [
         "infra",
         "review",
-        "doc"
+        "doc",
+        "code",
+        "ideas"
       ]
     }
   ],
