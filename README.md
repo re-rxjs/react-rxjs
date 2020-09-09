@@ -3,7 +3,7 @@
 <!-- prettier-ignore-start -->
 [![Build Status](https://img.shields.io/github/workflow/status/re-rxjs/react-rxjs/CI?style=flat-square)](https://github.com/re-rxjs/react-rxjs/actions)
 [![codecov](https://img.shields.io/codecov/c/github/re-rxjs/react-rxjs.svg?style=flat-square)](https://codecov.io/gh/re-rxjs/react-rxjs)
-[![version](https://img.shields.io/npm/v/react-rxjs.svg?style=flat-square)](https://www.npmjs.com/package/@react-rxjs/core)
+[![version](https://img.shields.io/npm/v/@react-rxjs/core.svg?style=flat-square)](https://www.npmjs.com/package/@react-rxjs/core)
 [![MIT License](https://img.shields.io/npm/l/react-rxjs.svg?style=flat-square)](https://github.com/re-rxjs/react-rxjs/blob/main/LICENSE)
 [![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
