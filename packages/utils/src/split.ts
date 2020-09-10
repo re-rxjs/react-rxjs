@@ -57,11 +57,8 @@ export function split<T, K, R>(
             : subject.asObservable()) as GroupedObservable<K, R>
 
           res.key = key
-          res.subscribe({
-            complete() {
-              groups.delete(key)
-            },
-          })
+          const onFinish = () => groups.delete(key)
+          res.subscribe(undefined, onFinish, onFinish)
 
           subject.next(x)
           subscriber.next(res)
