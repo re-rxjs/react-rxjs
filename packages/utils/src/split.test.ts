@@ -58,7 +58,7 @@ describe("split", () => {
       )
   })
 
-  it("should group values while the inner stream is active", () => {
+  it("should group values while the inner stream does not complete", () => {
     const expectedGroups = [
       { key: 1, values: [1, 3] },
       { key: 0, values: [2, 4] },
@@ -70,6 +70,41 @@ describe("split", () => {
 
     of(1, 2, 3, 4, 5, 6)
       .pipe(split((x: number) => x % 2, take(2)))
+      .subscribe((g: any) => {
+        let group = { key: g.key, values: [] as number[] }
+
+        g.subscribe((x: any) => {
+          group.values.push(x)
+        })
+
+        resultingGroups.push(group)
+      })
+
+    expect(resultingGroups).toEqual(expectedGroups)
+  })
+
+  it("should group values while the inner stream does error", () => {
+    const expectedGroups = [
+      { key: 1, values: [1, 3] },
+      { key: 0, values: [2, 4] },
+      { key: 1, values: [7, 9] },
+      { key: 0, values: [8, 10] },
+    ]
+
+    const resultingGroups: { key: number; values: number[] }[] = []
+
+    of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+      .pipe(
+        split(
+          (x: number) => x % 2,
+          map((val, idx) => {
+            if (idx === 2) {
+              throw new Error("Boom!")
+            }
+            return val
+          }),
+        ),
+      )
       .subscribe((g: any) => {
         let group = { key: g.key, values: [] as number[] }
 
