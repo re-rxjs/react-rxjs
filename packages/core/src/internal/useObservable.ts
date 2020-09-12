@@ -1,8 +1,7 @@
-import { useReducer } from "react"
-import { Observable } from "rxjs"
+import { useEffect, useReducer } from "react"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
-import useLayoutEffect from "../useLayoutEffect"
+import { Observable } from "rxjs"
 
 const ERROR: "e" = "e"
 const VALUE: "v" = "v"
@@ -41,7 +40,7 @@ export const useObservable = <O>(
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, dispatch] = useReducer(reducer, source$, init)
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const subscription = defaultSUSPENSE(source$).subscribe(
       (value) => {
         if ((value as any) === SUSPENSE) {
@@ -62,6 +61,7 @@ export const useObservable = <O>(
     return () => subscription.unsubscribe()
   }, [source$])
 
-  if (state.type === VALUE) return state.payload
-  throw state.payload
+  const { type, payload } = state
+  if (type === VALUE) return payload
+  throw payload
 }
