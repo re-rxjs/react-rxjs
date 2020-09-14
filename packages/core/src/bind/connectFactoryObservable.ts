@@ -1,4 +1,4 @@
-import { Observable } from "rxjs"
+import { Observable, defer } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import reactEnhancer from "../internal/react-enhancer"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
@@ -55,8 +55,16 @@ export default function connectFactoryObservable<A extends [], O>(
 
     const reactObservable$ = reactEnhancer(sharedObservable$)
 
+    const publicShared$: Observable<O> = defer(() => {
+      const inCache = cache.get(keys)
+      if (inCache) {
+        return inCache[0] === publicShared$ ? sharedObservable$ : inCache[0]
+      }
+      return getSharedObservables$(input)[0]
+    })
+
     const result: [Observable<O>, BehaviorObservable<O>] = [
-      sharedObservable$,
+      publicShared$,
       reactObservable$,
     ]
 
