@@ -9,7 +9,7 @@ import {
   Subject,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { switchMap, delay } from "rxjs/operators"
+import { switchMap, delay, take } from "rxjs/operators"
 import { FC, Suspense, useState } from "react"
 import React from "react"
 import {
@@ -443,6 +443,81 @@ describe("connectFactoryObservable", () => {
       expect(nUpdates).toBe(10)
       expect(sub4.closed).toBe(false)
       sub4.unsubscribe()
+    })
+
+    describe("re-subscriptions on disposed observables", () => {
+      it("registers itself when no other observable has been registered for that key", () => {
+        const key = 0
+        let sideEffects = 0
+
+        const [, getShared] = bind((_: number) =>
+          defer(() => {
+            return of(++sideEffects)
+          }),
+        )
+
+        const stream = getShared(key)
+
+        let val
+        stream.pipe(take(1)).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(1)
+
+        stream.pipe(take(1)).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(2)
+
+        const subscription = stream.subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(3)
+
+        getShared(key)
+          .pipe(take(1))
+          .subscribe((x) => {
+            val = x
+          })
+        expect(val).toBe(3)
+        subscription.unsubscribe()
+      })
+
+      it("subscribes to the currently registered observable if a new observalbe has been registered for that key", () => {
+        const key = 0
+        let sideEffects = 0
+
+        const [, getShared] = bind((_: number) =>
+          defer(() => {
+            return of(++sideEffects)
+          }),
+        )
+
+        const stream = getShared(key)
+
+        let val
+        stream.pipe(take(1)).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(1)
+
+        const subscription = getShared(key).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(2)
+
+        stream.pipe(take(1)).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(2)
+
+        stream.pipe(take(1)).subscribe((x) => {
+          val = x
+        })
+        expect(val).toBe(2)
+
+        subscription.unsubscribe()
+      })
     })
   })
 })
