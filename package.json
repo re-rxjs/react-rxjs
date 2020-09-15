@@ -42,8 +42,8 @@
   "devDependencies": {
     "cross-env": "^7.0.2",
     "eslint-plugin-prettier": "^3.1.4",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.2.13",
+    "husky": "^4.3.0",
+    "lint-staged": "^10.3.0",
     "prettier": "^2.1.1",
     "typescript": "^3.9.7",
     "wsrun": "^5.2.1"
