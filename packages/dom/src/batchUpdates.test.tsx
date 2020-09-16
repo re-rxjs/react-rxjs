@@ -1,13 +1,13 @@
-import React, { Component, ErrorInfo, useLayoutEffect } from "react"
+import React, { Component, ErrorInfo, useEffect } from "react"
 import { Observable, from, throwError } from "rxjs"
 import { delay, startWith } from "rxjs/operators"
-import { bind } from "@react-rxjs/core"
+import { bind, Subscribe } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { render, screen } from "@testing-library/react"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-const [useLatestNumber] = bind((id: string, batched: boolean) =>
+const [useLatestNumber, latestNumber$] = bind((id: string, batched: boolean) =>
   (id === "error"
     ? throwError("controlled error")
     : from([1, 2, 3, 4, 5])
@@ -54,13 +54,13 @@ interface Props {
 }
 const Grandson: React.FC<Props> = ({ onRender, batched, id }) => {
   const latestNumber = useLatestNumber(id, batched)
-  useLayoutEffect(onRender)
+  useEffect(onRender)
   return <div>Grandson {latestNumber}</div>
 }
 
 const Son: React.FC<Props> = (props) => {
   const latestNumber = useLatestNumber(props.id, props.batched)
-  useLayoutEffect(props.onRender)
+  useEffect(props.onRender)
   return (
     <div>
       Son {latestNumber}
@@ -71,7 +71,7 @@ const Son: React.FC<Props> = (props) => {
 
 const Father: React.FC<Props> = (props) => {
   const latestNumber = useLatestNumber(props.id, props.batched)
-  useLayoutEffect(props.onRender)
+  useEffect(props.onRender)
   return (
     <div>
       Father {latestNumber}
@@ -97,7 +97,11 @@ describe("batchUpdates", () => {
 
   test("it triggers nested updates when batchUpdates is not used", async () => {
     const mockFn = jest.fn()
-    render(<Father id="noBatching" batched={false} onRender={mockFn} />)
+    render(
+      <Subscribe source$={latestNumber$("noBatching", false)}>
+        <Father id="noBatching" batched={false} onRender={mockFn} />
+      </Subscribe>,
+    )
     expect(screen.queryByText("Father 0")).not.toBeNull()
     expect(screen.queryByText("Son 0")).not.toBeNull()
     expect(screen.queryByText("Grandson 0")).not.toBeNull()
@@ -113,7 +117,12 @@ describe("batchUpdates", () => {
 
   test("batchUpdates prevents unnecessary updates", async () => {
     const mockFn = jest.fn()
-    render(<Father id="batchingAndComplete" batched={true} onRender={mockFn} />)
+    render(
+      <Subscribe source$={latestNumber$("batchingAndComplete", true)}>
+        <Father id="batchingAndComplete" batched onRender={mockFn} />
+      </Subscribe>,
+    )
+
     expect(screen.queryByText("Father 0")).not.toBeNull()
     expect(screen.queryByText("Son 0")).not.toBeNull()
     expect(screen.queryByText("Grandson 0")).not.toBeNull()
