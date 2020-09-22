@@ -1,5 +1,6 @@
 export { collectValues } from "./collectValues"
 export { collect } from "./collect"
+export { createListener } from "./createListener"
 export { mergeWithKey } from "./mergeWithKey"
 export { split } from "./split"
 export { suspend } from "./suspend"
