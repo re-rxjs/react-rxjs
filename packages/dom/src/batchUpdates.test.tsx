@@ -1,21 +1,25 @@
 import React, { Component, ErrorInfo, useEffect } from "react"
-import { Observable, from, throwError } from "rxjs"
-import { delay, startWith } from "rxjs/operators"
+import { Observable, throwError, concat, Subject } from "rxjs"
+import { mergeMapTo, take, filter } from "rxjs/operators"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { batchUpdates } from "./"
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-const [useLatestNumber, latestNumber$] = bind((id: string, batched: boolean) =>
-  (id === "error"
-    ? throwError("controlled error")
-    : from([1, 2, 3, 4, 5])
-  ).pipe(
-    delay(5),
-    batched ? batchUpdates() : (x: Observable<number>) => x,
-    startWith(0),
-  ),
+const next$ = new Subject<{ batched: boolean; error: boolean }>()
+const [useLatestNumber, latestNumber$] = bind(
+  (batched: boolean, error: boolean) => {
+    return concat(
+      [0],
+      next$.pipe(
+        filter((x) => x.batched === batched && x.error === error),
+        take(1),
+        mergeMapTo(error ? throwError("controlled error") : [1, 2, 3, 4, 5]),
+        batched ? batchUpdates() : (x: Observable<number>) => x,
+      ),
+    )
+  },
 )
 
 class TestErrorBoundary extends Component<
@@ -49,17 +53,17 @@ class TestErrorBoundary extends Component<
 
 interface Props {
   onRender: () => void
-  batched: boolean
-  id: string
+  batched?: boolean
+  error?: boolean
 }
-const Grandson: React.FC<Props> = ({ onRender, batched, id }) => {
-  const latestNumber = useLatestNumber(id, batched)
+const Grandson: React.FC<Props> = ({ onRender, batched, error }) => {
+  const latestNumber = useLatestNumber(!!batched, !!error)
   useEffect(onRender)
   return <div>Grandson {latestNumber}</div>
 }
 
 const Son: React.FC<Props> = (props) => {
-  const latestNumber = useLatestNumber(props.id, props.batched)
+  const latestNumber = useLatestNumber(!!props.batched, !!props.error)
   useEffect(props.onRender)
   return (
     <div>
@@ -70,7 +74,7 @@ const Son: React.FC<Props> = (props) => {
 }
 
 const Father: React.FC<Props> = (props) => {
-  const latestNumber = useLatestNumber(props.id, props.batched)
+  const latestNumber = useLatestNumber(!!props.batched, !!props.error)
   useEffect(props.onRender)
   return (
     <div>
@@ -98,8 +102,8 @@ describe("batchUpdates", () => {
   test("it triggers nested updates when batchUpdates is not used", async () => {
     const mockFn = jest.fn()
     render(
-      <Subscribe source$={latestNumber$("noBatching", false)}>
-        <Father id="noBatching" batched={false} onRender={mockFn} />
+      <Subscribe source$={latestNumber$(false, false)}>
+        <Father onRender={mockFn} />
       </Subscribe>,
     )
     expect(screen.queryByText("Father 0")).not.toBeNull()
@@ -107,7 +111,10 @@ describe("batchUpdates", () => {
     expect(screen.queryByText("Grandson 0")).not.toBeNull()
     expect(mockFn).toHaveBeenCalledTimes(3)
 
-    await wait(10)
+    await act(async () => {
+      await wait(100)
+      next$.next({ batched: false, error: false })
+    })
 
     expect(screen.queryByText("Father 5")).not.toBeNull()
     expect(screen.queryByText("Son 5")).not.toBeNull()
@@ -118,8 +125,8 @@ describe("batchUpdates", () => {
   test("batchUpdates prevents unnecessary updates", async () => {
     const mockFn = jest.fn()
     render(
-      <Subscribe source$={latestNumber$("batchingAndComplete", true)}>
-        <Father id="batchingAndComplete" batched onRender={mockFn} />
+      <Subscribe source$={latestNumber$(true, false)}>
+        <Father batched onRender={mockFn} />
       </Subscribe>,
     )
 
@@ -128,7 +135,10 @@ describe("batchUpdates", () => {
     expect(screen.queryByText("Grandson 0")).not.toBeNull()
     expect(mockFn).toHaveBeenCalledTimes(3)
 
-    await wait(10)
+    await act(async () => {
+      await wait(100)
+      next$.next({ batched: true, error: false })
+    })
 
     expect(screen.queryByText("Father 5")).not.toBeNull()
     expect(screen.queryByText("Son 5")).not.toBeNull()
@@ -141,7 +151,7 @@ describe("batchUpdates", () => {
     const errorCallback = jest.fn()
     render(
       <TestErrorBoundary onError={errorCallback}>
-        <Father id="error" batched={true} onRender={mockFn} />
+        <Father batched error onRender={mockFn} />
       </TestErrorBoundary>,
     )
     expect(screen.queryByText("Father 0")).not.toBeNull()
@@ -149,12 +159,14 @@ describe("batchUpdates", () => {
     expect(screen.queryByText("Grandson 0")).not.toBeNull()
     expect(mockFn).toHaveBeenCalledTimes(3)
 
-    await wait(10)
+    await act(async () => {
+      next$.next({ batched: true, error: true })
+    })
 
-    expect(mockFn).toHaveBeenCalledTimes(3)
     expect(errorCallback).toHaveBeenCalledWith(
       "controlled error",
       expect.any(Object),
     )
+    expect(mockFn).toHaveBeenCalledTimes(3)
   })
 })
