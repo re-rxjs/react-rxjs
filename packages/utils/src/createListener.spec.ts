@@ -14,7 +14,17 @@ describe("createListener", () => {
     onFooBar(0, "1")
     expect(receivedValue).toEqual({ foo: 0, bar: "1" })
   })
-  it('returns a tuple with a void observable and its corresponding event-emitter when no "event creator" is provided', () => {
+  it('returns a tuple with a typed observable and its corresponding event-emitter when no "event creator" is provided', () => {
+    const [foo$, onFoo] = createListener<string>()
+    let receivedValue
+    foo$.subscribe((val) => {
+      receivedValue = val
+    })
+    expect(receivedValue).toBe(undefined)
+    onFoo("foo")
+    expect(receivedValue).toEqual("foo")
+  })
+  it('returns a tuple with a void observable and its corresponding event-emitter when no "event creator" and no type is provided', () => {
     const [clicks$, onClick] = createListener()
     let count = 0
     clicks$.subscribe(() => {
