@@ -1,6 +1,6 @@
 import { Observable, GroupedObservable, OperatorFunction } from "rxjs"
 import { map, endWith } from "rxjs/operators"
-import { set, del, collector } from "./internal-utils"
+import { CollectorAction, collector } from "./internal-utils"
 
 /**
  * A pipeable operator that collects all the GroupedObservables emitted by
@@ -12,7 +12,7 @@ export const collectValues = <K, V>(): OperatorFunction<
 > => (source$: Observable<GroupedObservable<K, V>>): Observable<Map<K, V>> =>
   collector(source$, (inner$) =>
     inner$.pipe(
-      map((v) => ({ t: set, k: inner$.key, v })),
-      endWith({ t: del, k: inner$.key }),
+      map((v) => ({ t: CollectorAction.Set as const, k: inner$.key, v })),
+      endWith({ t: CollectorAction.Delete, k: inner$.key }),
     ),
   )
