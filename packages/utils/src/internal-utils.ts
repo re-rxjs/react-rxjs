@@ -37,24 +37,29 @@ export const scanWithDefaultValue = <I, O>(
     return source.pipe(scan(accumulator, seed), defaultStart(seed))
   })
 
-export const set = "s" as const
-export const del = "d" as const
-export const complete = "c" as const
+export const enum CollectorAction {
+  Set,
+  Delete,
+  Complete,
+}
 
 export const collector = <K, V, VV>(
   source: Observable<GroupedObservable<K, V>>,
   enhancer: (
     source: GroupedObservable<K, V>,
-  ) => Observable<{ t: "d"; k: K } | { t: "s"; k: K; v: VV }>,
+  ) => Observable<
+    | { t: CollectorAction.Delete; k: K }
+    | { t: CollectorAction.Set; k: K; v: VV }
+  >,
 ): Observable<Map<K, VV>> =>
   source.pipe(
     publish((x) => x.pipe(mergeMap(enhancer), takeUntil(takeLast(1)(x)))),
-    endWith({ t: complete }),
+    endWith({ t: CollectorAction.Complete as const }),
     scanWithDefaultValue(
       (acc, val) => {
-        if (val.t === set) {
+        if (val.t === CollectorAction.Set) {
           acc.set(val.k, val.v)
-        } else if (val.t === del) {
+        } else if (val.t === CollectorAction.Delete) {
           acc.delete(val.k)
         } else {
           acc.clear()

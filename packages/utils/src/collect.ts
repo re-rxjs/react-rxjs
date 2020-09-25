@@ -7,7 +7,7 @@ import {
   distinctUntilChanged,
   skipWhile,
 } from "rxjs/operators"
-import { set, del, collector } from "./internal-utils"
+import { CollectorAction, collector } from "./internal-utils"
 
 const defaultFilter = (source$: Observable<any>) =>
   source$.pipe(ignoreElements(), startWith(true), endWith(false))
@@ -37,6 +37,12 @@ export const collect = <K, V>(
 
   return (source$: Observable<GroupedObservable<K, V>>) =>
     collector(source$, (o) =>
-      map((x) => ({ t: x ? set : del, k: o.key, v: o }))(enhancer(o)),
+      map((x) => ({
+        t: x
+          ? (CollectorAction.Set as const)
+          : (CollectorAction.Delete as const),
+        k: o.key,
+        v: o,
+      }))(enhancer(o)),
     )
 }

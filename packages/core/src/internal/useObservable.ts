@@ -1,11 +1,7 @@
 import { useEffect, useReducer } from "react"
-import { BehaviorObservable } from "./BehaviorObservable"
+import { BehaviorObservable, Action } from "./BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
 import { Observable } from "rxjs"
-
-const ERROR: "e" = "e"
-const VALUE: "v" = "v"
-type Action = "e" | "v" | "s"
 
 const reducer = (
   current: { type: Action; payload: any },
@@ -47,14 +43,14 @@ export const useObservable = <O>(
           dispatch(source$.getValue())
         } else {
           dispatch({
-            type: VALUE,
+            type: Action.Value,
             payload: value,
           })
         }
       },
       (error) =>
         dispatch({
-          type: ERROR,
+          type: Action.Error,
           payload: error,
         }),
     )
@@ -62,6 +58,6 @@ export const useObservable = <O>(
   }, [source$])
 
   const { type, payload } = state
-  if (type === VALUE) return payload
+  if (type === Action.Value) return payload
   throw payload
 }
