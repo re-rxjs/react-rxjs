@@ -1,4 +1,4 @@
-import { ObservableInput, from } from "rxjs"
+import { ObservableInput, from, Observable } from "rxjs"
 import { startWith } from "rxjs/operators"
 import { SUSPENSE } from "@react-rxjs/core"
 
@@ -7,5 +7,7 @@ import { SUSPENSE } from "@react-rxjs/core"
  *
  * @param source$ Source observable
  */
-export const suspend = <T>(source$: ObservableInput<T>) =>
-  from(source$).pipe(startWith(SUSPENSE))
+export const suspend: <T>(
+  source$: ObservableInput<T>,
+) => Observable<T | typeof SUSPENSE> = <T>(source$: ObservableInput<T>) =>
+  startWith(SUSPENSE)(from(source$)) as any

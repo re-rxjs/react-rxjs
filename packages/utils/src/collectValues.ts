@@ -1,4 +1,4 @@
-import { Observable, GroupedObservable, OperatorFunction } from "rxjs"
+import { GroupedObservable, OperatorFunction } from "rxjs"
 import { map, endWith } from "rxjs/operators"
 import { CollectorAction, collector } from "./internal-utils"
 
@@ -9,8 +9,8 @@ import { CollectorAction, collector } from "./internal-utils"
 export const collectValues = <K, V>(): OperatorFunction<
   GroupedObservable<K, V>,
   Map<K, V>
-> => (source$: Observable<GroupedObservable<K, V>>): Observable<Map<K, V>> =>
-  collector(source$, (inner$) =>
+> =>
+  collector((inner$) =>
     inner$.pipe(
       map((v) => ({ t: CollectorAction.Set as const, k: inner$.key, v })),
       endWith({ t: CollectorAction.Delete, k: inner$.key }),
