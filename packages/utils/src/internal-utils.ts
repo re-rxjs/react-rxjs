@@ -1,4 +1,4 @@
-import { Observable, defer, GroupedObservable } from "rxjs"
+import { Observable, defer, GroupedObservable, pipe } from "rxjs"
 import { shareLatest } from "@react-rxjs/core"
 import {
   scan,
@@ -44,15 +44,14 @@ export const enum CollectorAction {
 }
 
 export const collector = <K, V, VV>(
-  source: Observable<GroupedObservable<K, V>>,
   enhancer: (
     source: GroupedObservable<K, V>,
   ) => Observable<
     | { t: CollectorAction.Delete; k: K }
     | { t: CollectorAction.Set; k: K; v: VV }
   >,
-): Observable<Map<K, VV>> =>
-  source.pipe(
+): ((source: Observable<GroupedObservable<K, V>>) => Observable<Map<K, VV>>) =>
+  pipe(
     publish((x) => x.pipe(mergeMap(enhancer), takeUntil(takeLast(1)(x)))),
     endWith({ t: CollectorAction.Complete as const }),
     scanWithDefaultValue(

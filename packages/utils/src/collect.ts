@@ -35,14 +35,11 @@ export const collect = <K, V>(
         )
     : defaultFilter
 
-  return (source$: Observable<GroupedObservable<K, V>>) =>
-    collector(source$, (o) =>
-      map((x) => ({
-        t: x
-          ? (CollectorAction.Set as const)
-          : (CollectorAction.Delete as const),
-        k: o.key,
-        v: o,
-      }))(enhancer(o)),
-    )
+  return collector((o) =>
+    map((x) => ({
+      t: x ? (CollectorAction.Set as const) : (CollectorAction.Delete as const),
+      k: o.key,
+      v: o,
+    }))(enhancer(o)),
+  )
 }
