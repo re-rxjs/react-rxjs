@@ -9,8 +9,8 @@ import {
   mergeMap,
 } from "rxjs/operators"
 
-export const defaultStart = <T>(value: T) => (source$: Observable<T>) =>
-  new Observable<T>((observer) => {
+export const defaultStart = <T, D>(value: D) => (source$: Observable<T>) =>
+  new Observable<T | D>((observer) => {
     let emitted = false
     const subscription = source$.subscribe(
       (x) => {
