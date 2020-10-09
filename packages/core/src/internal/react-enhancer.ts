@@ -1,5 +1,4 @@
 import { Observable, noop } from "rxjs"
-import { take, filter, tap } from "rxjs/operators"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable, Action } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
@@ -67,29 +66,32 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
       let value:
         | typeof EMPTY_VALUE
         | { type: Action.Value; payload: T } = EMPTY_VALUE
+
       promise = {
         type: Action.Suspense,
-        payload: result
-          .pipe(
-            filter((x) => x !== (SUSPENSE as any)),
-            take(1),
-            tap({
-              next(v) {
+        payload: new Promise<T>((res) => {
+          const subscription = result.subscribe(
+            (v) => {
+              if (v !== (SUSPENSE as any)) {
                 value = { type: Action.Value, payload: v }
-              },
-              error(e) {
-                error = { type: Action.Error, payload: e }
-                timeoutToken = setTimeout(() => {
-                  error = EMPTY_VALUE
-                }, 50)
-              },
-            }),
+                subscription && subscription.unsubscribe()
+                res(v)
+              }
+            },
+            (e) => {
+              error = { type: Action.Error, payload: e }
+              timeoutToken = setTimeout(() => {
+                error = EMPTY_VALUE
+              }, 50)
+              res()
+            },
           )
-          .toPromise()
-          .catch(() => {})
-          .finally(() => {
-            promise = undefined
-          }),
+          if (value !== EMPTY_VALUE || error !== EMPTY_VALUE) {
+            subscription.unsubscribe()
+          }
+        }).finally(() => {
+          promise = undefined
+        }),
       }
 
       if (value !== EMPTY_VALUE) {
