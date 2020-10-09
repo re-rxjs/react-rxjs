@@ -1,4 +1,4 @@
-import { Observable, defer } from "rxjs"
+import { Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import reactEnhancer from "../internal/react-enhancer"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
@@ -30,11 +30,14 @@ export default function connectFactoryObservable<A extends [], O>(
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
 ] {
-  const cache = new NestedMap<A, [Observable<O>, BehaviorObservable<O>]>()
+  const cache = new NestedMap<
+    A,
+    [BehaviorObservable<O>, BehaviorObservable<O>]
+  >()
 
   const getSharedObservables$ = (
     input: A,
-  ): [Observable<O>, BehaviorObservable<O>] => {
+  ): [BehaviorObservable<O>, BehaviorObservable<O>] => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
       input.splice(-1)
     }
@@ -53,17 +56,21 @@ export default function connectFactoryObservable<A extends [], O>(
       },
     )
 
-    const reactObservable$ = reactEnhancer(sharedObservable$)
-
-    const publicShared$: Observable<O> = defer(() => {
+    const publicShared$ = new Observable<O>((subscriber) => {
       const inCache = cache.get(keys)
-      if (inCache) {
-        return inCache[0] === publicShared$ ? sharedObservable$ : inCache[0]
-      }
-      return getSharedObservables$(input)[0]
-    })
+      const source$ = inCache
+        ? inCache[0] === publicShared$
+          ? sharedObservable$
+          : inCache[0]
+        : getSharedObservables$(input)[0]
 
-    const result: [Observable<O>, BehaviorObservable<O>] = [
+      publicShared$.getValue = source$.getValue
+
+      return source$.subscribe(subscriber)
+    }) as BehaviorObservable<O>
+    const reactObservable$ = reactEnhancer(publicShared$)
+
+    const result: [BehaviorObservable<O>, BehaviorObservable<O>] = [
       publicShared$,
       reactObservable$,
     ]
