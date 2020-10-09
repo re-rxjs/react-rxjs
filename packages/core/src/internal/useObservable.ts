@@ -1,35 +1,17 @@
 import { useEffect, useReducer } from "react"
 import { BehaviorObservable, Action } from "./BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
-import { Observable } from "rxjs"
+import { EMPTY_VALUE } from "./empty-value"
 
 const reducer = (
   current: { type: Action; payload: any },
   action: { type: Action; payload: any },
 ) =>
-  Object.is(current.payload, action.payload) && current.type === action.type
+  current.type === action.type && Object.is(current.payload, action.payload)
     ? current
     : action
 
 const init = (source$: BehaviorObservable<any>) => source$.getValue()
-
-const defaultSUSPENSE = <T>(source$: Observable<T>) =>
-  new Observable<T | typeof SUSPENSE>((observer) => {
-    let isEmpty = true
-    const subscription = source$.subscribe(
-      (x) => {
-        isEmpty = false
-        observer.next(x)
-      },
-      (e) => observer.error(e),
-    )
-
-    if (isEmpty) {
-      observer.next(SUSPENSE)
-    }
-
-    return subscription
-  })
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
@@ -37,23 +19,34 @@ export const useObservable = <O>(
   const [state, dispatch] = useReducer(reducer, source$, init)
 
   useEffect(() => {
-    const subscription = defaultSUSPENSE(source$).subscribe(
-      (value) => {
-        if ((value as any) === SUSPENSE) {
-          dispatch(source$.getValue())
-        } else {
-          dispatch({
-            type: Action.Value,
-            payload: value,
-          })
-        }
-      },
-      (error) =>
+    const onNext = (value: O | typeof SUSPENSE) => {
+      if ((value as any) === SUSPENSE) {
+        dispatch(source$.getValue())
+      } else {
         dispatch({
-          type: Action.Error,
-          payload: error,
-        }),
+          type: Action.Value,
+          payload: value,
+        })
+      }
+    }
+    const onError = (error: any) =>
+      dispatch({
+        type: Action.Error,
+        payload: error,
+      })
+
+    let val: O | typeof SUSPENSE = SUSPENSE
+    let err: any = EMPTY_VALUE
+    let subscription = source$.subscribe(
+      (v) => (val = v),
+      (e) => (err = e),
     )
+    if (err !== EMPTY_VALUE) return onError(err)
+    onNext(val)
+    const t = subscription
+    subscription = source$.subscribe(onNext, onError)
+    t.unsubscribe()
+
     return () => subscription.unsubscribe()
   }, [source$])
 
