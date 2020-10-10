@@ -1,19 +1,14 @@
-import { Observable, noop } from "rxjs"
+import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable, Action } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
 const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
-  let refCount = 0
-  let finalizeLastUnsubscription = noop
-
   const result = new Observable<T>((subscriber) => {
-    refCount++
-    let isActive = true
     let latestValue = EMPTY_VALUE
-    const subscription = source$.subscribe(
+    return source$.subscribe(
       (value) => {
-        if (isActive && !Object.is(latestValue, value)) {
+        if (!Object.is(latestValue, value)) {
           subscriber.next((latestValue = value))
         }
       },
@@ -21,24 +16,6 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
         subscriber.error(e)
       },
     )
-    finalizeLastUnsubscription()
-    return () => {
-      refCount--
-      if (refCount > 0 || subscription.closed) {
-        return subscription.unsubscribe()
-      }
-
-      isActive = false
-      const timeoutToken = setTimeout(() => {
-        finalizeLastUnsubscription()
-      }, 250)
-
-      finalizeLastUnsubscription = () => {
-        clearTimeout(timeoutToken)
-        subscription.unsubscribe()
-        finalizeLastUnsubscription = noop
-      }
-    }
   }) as BehaviorObservable<T>
 
   let promise: undefined | { type: Action.Suspense; payload: Promise<T | void> }
@@ -86,7 +63,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
               res()
             },
           )
-          if (value !== EMPTY_VALUE || error !== EMPTY_VALUE) {
+          if (value !== EMPTY_VALUE) {
             subscription.unsubscribe()
           }
         }).finally(() => {
@@ -98,11 +75,7 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
         return value
       }
 
-      if (error !== EMPTY_VALUE) {
-        return error
-      }
-
-      return promise
+      return error !== EMPTY_VALUE ? error : promise
     }
   }
   result.getValue = getValue

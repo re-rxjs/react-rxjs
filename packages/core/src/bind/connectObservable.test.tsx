@@ -14,9 +14,15 @@ import {
   Subject,
   throwError,
   Observable,
-  concat,
 } from "rxjs"
-import { delay, scan, startWith, map, switchMap } from "rxjs/operators"
+import {
+  delay,
+  scan,
+  startWith,
+  map,
+  switchMap,
+  catchError,
+} from "rxjs/operators"
 import { bind, SUSPENSE } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
@@ -51,7 +57,8 @@ describe("connectObservable", () => {
 
   it("suspends the component when the observable hasn't emitted yet.", async () => {
     const source$ = of(1).pipe(delay(100))
-    const [useDelayedNumber] = bind(source$)
+    const [useDelayedNumber, delayedNumber$] = bind(source$)
+    const sub = delayedNumber$.subscribe()
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
@@ -70,6 +77,32 @@ describe("connectObservable", () => {
 
     expect(screen.queryByText("Result 1")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
+    sub.unsubscribe()
+  })
+
+  it("suspends the component when the observable starts emitting suspense", async () => {
+    const source$ = of(1).pipe(delay(100), startWith(SUSPENSE))
+    const [useDelayedNumber, delayedNumber$] = bind(source$)
+    const sub = delayedNumber$.subscribe()
+    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
+    const TestSuspense: React.FC = () => {
+      return (
+        <Suspense fallback={<span>Waiting</span>}>
+          <Result />
+        </Suspense>
+      )
+    }
+
+    render(<TestSuspense />)
+
+    expect(screen.queryByText("Result")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    await wait(110)
+
+    expect(screen.queryByText("Result 1")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+    sub.unsubscribe()
   })
 
   it("updates with the last emitted value", async () => {
@@ -157,14 +190,15 @@ describe("connectObservable", () => {
     expect(updates).toHaveBeenCalledTimes(2)
   })
 
-  it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
+  it("shares the source subscription until there are no more subscribers", async () => {
     let nInitCount = 0
     const observable$ = defer(() => {
       nInitCount += 1
       return from([1, 2, 3, 4, 5])
     })
 
-    const [useLatestNumber] = bind(observable$)
+    const [useLatestNumber, latestNumber$] = bind(observable$)
+    let subs = latestNumber$.subscribe()
     const { unmount } = renderHook(() => useLatestNumber())
     const { unmount: unmount2 } = renderHook(() => useLatestNumber())
     const { unmount: unmount3 } = renderHook(() => useLatestNumber())
@@ -173,12 +207,12 @@ describe("connectObservable", () => {
     unmount2()
     unmount3()
 
-    await wait(230)
     const { unmount: unmount4 } = renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(1)
     unmount4()
 
-    await wait(270)
+    subs.unsubscribe()
+    subs = latestNumber$.subscribe()
     renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(2)
   })
@@ -352,7 +386,7 @@ describe("connectObservable", () => {
 
   it("allows to retry the errored observable after a grace period of time", async () => {
     let errStream = new Subject<string>()
-    const [useError] = bind(
+    const [useError, error$] = bind(
       defer(() => {
         return (errStream = new Subject<string>())
       }),
@@ -364,6 +398,7 @@ describe("connectObservable", () => {
     }
 
     const errorCallback = jest.fn()
+    error$.pipe(catchError(() => [])).subscribe()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Suspense fallback={<div>Loading...</div>}>
@@ -390,8 +425,9 @@ describe("connectObservable", () => {
 
     errorCallback.mockReset()
     await componentAct(async () => {
-      await wait(250)
+      await wait(200)
     })
+    error$.subscribe()
 
     render(
       <TestErrorBoundary onError={errorCallback}>
@@ -447,43 +483,5 @@ describe("connectObservable", () => {
     })
 
     expect(errorCallback).not.toHaveBeenCalled()
-  })
-
-  it("handles combined Suspended components that resolve at different times", async () => {
-    let nSideEffects = 0
-    const fast$ = defer(() => {
-      nSideEffects++
-      return of("fast")
-    }).pipe(delay(5))
-    const slow$ = defer(() => {
-      nSideEffects++
-      return of("slow")
-    }).pipe(delay(2500))
-
-    const [useFast] = bind(concat(of(SUSPENSE), fast$))
-    const [useSlow] = bind(concat(of(SUSPENSE), slow$))
-
-    const Fast: React.FC = () => <>{useFast()}</>
-    const Slow: React.FC = () => <>{useSlow()}</>
-
-    expect(nSideEffects).toBe(0)
-
-    render(
-      <Suspense fallback={<div>Loading...</div>}>
-        <Slow />
-        <Fast />
-      </Suspense>,
-    )
-
-    expect(screen.queryByText("Loading...")).not.toBeNull()
-
-    expect(nSideEffects).toBe(2)
-
-    await componentAct(async () => {
-      await wait(2600)
-    })
-
-    expect(screen.queryByText("Loading...")).toBeNull()
-    expect(nSideEffects).toBe(2)
   })
 })

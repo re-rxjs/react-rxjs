@@ -9,7 +9,7 @@ import {
   Subject,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { switchMap, delay, take } from "rxjs/operators"
+import { switchMap, delay, take, catchError } from "rxjs/operators"
 import { FC, Suspense, useState } from "react"
 import React from "react"
 import {
@@ -55,7 +55,8 @@ describe("connectFactoryObservable", () => {
 
     it("suspends the component when the observable hasn't emitted yet.", async () => {
       const source$ = of(1).pipe(delay(100))
-      const [useDelayedNumber] = bind(() => source$)
+      const [useDelayedNumber, getDelayedNumber$] = bind(() => source$)
+      const subs = getDelayedNumber$().subscribe()
       const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
       const TestSuspense: React.FC = () => {
         return (
@@ -74,6 +75,7 @@ describe("connectFactoryObservable", () => {
 
       expect(screen.queryByText("Result 1")).not.toBeNull()
       expect(screen.queryByText("Waiting")).toBeNull()
+      subs.unsubscribe()
     })
 
     it("shares the multicasted subscription with all of the components that use the same parameters", async () => {
@@ -92,19 +94,21 @@ describe("connectFactoryObservable", () => {
       expect(subscriberCount).toBe(0)
 
       const first = { val: 1 }
-      renderHook(() => useLatestNumber(1, first))
-      expect(subscriberCount).toBe(1)
-
-      renderHook(() => useLatestNumber(1, first))
-      expect(subscriberCount).toBe(1)
-
       latestNumber$(1, first).subscribe()
+      renderHook(() => useLatestNumber(1, first))
+      expect(subscriberCount).toBe(1)
+
+      renderHook(() => useLatestNumber(1, first))
+      expect(subscriberCount).toBe(1)
+
       expect(subscriberCount).toBe(1)
 
       const second = { val: 2 }
+      latestNumber$(1, second).subscribe()
       renderHook(() => useLatestNumber(1, second))
       expect(subscriberCount).toBe(2)
 
+      latestNumber$(2, second).subscribe()
       renderHook(() => useLatestNumber(2, second))
       expect(subscriberCount).toBe(3)
     })
@@ -135,7 +139,9 @@ describe("connectFactoryObservable", () => {
     })
 
     it("suspends the component when the factory-observable hasn't emitted yet.", async () => {
-      const [useDelayedNumber] = bind((x: number) => of(x).pipe(delay(50)))
+      const [useDelayedNumber, getDelayedNumber$] = bind((x: number) =>
+        of(x).pipe(delay(50)),
+      )
       const Result: React.FC<{ input: number }> = (p) => (
         <div>Result {useDelayedNumber(p.input)}</div>
       )
@@ -151,6 +157,7 @@ describe("connectFactoryObservable", () => {
         )
       }
 
+      getDelayedNumber$(0).subscribe()
       render(<TestSuspense />)
       expect(screen.queryByText("Result")).toBeNull()
       expect(screen.queryByText("Waiting")).not.toBeNull()
@@ -161,6 +168,7 @@ describe("connectFactoryObservable", () => {
       expect(screen.queryByText("Waiting")).toBeNull()
 
       componentAct(() => {
+        getDelayedNumber$(1).subscribe()
         fireEvent.click(screen.getByText(/increase/i))
       })
       expect(screen.queryByText("Result")).toBeNull()
@@ -172,6 +180,7 @@ describe("connectFactoryObservable", () => {
       expect(screen.queryByText("Waiting")).toBeNull()
 
       componentAct(() => {
+        getDelayedNumber$(2).subscribe()
         fireEvent.click(screen.getByText(/increase/i))
       })
       expect(screen.queryByText("Result")).toBeNull()
@@ -190,9 +199,10 @@ describe("connectFactoryObservable", () => {
         return from([1, 2, 3, 4, 5])
       })
 
-      const [useLatestNumber] = bind((id: number) =>
+      const [useLatestNumber, getLatestNumber$] = bind((id: number) =>
         concat(observable$, of(id)),
       )
+      let subs = getLatestNumber$(6).subscribe()
       const { unmount } = renderHook(() => useLatestNumber(6))
       const { unmount: unmount2 } = renderHook(() => useLatestNumber(6))
       const { unmount: unmount3 } = renderHook(() => useLatestNumber(6))
@@ -201,13 +211,13 @@ describe("connectFactoryObservable", () => {
       unmount2()
       unmount3()
 
-      await wait(230)
       const { unmount: unmount4 } = renderHook(() => useLatestNumber(6))
       expect(nInitCount).toBe(1)
 
       unmount4()
-      await wait(270)
+      subs.unsubscribe()
 
+      getLatestNumber$(6).subscribe()
       renderHook(() => useLatestNumber(6))
       expect(nInitCount).toBe(2)
     })
@@ -307,7 +317,13 @@ describe("connectFactoryObservable", () => {
           observer.error("controlled error")
         })
 
-        const [useOkKo] = bind((ok: boolean) => (ok ? normal$ : errored$))
+        const [useOkKo, getObs$] = bind((ok: boolean) =>
+          ok ? normal$ : errored$,
+        )
+        getObs$(true).subscribe()
+        getObs$(false)
+          .pipe(catchError(() => []))
+          .subscribe()
 
         const ErrorComponent = () => {
           const [ok, setOk] = useState(true)
@@ -407,6 +423,7 @@ describe("connectFactoryObservable", () => {
       expect(sub1.closed).toBe(false)
       sub1.unsubscribe()
 
+      let sub = getShared(0).subscribe()
       const { result, unmount } = renderHook(() => useLatestNumber(0))
       expect(result.current).toBe(5)
       expect(nUpdates).toBe(4)
@@ -432,7 +449,7 @@ describe("connectFactoryObservable", () => {
       sub3.unsubscribe()
 
       unmount()
-      await wait(260)
+      sub.unsubscribe()
 
       let latestValue4: number = 0
       const sub4 = getShared(0).subscribe((x) => {

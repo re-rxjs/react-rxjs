@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, useEffect } from "react"
 import { Observable, throwError, concat, Subject } from "rxjs"
-import { mergeMapTo, take, filter } from "rxjs/operators"
+import { mergeMapTo, take, filter, catchError } from "rxjs/operators"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { act, render, screen } from "@testing-library/react"
@@ -149,6 +149,9 @@ describe("batchUpdates", () => {
   test("batchUpdates doesn't get in the way of Error Boundaries", async () => {
     const mockFn = jest.fn()
     const errorCallback = jest.fn()
+    latestNumber$(true, true)
+      .pipe(catchError(() => []))
+      .subscribe()
     render(
       <TestErrorBoundary onError={errorCallback}>
         <Father batched error onRender={mockFn} />
