@@ -14,6 +14,7 @@ import {
   Subject,
   throwError,
   Observable,
+  merge,
 } from "rxjs"
 import {
   delay,
@@ -385,11 +386,17 @@ describe("connectObservable", () => {
   })
 
   it("allows to retry the errored observable after a grace period of time", async () => {
-    let errStream = new Subject<string>()
+    const errStream = new Subject<string>()
+    const nextStream = new Subject<string>()
     const [useError, error$] = bind(
-      defer(() => {
-        return (errStream = new Subject<string>())
-      }),
+      merge(
+        errStream.pipe(
+          map((x) => {
+            throw x
+          }),
+        ),
+        nextStream,
+      ),
     )
 
     const ErrorComponent = () => {
@@ -398,7 +405,7 @@ describe("connectObservable", () => {
     }
 
     const errorCallback = jest.fn()
-    error$.pipe(catchError(() => [])).subscribe()
+    error$.pipe(catchError((_, caught) => caught)).subscribe()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Suspense fallback={<div>Loading...</div>}>
@@ -411,7 +418,7 @@ describe("connectObservable", () => {
     expect(screen.queryByText("ALL GOOD")).toBeNull()
 
     await componentAct(async () => {
-      errStream.error("controlled error")
+      errStream.next("controlled error")
       await wait(50)
     })
 
@@ -439,7 +446,7 @@ describe("connectObservable", () => {
     expect(screen.queryByText("Loading...")).not.toBeNull()
 
     await componentAct(async () => {
-      errStream.next("ALL GOOD")
+      nextStream.next("ALL GOOD")
       await wait(50)
     })
 
