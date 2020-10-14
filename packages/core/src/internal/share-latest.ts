@@ -1,5 +1,4 @@
 import { Observable, Subscription, Subject, noop } from "rxjs"
-import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
@@ -58,12 +57,7 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
 
-  result.getValue = () => {
-    if (currentValue === EMPTY_VALUE || currentValue === (SUSPENSE as any)) {
-      throw currentValue
-    }
-    return currentValue
-  }
+  result.getValue = () => currentValue
 
   return result
 }

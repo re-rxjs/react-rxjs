@@ -1,16 +1,17 @@
-import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
-const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
-  const result = new Observable<T>((subscriber) =>
-    source$.subscribe(subscriber),
-  ) as BehaviorObservable<T>
-
+const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
   let promise: Promise<T | void> | undefined
   let error: any = EMPTY_VALUE
-  const getValue = (): T => {
+
+  return (): T => {
+    const currentValue = source$.getValue()
+    if (currentValue !== SUSPENSE && currentValue !== EMPTY_VALUE) {
+      return currentValue
+    }
+
     let timeoutToken
     if (error !== EMPTY_VALUE) {
       clearTimeout(timeoutToken)
@@ -20,44 +21,38 @@ const reactEnhancer = <T>(source$: Observable<T>): BehaviorObservable<T> => {
       throw error
     }
 
-    try {
-      return (source$ as BehaviorObservable<T>).getValue()
-    } catch (e) {
-      if (promise) throw promise
+    if (promise) throw promise
 
-      let value: typeof EMPTY_VALUE | T = EMPTY_VALUE
+    let value: typeof EMPTY_VALUE | T = EMPTY_VALUE
 
-      promise = new Promise<T>((res) => {
-        const subscription = result.subscribe(
-          (v) => {
-            if (v !== (SUSPENSE as any)) {
-              value = v
-              subscription && subscription.unsubscribe()
-              res(v)
-            }
-          },
-          (e) => {
-            error = e
-            timeoutToken = setTimeout(() => {
-              error = EMPTY_VALUE
-            }, 50)
-            res()
-          },
-        )
-        if (value !== EMPTY_VALUE) {
-          subscription.unsubscribe()
-        }
-      }).finally(() => {
-        promise = undefined
-      })
+    promise = new Promise<T>((res) => {
+      const subscription = source$.subscribe(
+        (v) => {
+          if (v !== (SUSPENSE as any)) {
+            value = v
+            subscription && subscription.unsubscribe()
+            res(v)
+          }
+        },
+        (e) => {
+          error = e
+          timeoutToken = setTimeout(() => {
+            error = EMPTY_VALUE
+          }, 50)
+          res()
+        },
+      )
+      if (value !== EMPTY_VALUE) {
+        subscription.unsubscribe()
+      }
+    }).finally(() => {
+      promise = undefined
+    })
 
-      if (value !== EMPTY_VALUE) return value
+    if (value !== EMPTY_VALUE) return value
 
-      throw error !== EMPTY_VALUE ? error : promise
-    }
+    throw error !== EMPTY_VALUE ? error : promise
   }
-  result.getValue = getValue
-  return result
 }
 
 export default reactEnhancer
