@@ -55,13 +55,14 @@ export default function connectFactoryObservable<A extends [], O>(
 
     const publicShared$ = new Observable<O>((subscriber) => {
       const inCache = cache.get(keys)
-      const source$ = inCache
-        ? inCache[0] === publicShared$
-          ? sharedObservable$
-          : inCache[0]
-        : getSharedObservables$(input)[0]
+      let source$: BehaviorObservable<O> = sharedObservable$
 
-      publicShared$.getValue = source$.getValue
+      if (!inCache) {
+        cache.set(keys, result)
+      } else if (inCache[0] !== publicShared$) {
+        source$ = inCache[0]
+        publicShared$.getValue = source$.getValue
+      }
 
       return source$.subscribe(subscriber)
     }) as BehaviorObservable<O>
