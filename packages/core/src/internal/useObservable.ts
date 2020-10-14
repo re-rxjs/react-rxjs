@@ -6,6 +6,7 @@ import { Observable } from "rxjs"
 export const useObservable = <O>(
   source$: Observable<O>,
   getValue: () => O,
+  keys: Array<any>,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState(getValue)
   const prevStateRef = useRef<O | (() => O)>(state)
@@ -37,7 +38,7 @@ export const useObservable = <O>(
     t.unsubscribe()
 
     return () => subscription.unsubscribe()
-  }, [source$])
+  }, keys)
 
   return state as Exclude<O, typeof SUSPENSE>
 }
