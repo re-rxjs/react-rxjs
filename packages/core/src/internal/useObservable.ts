@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
 import { Observable } from "rxjs"
@@ -8,19 +8,11 @@ export const useObservable = <O>(
   getValue: () => O,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState(getValue)
+  const prevStateRef = useRef<O | (() => O)>(state)
 
   useEffect(() => {
-    let prevVal: O | typeof SUSPENSE = EMPTY_VALUE
     let err: any = EMPTY_VALUE
-
-    const onNext = (value: O | typeof SUSPENSE) => {
-      if (value === SUSPENSE) {
-        setState(getValue)
-      } else if (!Object.is(value, prevVal)) {
-        setState(value)
-      }
-      prevVal = value
-    }
+    let syncVal: O | typeof SUSPENSE = EMPTY_VALUE
     const onError = (error: any) => {
       err = error
       setState(() => {
@@ -28,11 +20,20 @@ export const useObservable = <O>(
       })
     }
 
-    let subscription = source$.subscribe(onNext, onError)
+    let subscription = source$.subscribe((val) => (syncVal = val), onError)
     if (err !== EMPTY_VALUE) return
-    if (prevVal === EMPTY_VALUE) onNext(SUSPENSE)
+
+    const set = (val: O | (() => O)) => {
+      if (!Object.is(val, prevStateRef.current)) {
+        setState((prevStateRef.current = val))
+      }
+    }
+
+    if (syncVal === EMPTY_VALUE) set(getValue)
     const t = subscription
-    subscription = source$.subscribe(onNext, onError)
+    subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
+      set(value === SUSPENSE ? getValue : value)
+    }, onError)
     t.unsubscribe()
 
     return () => subscription.unsubscribe()
