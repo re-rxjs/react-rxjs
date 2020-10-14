@@ -20,7 +20,7 @@ import { useObservable } from "../internal/useObservable"
  */
 export default function connectObservable<T>(observable: Observable<T>) {
   const sharedObservable$ = shareLatest<T>(observable, false)
-  const reactObservable$ = reactEnhancer(sharedObservable$)
-  const useStaticObservable = () => useObservable(reactObservable$)
+  const getValue = reactEnhancer(sharedObservable$)
+  const useStaticObservable = () => useObservable(sharedObservable$, getValue)
   return [useStaticObservable, sharedObservable$] as const
 }

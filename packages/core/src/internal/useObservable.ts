@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
-import { BehaviorObservable } from "./BehaviorObservable"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
+import { Observable } from "rxjs"
 
 export const useObservable = <O>(
-  source$: BehaviorObservable<O>,
+  source$: Observable<O>,
+  getValue: () => O,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState(source$.getValue)
+  const [state, setState] = useState(getValue)
 
   useEffect(() => {
     let prevVal: O | typeof SUSPENSE = EMPTY_VALUE
@@ -14,7 +15,7 @@ export const useObservable = <O>(
 
     const onNext = (value: O | typeof SUSPENSE) => {
       if (value === SUSPENSE) {
-        setState(source$.getValue)
+        setState(getValue)
       } else if (!Object.is(value, prevVal)) {
         setState(value)
       }
@@ -37,5 +38,5 @@ export const useObservable = <O>(
     return () => subscription.unsubscribe()
   }, [source$])
 
-  return state
+  return state as Exclude<O, typeof SUSPENSE>
 }

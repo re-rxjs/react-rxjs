@@ -30,14 +30,11 @@ export default function connectFactoryObservable<A extends [], O>(
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
 ] {
-  const cache = new NestedMap<
-    A,
-    [BehaviorObservable<O>, BehaviorObservable<O>]
-  >()
+  const cache = new NestedMap<A, [BehaviorObservable<O>, () => O]>()
 
   const getSharedObservables$ = (
     input: A,
-  ): [BehaviorObservable<O>, BehaviorObservable<O>] => {
+  ): [BehaviorObservable<O>, () => O] => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
       input.splice(-1)
     }
@@ -68,11 +65,12 @@ export default function connectFactoryObservable<A extends [], O>(
 
       return source$.subscribe(subscriber)
     }) as BehaviorObservable<O>
-    const reactObservable$ = reactEnhancer(publicShared$)
+    publicShared$.getValue = sharedObservable$.getValue
+    const reactGetValue = reactEnhancer(publicShared$)
 
-    const result: [BehaviorObservable<O>, BehaviorObservable<O>] = [
+    const result: [BehaviorObservable<O>, () => O] = [
       publicShared$,
-      reactObservable$,
+      reactGetValue,
     ]
 
     cache.set(keys, result)
@@ -80,7 +78,10 @@ export default function connectFactoryObservable<A extends [], O>(
   }
 
   return [
-    (...input: A) => useObservable(getSharedObservables$(input)[1]),
+    (...input: A) => {
+      const [source$, getValue] = getSharedObservables$(input)
+      return useObservable(source$, getValue)
+    },
     (...input: A) => getSharedObservables$(input)[0],
   ]
 }
