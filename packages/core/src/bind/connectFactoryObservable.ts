@@ -80,7 +80,7 @@ export default function connectFactoryObservable<A extends [], O>(
   return [
     (...input: A) => {
       const [source$, getValue] = getSharedObservables$(input)
-      return useObservable(source$, getValue)
+      return useObservable(source$, getValue, input)
     },
     (...input: A) => getSharedObservables$(input)[0],
   ]
