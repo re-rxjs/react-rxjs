@@ -402,6 +402,30 @@ describe("connectFactoryObservable", () => {
 
       expect(errorCallback).not.toHaveBeenCalled()
     })
+
+    it("does not resubscribe to an observable that emits synchronously and that does not have a top-level subscription after a re-render", () => {
+      let nTopSubscriptions = 0
+
+      const [useNTopSubscriptions] = bind((id: number) =>
+        defer(() => {
+          return of(++nTopSubscriptions + id)
+        }),
+      )
+
+      const { result, rerender, unmount } = renderHook(() =>
+        useNTopSubscriptions(0),
+      )
+
+      expect(result.current).toBe(2)
+
+      actHook(() => {
+        rerender()
+      })
+      expect(result.current).toBe(2)
+      expect(nTopSubscriptions).toBe(2)
+
+      unmount()
+    })
   })
 
   describe("observable", () => {
