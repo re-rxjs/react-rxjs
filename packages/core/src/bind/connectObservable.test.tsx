@@ -508,4 +508,45 @@ describe("connectObservable", () => {
     expect(screen.queryByText("Loading...")).toBeNull()
     expect(screen.queryByText("Hello")).not.toBeNull()
   })
+
+  it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
+    const number$ = new Subject<number>()
+    const [useNumber] = bind(number$, 0)
+
+    const { result, unmount } = renderHook(() => useNumber())
+
+    expect(result.current).toBe(0)
+
+    act(() => {
+      number$.next(5)
+    })
+
+    expect(result.current).toBe(5)
+
+    unmount()
+  })
+
+  it("when a defaultValue is provided, the first subscription happens once the component is mounted", () => {
+    let nTopSubscriptions = 0
+
+    const [useNTopSubscriptions] = bind(
+      defer(() => of(++nTopSubscriptions)),
+      1,
+    )
+
+    const { result, rerender, unmount } = renderHook(() =>
+      useNTopSubscriptions(),
+    )
+
+    expect(result.current).toBe(1)
+
+    act(() => {
+      rerender()
+    })
+
+    expect(result.current).toBe(1)
+    expect(nTopSubscriptions).toBe(1)
+
+    unmount()
+  })
 })

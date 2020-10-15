@@ -3,6 +3,7 @@ import shareLatest from "../internal/share-latest"
 import reactEnhancer from "../internal/react-enhancer"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { useObservable } from "../internal/useObservable"
+import { EMPTY_VALUE } from "../internal/empty-value"
 import { SUSPENSE } from "../SUSPENSE"
 
 /**
@@ -26,6 +27,7 @@ import { SUSPENSE } from "../SUSPENSE"
  */
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
+  defaultValue: O = EMPTY_VALUE,
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
@@ -67,7 +69,7 @@ export default function connectFactoryObservable<A extends [], O>(
       return source$.subscribe(subscriber)
     }) as BehaviorObservable<O>
     publicShared$.getValue = sharedObservable$.getValue
-    const reactGetValue = reactEnhancer(publicShared$)
+    const reactGetValue = reactEnhancer(publicShared$, defaultValue)
 
     const result: [BehaviorObservable<O>, () => O] = [
       publicShared$,

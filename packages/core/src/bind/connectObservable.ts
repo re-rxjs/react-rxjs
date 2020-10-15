@@ -2,6 +2,7 @@ import { Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import reactEnhancer from "../internal/react-enhancer"
 import { useObservable } from "../internal/useObservable"
+import { EMPTY_VALUE } from "../internal/empty-value"
 
 /**
  * Accepts: An Observable.
@@ -19,9 +20,12 @@ import { useObservable } from "../internal/useObservable"
  * for the first value.
  */
 const emptyArr: Array<any> = []
-export default function connectObservable<T>(observable: Observable<T>) {
+export default function connectObservable<T>(
+  observable: Observable<T>,
+  defaultValue: T = EMPTY_VALUE,
+) {
   const sharedObservable$ = shareLatest<T>(observable, false)
-  const getValue = reactEnhancer(sharedObservable$)
+  const getValue = reactEnhancer(sharedObservable$, defaultValue)
   const useStaticObservable = () =>
     useObservable(sharedObservable$, getValue, emptyArr)
   return [useStaticObservable, sharedObservable$] as const

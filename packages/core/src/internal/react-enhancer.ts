@@ -2,15 +2,19 @@ import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
-const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
+const reactEnhancer = <T>(
+  source$: BehaviorObservable<T>,
+  defaultValue: T,
+): (() => T) => {
   let promise: Promise<T | void> | null
   let error: any = EMPTY_VALUE
 
-  return (): T => {
+  const res = (): T => {
     const currentValue = source$.getValue()
     if (currentValue !== SUSPENSE && currentValue !== EMPTY_VALUE) {
       return currentValue
     }
+    if (defaultValue !== EMPTY_VALUE) return defaultValue
 
     let timeoutToken
     if (error !== EMPTY_VALUE) {
@@ -56,6 +60,8 @@ const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
 
     throw error !== EMPTY_VALUE ? error : promise
   }
+  res.d = defaultValue
+  return res
 }
 
 export default reactEnhancer
