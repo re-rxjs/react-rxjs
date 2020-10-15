@@ -9,7 +9,7 @@ import {
   Subject,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { switchMap, delay, take, catchError } from "rxjs/operators"
+import { switchMap, delay, take, catchError, map } from "rxjs/operators"
 import { FC, Suspense, useState } from "react"
 import React from "react"
 import {
@@ -423,6 +423,53 @@ describe("connectFactoryObservable", () => {
       })
       expect(result.current).toBe(2)
       expect(nTopSubscriptions).toBe(2)
+
+      unmount()
+    })
+
+    it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
+      const number$ = new Subject<number>()
+      const [useNumber] = bind(
+        (id: number) => number$.pipe(map((x) => x + id)),
+        0,
+      )
+
+      const { result, unmount } = renderHook(() => useNumber(5))
+
+      expect(result.current).toBe(0)
+
+      actHook(() => {
+        number$.next(5)
+      })
+
+      expect(result.current).toBe(10)
+
+      unmount()
+    })
+
+    it("when a defaultValue is provided, the first subscription happens once the component is mounted", () => {
+      let nTopSubscriptions = 0
+
+      const [useNTopSubscriptions] = bind(
+        (id: number) =>
+          defer(() => {
+            return of(++nTopSubscriptions + id)
+          }),
+        1,
+      )
+
+      const { result, rerender, unmount } = renderHook(() =>
+        useNTopSubscriptions(0),
+      )
+
+      expect(result.current).toBe(1)
+
+      actHook(() => {
+        rerender()
+      })
+
+      expect(result.current).toBe(1)
+      expect(nTopSubscriptions).toBe(1)
 
       unmount()
     })

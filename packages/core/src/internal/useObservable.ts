@@ -14,6 +14,7 @@ export const useObservable = <O>(
   useEffect(() => {
     let err: any = EMPTY_VALUE
     let syncVal: O | typeof SUSPENSE = EMPTY_VALUE
+
     const onError = (error: any) => {
       err = error
       setState(() => {
@@ -26,13 +27,16 @@ export const useObservable = <O>(
     }, onError)
     if (err !== EMPTY_VALUE) return
 
-    const set = (val: O | (() => O)) => {
-      if (!Object.is(val, prevStateRef.current)) {
-        setState((prevStateRef.current = val))
-      }
+    const set = (value: O | (() => O)) => {
+      if (!Object.is(prevStateRef.current, value))
+        setState((prevStateRef.current = value))
     }
 
-    if (syncVal === EMPTY_VALUE) set(getValue)
+    const defaultValue = (getValue as any).d
+    if (syncVal === EMPTY_VALUE) {
+      set(defaultValue === EMPTY_VALUE ? getValue : defaultValue)
+    }
+
     const t = subscription
     subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
       set(value === SUSPENSE ? getValue : value)
