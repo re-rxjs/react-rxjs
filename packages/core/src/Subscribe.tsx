@@ -18,7 +18,9 @@ export const Subscribe: React.FC<{
   useEffect(() => {
     const subscription = source$.subscribe()
     setMounted(1)
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [source$])
   return <>{mounted ? children : fallback}</>
 }

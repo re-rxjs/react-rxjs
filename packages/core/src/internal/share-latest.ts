@@ -7,8 +7,8 @@ const shareLatest = <T>(
   shouldComplete = true,
   teardown = noop,
 ): BehaviorObservable<T> => {
-  let subject: Subject<T> | undefined
-  let subscription: Subscription | undefined | null
+  let subject: Subject<T> | null
+  let subscription: Subscription | null
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
 
@@ -25,16 +25,16 @@ const shareLatest = <T>(
         },
         (err) => {
           const _subject = subject
-          subscription = undefined
-          subject = undefined
+          subscription = null
+          subject = null
           _subject!.error(err)
         },
         () => {
-          subscription = undefined
+          subscription = null
           shouldComplete && subject!.complete()
         },
       )
-      if (subscription.closed) subscription = undefined
+      if (subscription.closed) subscription = null
     } else {
       innerSub = subject.subscribe(subscriber)
       if (currentValue !== EMPTY_VALUE) {
@@ -51,8 +51,8 @@ const shareLatest = <T>(
           subscription.unsubscribe()
         }
         teardown()
-        subject = undefined
-        subscription = undefined
+        subject = null
+        subscription = null
       }
     }
   }) as BehaviorObservable<T>

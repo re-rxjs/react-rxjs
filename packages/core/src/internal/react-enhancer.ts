@@ -3,7 +3,7 @@ import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
 const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
-  let promise: Promise<T | void> | undefined
+  let promise: Promise<T | void> | null
   let error: any = EMPTY_VALUE
 
   return (): T => {
@@ -46,11 +46,11 @@ const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
         subscription.unsubscribe()
       }
     }).finally(() => {
-      promise = undefined
+      promise = null
     })
 
     if (value !== EMPTY_VALUE) {
-      promise = undefined
+      promise = null
       return value
     }
 
