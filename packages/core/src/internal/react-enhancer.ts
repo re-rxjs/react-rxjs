@@ -49,7 +49,10 @@ const reactEnhancer = <T>(source$: BehaviorObservable<T>): (() => T) => {
       promise = undefined
     })
 
-    if (value !== EMPTY_VALUE) return value
+    if (value !== EMPTY_VALUE) {
+      promise = undefined
+      return value
+    }
 
     throw error !== EMPTY_VALUE ? error : promise
   }

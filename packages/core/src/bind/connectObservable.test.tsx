@@ -5,7 +5,7 @@ import {
   screen,
 } from "@testing-library/react"
 import { act, renderHook } from "@testing-library/react-hooks"
-import React, { Suspense, useEffect, FC } from "react"
+import React, { Suspense, useEffect, FC, StrictMode } from "react"
 import {
   BehaviorSubject,
   defer,
@@ -15,6 +15,7 @@ import {
   throwError,
   Observable,
   merge,
+  NEVER,
 } from "rxjs"
 import {
   delay,
@@ -490,5 +491,21 @@ describe("connectObservable", () => {
     })
 
     expect(errorCallback).not.toHaveBeenCalled()
+  })
+
+  it("should not trigger suspense when the stream emits synchronously", () => {
+    const [useValue] = bind(NEVER.pipe(startWith("Hello")))
+
+    const Component: FC = () => <>{useValue()}</>
+    render(
+      <StrictMode>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Component />
+        </Suspense>
+      </StrictMode>,
+    )
+
+    expect(screen.queryByText("Loading...")).toBeNull()
+    expect(screen.queryByText("Hello")).not.toBeNull()
   })
 })
