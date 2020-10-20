@@ -13,6 +13,8 @@ import { useEffect } from "react"
 export const useSubscribe = <T>(source$: Observable<T>) => {
   useEffect(() => {
     const subscription = source$.subscribe()
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [source$])
 }

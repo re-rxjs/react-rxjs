@@ -21,7 +21,9 @@ export const useObservable = <O>(
       })
     }
 
-    let subscription = source$.subscribe((val) => (syncVal = val), onError)
+    let subscription = source$.subscribe((val) => {
+      syncVal = val
+    }, onError)
     if (err !== EMPTY_VALUE) return
 
     const set = (val: O | (() => O)) => {
@@ -37,7 +39,9 @@ export const useObservable = <O>(
     }, onError)
     t.unsubscribe()
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+    }
   }, keys)
 
   return state as Exclude<O, typeof SUSPENSE>
