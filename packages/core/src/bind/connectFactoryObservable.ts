@@ -1,9 +1,7 @@
 import { Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
-import reactEnhancer from "../internal/react-enhancer"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { useObservable } from "../internal/useObservable"
-import { EMPTY_VALUE } from "../internal/empty-value"
 import { SUSPENSE } from "../SUSPENSE"
 
 /**
@@ -27,16 +25,14 @@ import { SUSPENSE } from "../SUSPENSE"
  */
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
-  defaultValue: O = EMPTY_VALUE,
+  defaultValue: O,
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
 ] {
-  const cache = new NestedMap<A, [BehaviorObservable<O>, () => O]>()
+  const cache = new NestedMap<A, BehaviorObservable<O>>()
 
-  const getSharedObservables$ = (
-    input: A,
-  ): [BehaviorObservable<O>, () => O] => {
+  const getSharedObservables$ = (input: A): BehaviorObservable<O> => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
       input.splice(-1)
     }
@@ -50,6 +46,7 @@ export default function connectFactoryObservable<A extends [], O>(
     const sharedObservable$ = shareLatest(
       getObservable(...input),
       false,
+      defaultValue,
       () => {
         cache.delete(keys)
       },
@@ -61,31 +58,25 @@ export default function connectFactoryObservable<A extends [], O>(
 
       if (!inCache) {
         cache.set(keys, result)
-      } else if (inCache[0] !== publicShared$) {
-        source$ = inCache[0]
-        publicShared$.getValue = source$.getValue
+      } else if (inCache !== publicShared$) {
+        source$ = inCache
+        publicShared$.gV = source$.gV
       }
 
       return source$.subscribe(subscriber)
     }) as BehaviorObservable<O>
-    publicShared$.getValue = sharedObservable$.getValue
-    const reactGetValue = reactEnhancer(publicShared$, defaultValue)
+    publicShared$.gV = sharedObservable$.gV
 
-    const result: [BehaviorObservable<O>, () => O] = [
-      publicShared$,
-      reactGetValue,
-    ]
+    const result: BehaviorObservable<O> = publicShared$
 
     cache.set(keys, result)
     return result
   }
 
   return [
-    (...input: A) => {
-      const [source$, getValue] = getSharedObservables$(input)
-      return useObservable(source$, getValue, input)
-    },
-    (...input: A) => getSharedObservables$(input)[0],
+    (...input: A) =>
+      useObservable(getSharedObservables$(input), input, defaultValue),
+    (...input: A) => getSharedObservables$(input),
   ]
 }
 

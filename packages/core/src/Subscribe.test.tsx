@@ -1,23 +1,26 @@
 import React from "react"
 import { render } from "@testing-library/react"
-import { defer, Subject } from "rxjs"
-import { share, finalize } from "rxjs/operators"
-import { Subscribe } from "./"
+import { Observable } from "rxjs"
+import { Subscribe, bind } from "./"
 
 describe("Subscribe", () => {
   it("subscribes to the provided observable and remains subscribed until it's unmounted", () => {
     let nSubscriptions = 0
-    const source$ = defer(() => {
-      nSubscriptions++
-      return new Subject()
-    }).pipe(
-      finalize(() => {
-        nSubscriptions--
+    const [useNumber, number$] = bind(
+      new Observable<number>(() => {
+        nSubscriptions++
+        return () => {
+          nSubscriptions--
+        }
       }),
-      share(),
     )
 
-    const TestSubscribe: React.FC = () => <Subscribe source$={source$} />
+    const Number: React.FC = () => <>{useNumber()}</>
+    const TestSubscribe: React.FC = () => (
+      <Subscribe source$={number$}>
+        <Number />
+      </Subscribe>
+    )
 
     expect(nSubscriptions).toBe(0)
 

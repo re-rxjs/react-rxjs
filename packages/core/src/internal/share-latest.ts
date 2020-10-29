@@ -1,18 +1,23 @@
 import { Observable, Subscription, Subject, noop } from "rxjs"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
+import { SUSPENSE } from "../SUSPENSE"
 
 const shareLatest = <T>(
   source$: Observable<T>,
   shouldComplete = true,
+  defaultValue: T = EMPTY_VALUE,
   teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | null
   let subscription: Subscription | null
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
+  let promise: Promise<T> | null
 
   const result = new Observable<T>((subscriber) => {
+    if (!shouldComplete) subscriber.complete = noop
+
     refCount++
     let innerSub: Subscription
     if (!subject) {
@@ -31,7 +36,7 @@ const shareLatest = <T>(
         },
         () => {
           subscription = null
-          shouldComplete && subject!.complete()
+          subject!.complete()
         },
       )
       if (subscription.closed) subscription = null
@@ -53,11 +58,57 @@ const shareLatest = <T>(
         teardown()
         subject = null
         subscription = null
+        promise = null
       }
     }
   }) as BehaviorObservable<T>
 
-  result.getValue = () => currentValue
+  let error: any = EMPTY_VALUE
+  let timeoutToken: any
+  result.gV = (): T => {
+    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
+      return currentValue
+    }
+    if (defaultValue !== EMPTY_VALUE) return defaultValue
+
+    if (error !== EMPTY_VALUE) {
+      clearTimeout(timeoutToken)
+      timeoutToken = setTimeout(() => {
+        error = EMPTY_VALUE
+      }, 50)
+      throw error
+    }
+
+    if (!subscription) {
+      throw new Error("Missing subscription")
+    }
+    if (promise) throw promise
+
+    throw (promise = new Promise<T>((res) => {
+      const setError = (e: any) => {
+        error = e
+        timeoutToken = setTimeout(() => {
+          error = EMPTY_VALUE
+        }, 50)
+        res()
+        promise = null
+      }
+      const pSubs = subject!.subscribe(
+        (v) => {
+          if (v !== (SUSPENSE as any)) {
+            pSubs.unsubscribe()
+            res(v)
+            promise = null
+          }
+        },
+        setError,
+        () => {
+          setError(new Error("Empty observable"))
+        },
+      )
+      subscription!.add(pSubs)
+    }))
+  }
 
   return result
 }

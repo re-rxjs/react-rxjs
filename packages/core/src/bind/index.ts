@@ -2,6 +2,7 @@ import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import connectFactoryObservable from "./connectFactoryObservable"
 import connectObservable from "./connectObservable"
+import { EMPTY_VALUE } from "../internal/empty-value"
 
 /**
  * Binds an observable to React
@@ -45,8 +46,8 @@ export function bind<A extends unknown[], O>(
   defaultValue?: O,
 ): [(...args: A) => Exclude<O, typeof SUSPENSE>, (...args: A) => Observable<O>]
 
-export function bind(...args: any[]) {
-  return (typeof args[0] === "function"
+export function bind(observable: any, defaultValue: any = EMPTY_VALUE) {
+  return (typeof observable === "function"
     ? (connectFactoryObservable as any)
-    : connectObservable)(...args)
+    : connectObservable)(observable, defaultValue)
 }

@@ -1,17 +1,18 @@
 import { useEffect, useState, useRef } from "react"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
-import { Observable } from "rxjs"
+import { BehaviorObservable } from "../internal/BehaviorObservable"
 
 export const useObservable = <O>(
-  source$: Observable<O>,
-  getValue: () => O,
+  source$: BehaviorObservable<O>,
   keys: Array<any>,
+  defaultValue: O,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState(getValue)
+  const [state, setState] = useState(source$.gV)
   const prevStateRef = useRef<O | (() => O)>(state)
 
   useEffect(() => {
+    const { gV } = source$
     let err: any = EMPTY_VALUE
     let syncVal: O | typeof SUSPENSE = EMPTY_VALUE
 
@@ -32,14 +33,13 @@ export const useObservable = <O>(
         setState((prevStateRef.current = value))
     }
 
-    const defaultValue = (getValue as any).d
     if (syncVal === EMPTY_VALUE) {
-      set(defaultValue === EMPTY_VALUE ? getValue : defaultValue)
+      set(defaultValue === EMPTY_VALUE ? gV : defaultValue)
     }
 
     const t = subscription
     subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
-      set(value === SUSPENSE ? getValue : value)
+      set(value === SUSPENSE ? gV : value)
     }, onError)
     t.unsubscribe()
 
