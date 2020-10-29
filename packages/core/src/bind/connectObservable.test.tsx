@@ -7,7 +7,6 @@ import {
 import { act, renderHook } from "@testing-library/react-hooks"
 import React, { Suspense, useEffect, FC, StrictMode } from "react"
 import {
-  BehaviorSubject,
   defer,
   from,
   of,
@@ -15,17 +14,17 @@ import {
   throwError,
   Observable,
   merge,
-  NEVER,
+  EMPTY,
 } from "rxjs"
 import {
   delay,
   scan,
   startWith,
   map,
-  switchMap,
   catchError,
+  switchMapTo,
 } from "rxjs/operators"
-import { bind, SUSPENSE } from "../"
+import { bind, SUSPENSE, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -37,6 +36,8 @@ describe("connectObservable", () => {
       if (
         /Warning.*not wrapped in act/.test(args[0]) ||
         /Uncaught 'controlled error'/.test(args[0]) ||
+        /Missing subscription/.test(args[0]) ||
+        /Empty observable/.test(args[0]) ||
         /using the error boundary .* TestErrorBoundary/.test(args[0])
       ) {
         return
@@ -51,10 +52,12 @@ describe("connectObservable", () => {
 
   it("sets the initial state synchronously if it's available", async () => {
     const observable$ = of(1)
-    const [useLatestNumber] = bind(observable$)
+    const [useLatestNumber, latestNumber$] = bind(observable$)
+    const subs = latestNumber$.subscribe()
 
     const { result } = renderHook(() => useLatestNumber())
     expect(result.current).toEqual(1)
+    subs.unsubscribe()
   })
 
   it("suspends the component when the observable hasn't emitted yet.", async () => {
@@ -108,8 +111,8 @@ describe("connectObservable", () => {
   })
 
   it("updates with the last emitted value", async () => {
-    const numberStream = new BehaviorSubject(1)
-    const [useNumber] = bind(numberStream)
+    const numberStream = new Subject<number>()
+    const [useNumber] = bind(numberStream, 1)
     const { result } = renderHook(() => useNumber())
     expect(result.current).toBe(1)
 
@@ -121,7 +124,7 @@ describe("connectObservable", () => {
 
   it("updates more than one component", async () => {
     const value = new Subject<number>()
-    const [useValue] = bind(value.pipe(startWith(0)))
+    const [useValue] = bind(value, 0)
     const { result: result1, unmount: unmount1 } = renderHook(() => useValue())
     const { result: result2, unmount: unmount2 } = renderHook(() => useValue())
     const { result: result3, unmount: unmount3 } = renderHook(() => useValue())
@@ -162,10 +165,10 @@ describe("connectObservable", () => {
   })
 
   it("allows React to batch synchronous updates", async () => {
-    const numberStream = new BehaviorSubject(1)
-    const stringStream = new BehaviorSubject("a")
-    const [useNumber] = bind(numberStream)
-    const [useString] = bind(stringStream)
+    const numberStream = new Subject<number>()
+    const stringStream = new Subject<string>()
+    const [useNumber] = bind(numberStream, 1)
+    const [useString] = bind(stringStream, "a")
 
     const BatchComponent: FC<{
       onUpdate: () => void
@@ -231,15 +234,15 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber] = bind(source$)
+    const [useDelayedNumber, delayedNumber$] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
         <div>
           <button onClick={() => subject$.next()}>Next</button>
-          <Suspense fallback={<span>Waiting</span>}>
+          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
             <Result />
-          </Suspense>
+          </Subscribe>
         </div>
       )
     }
@@ -271,15 +274,15 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber] = bind(source$)
+    const [useDelayedNumber, delayedNumber$] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
         <div>
           <button onClick={() => subject$.next()}>Next</button>
-          <Suspense fallback={<span>Waiting</span>}>
+          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
             <Result />
-          </Suspense>
+          </Subscribe>
         </div>
       )
     }
@@ -304,8 +307,8 @@ describe("connectObservable", () => {
   })
 
   it("allows errors to be caught in error boundaries", () => {
-    const errStream = new BehaviorSubject(1)
-    const [useError] = bind(errStream)
+    const errStream = new Subject()
+    const [useError] = bind(errStream, 1)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -333,7 +336,7 @@ describe("connectObservable", () => {
     const errStream = new Observable((observer) =>
       observer.error("controlled error"),
     )
-    const [useError] = bind(errStream)
+    const [useError, errStream$] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -343,9 +346,9 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
           <ErrorComponent />
-        </Suspense>
+        </Subscribe>
       </TestErrorBoundary>,
     )
 
@@ -358,7 +361,8 @@ describe("connectObservable", () => {
 
   it("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
-    const [useError] = bind(errStream)
+    const [useError, errStream$] = bind(errStream)
+    const errStream$WithoutErrors = errStream$.pipe(catchError(() => EMPTY))
 
     const ErrorComponent = () => {
       const value = useError()
@@ -368,9 +372,12 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Subscribe
+          source$={errStream$WithoutErrors}
+          fallback={<div>Loading...</div>}
+        >
           <ErrorComponent />
-        </Suspense>
+        </Subscribe>
       </TestErrorBoundary>,
     )
 
@@ -406,12 +413,11 @@ describe("connectObservable", () => {
     }
 
     const errorCallback = jest.fn()
-    error$.pipe(catchError((_, caught) => caught)).subscribe()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Subscribe source$={error$} fallback={<div>Loading...</div>}>
           <ErrorComponent />
-        </Suspense>
+        </Subscribe>
       </TestErrorBoundary>,
     )
 
@@ -435,13 +441,12 @@ describe("connectObservable", () => {
     await componentAct(async () => {
       await wait(200)
     })
-    error$.subscribe()
 
     render(
       <TestErrorBoundary onError={errorCallback}>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Subscribe source$={error$} fallback={<div>Loading...</div>}>
           <ErrorComponent />
-        </Suspense>
+        </Subscribe>
       </TestErrorBoundary>,
     )
     expect(screen.queryByText("Loading...")).not.toBeNull()
@@ -459,11 +464,9 @@ describe("connectObservable", () => {
   })
 
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
-    const valueStream = new BehaviorSubject(1)
-    const [useValue, value$] = bind(valueStream)
-    const [useError] = bind(
-      value$.pipe(switchMap((v) => (v === 1 ? of(v) : throwError("error")))),
-    )
+    const valueStream = new Subject<number>()
+    const [useValue, value$] = bind(valueStream, 1)
+    const [useError] = bind(value$.pipe(switchMapTo(throwError("error"))), 1)
 
     const ErrorComponent: FC = () => {
       const value = useError()
@@ -493,20 +496,52 @@ describe("connectObservable", () => {
     expect(errorCallback).not.toHaveBeenCalled()
   })
 
-  it("should not trigger suspense when the stream emits synchronously", () => {
-    const [useValue] = bind(NEVER.pipe(startWith("Hello")))
+  it("should throw an error when the stream does not have a subscription", () => {
+    const [useValue] = bind(of("Hello"))
+    const errorCallback = jest.fn()
 
     const Component: FC = () => <>{useValue()}</>
     render(
       <StrictMode>
-        <Suspense fallback={<div>Loading...</div>}>
-          <Component />
-        </Suspense>
+        <TestErrorBoundary onError={errorCallback}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Component />
+          </Suspense>
+        </TestErrorBoundary>
+        ,
       </StrictMode>,
     )
 
+    expect(errorCallback).toHaveBeenCalled()
+  })
+
+  it("should throw an error if the stream completes without emitting while on SUSPENSE", async () => {
+    const subject = new Subject()
+    const [useValue, value$] = bind(subject)
+    const errorCallback = jest.fn()
+
+    const Component: FC = () => <>{useValue()}</>
+    render(
+      <StrictMode>
+        <TestErrorBoundary onError={errorCallback}>
+          <Subscribe source$={value$} fallback={<div>Loading...</div>}>
+            <Component />
+          </Subscribe>
+        </TestErrorBoundary>
+        ,
+      </StrictMode>,
+    )
+
+    expect(errorCallback).not.toHaveBeenCalled()
+    expect(screen.queryByText("Loading...")).not.toBeNull()
+
+    await componentAct(async () => {
+      subject.complete()
+      await wait(100)
+    })
+
     expect(screen.queryByText("Loading...")).toBeNull()
-    expect(screen.queryByText("Hello")).not.toBeNull()
+    expect(errorCallback).toHaveBeenCalled()
   })
 
   it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {

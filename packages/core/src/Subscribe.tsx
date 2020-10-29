@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from "react"
-import { Observable } from "rxjs"
+import React, { useState, Suspense, useLayoutEffect, ReactNode } from "react"
+import { Observable, noop } from "rxjs"
+
+const p = Promise.resolve()
+const Throw = () => {
+  throw p
+}
 
 /**
  * A React Component that creates a subscription to the provided observable once
@@ -12,15 +17,27 @@ import { Observable } from "rxjs"
  */
 export const Subscribe: React.FC<{
   source$: Observable<any>
-  fallback?: null | JSX.Element
+  fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {
-  const [mounted, setMounted] = useState(0)
-  useEffect(() => {
-    const subscription = source$.subscribe()
+  const [mounted, setMounted] = useState(() => {
+    try {
+      ;(source$ as any).gV()
+      return 1
+    } catch (e) {
+      return e.then ? 1 : 0
+    }
+  })
+  useLayoutEffect(() => {
+    const subscription = source$.subscribe(noop, (e) =>
+      setMounted(() => {
+        throw e
+      }),
+    )
     setMounted(1)
     return () => {
       subscription.unsubscribe()
     }
   }, [source$])
-  return <>{mounted ? children : fallback}</>
+  const fBack = fallback || null
+  return <Suspense fallback={fBack}>{mounted ? children : <Throw />}</Suspense>
 }
