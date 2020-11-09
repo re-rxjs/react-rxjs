@@ -22,9 +22,9 @@ export const Subscribe: React.FC<{
   const [mounted, setMounted] = useState(() => {
     try {
       ;(source$ as any).gV()
-      return 1
+      return source$
     } catch (e) {
-      return e.then ? 1 : 0
+      return e.then ? source$ : null
     }
   })
   useLayoutEffect(() => {
@@ -33,11 +33,15 @@ export const Subscribe: React.FC<{
         throw e
       }),
     )
-    setMounted(1)
+    setMounted(source$)
     return () => {
       subscription.unsubscribe()
     }
   }, [source$])
   const fBack = fallback || null
-  return <Suspense fallback={fBack}>{mounted ? children : <Throw />}</Suspense>
+  return (
+    <Suspense fallback={fBack}>
+      {mounted === source$ ? children : <Throw />}
+    </Suspense>
+  )
 }
