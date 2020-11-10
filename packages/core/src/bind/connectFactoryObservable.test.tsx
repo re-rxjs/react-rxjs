@@ -17,6 +17,7 @@ import {
   fireEvent,
   screen,
   render,
+  act,
 } from "@testing-library/react"
 import { bind, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
@@ -181,6 +182,30 @@ describe("connectFactoryObservable", () => {
       })
       expect(result.current).toBe(2)
       subs.unsubscribe()
+    })
+
+    it("immediately switches the state to the new observable", () => {
+      const [useNumber, getNumber$] = bind((x: number) => of(x))
+      const subs = merge(
+        getNumber$(0),
+        getNumber$(1),
+        getNumber$(2),
+      ).subscribe()
+
+      const Form = ({ id }: { id: number }) => {
+        const value = useNumber(id)
+
+        return <input role="input" key={id} defaultValue={value} />
+      }
+
+      const { rerender, getByRole } = render(<Form id={0} />)
+      expect((getByRole("input") as HTMLInputElement).value).toBe("0")
+
+      act(() => rerender(<Form id={1} />))
+      expect((getByRole("input") as HTMLInputElement).value).toBe("1")
+
+      act(() => rerender(<Form id={2} />))
+      expect((getByRole("input") as HTMLInputElement).value).toBe("2")
     })
 
     it("handles optional args correctly", () => {
