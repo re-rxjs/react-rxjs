@@ -8,8 +8,15 @@ export const useObservable = <O>(
   keys: Array<any>,
   defaultValue: O,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState(source$.gV)
-  const prevStateRef = useRef<O | (() => O)>(state)
+  const [state, setState] = useState<[O, any[]]>(() => [source$.gV(), keys])
+  const prevStateRef = useRef<O | (() => O)>(state[0])
+
+  if (
+    keys.length !== state[1].length ||
+    keys.some((k, i) => state[1][i] !== k)
+  ) {
+    setState([source$.gV(), keys])
+  }
 
   useEffect(() => {
     const { gV } = source$
@@ -29,8 +36,14 @@ export const useObservable = <O>(
     if (err !== EMPTY_VALUE) return
 
     const set = (value: O | (() => O)) => {
-      if (!Object.is(prevStateRef.current, value))
-        setState((prevStateRef.current = value))
+      if (!Object.is(prevStateRef.current, value)) {
+        prevStateRef.current = value
+        if (typeof value === "function") {
+          setState(() => [(value as any)(), keys])
+        } else {
+          setState([value, keys])
+        }
+      }
     }
 
     if (syncVal === EMPTY_VALUE) {
@@ -48,5 +61,5 @@ export const useObservable = <O>(
     }
   }, keys)
 
-  return state as Exclude<O, typeof SUSPENSE>
+  return state[0] as Exclude<O, typeof SUSPENSE>
 }
