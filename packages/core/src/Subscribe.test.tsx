@@ -32,7 +32,7 @@ describe("Subscribe", () => {
     expect(nSubscriptions).toBe(0)
   })
 
-  it("doesn't render its content until it has subscribed to a the source", () => {
+  it("doesn't render its content until it has subscribed to a new source", () => {
     let nSubscriptions = 0
     let errored = false
     const [useInstance, instance$] = bind((id: number) => {
