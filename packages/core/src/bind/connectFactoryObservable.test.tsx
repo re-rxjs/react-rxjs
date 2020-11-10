@@ -9,7 +9,14 @@ import {
   merge,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { delay, take, catchError, map, switchMapTo } from "rxjs/operators"
+import {
+  delay,
+  take,
+  catchError,
+  map,
+  switchMapTo,
+  first,
+} from "rxjs/operators"
 import { FC, useState } from "react"
 import React from "react"
 import {
@@ -242,7 +249,8 @@ describe("connectFactoryObservable", () => {
       expect(screen.queryByText("Result")).toBeNull()
       expect(screen.queryByText("Waiting")).not.toBeNull()
       await componentAct(async () => {
-        await wait(60)
+        await getDelayedNumber$(0).pipe(first()).toPromise()
+        await wait(0)
       })
       expect(screen.queryByText("Result 0")).not.toBeNull()
       expect(screen.queryByText("Waiting")).toBeNull()

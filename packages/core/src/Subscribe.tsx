@@ -6,6 +6,15 @@ const Throw = () => {
   throw p
 }
 
+const initFn = (source$: Observable<any>) => {
+  try {
+    ;(source$ as any).gV()
+    return source$
+  } catch (e) {
+    return e.then ? source$ : null
+  }
+}
+
 /**
  * A React Component that creates a subscription to the provided observable once
  * the component mounts and it unsubscribes when the component unmounts.
@@ -19,21 +28,23 @@ export const Subscribe: React.FC<{
   source$: Observable<any>
   fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {
-  const [mounted, setMounted] = useState(() => {
-    try {
-      ;(source$ as any).gV()
-      return source$
-    } catch (e) {
-      return e.then ? source$ : null
+  const [subscribedSource, setSubscribedSource] = useState(() =>
+    initFn(source$),
+  )
+  if (subscribedSource && subscribedSource !== source$) {
+    const result = initFn(source$)
+    if (result) {
+      setSubscribedSource(result)
     }
-  })
+  }
+
   useLayoutEffect(() => {
     const subscription = source$.subscribe(noop, (e) =>
-      setMounted(() => {
+      setSubscribedSource(() => {
         throw e
       }),
     )
-    setMounted(source$)
+    setSubscribedSource(source$)
     return () => {
       subscription.unsubscribe()
     }
@@ -41,7 +52,7 @@ export const Subscribe: React.FC<{
   const fBack = fallback || null
   return (
     <Suspense fallback={fBack}>
-      {mounted === source$ ? children : <Throw />}
+      {subscribedSource === source$ ? children : <Throw />}
     </Suspense>
   )
 }
