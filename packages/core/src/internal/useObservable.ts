@@ -47,7 +47,7 @@ export const useObservable = <O>(
     }
 
     if (syncVal === EMPTY_VALUE) {
-      set(defaultValue === EMPTY_VALUE ? gV : defaultValue)
+      set(defaultValue)
     }
 
     const t = subscription
