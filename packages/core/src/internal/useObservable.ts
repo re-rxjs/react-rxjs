@@ -34,24 +34,18 @@ export const useObservable = <O>(
     }, onError)
     if (err !== EMPTY_VALUE) return
 
-    const set = (value: O | (() => O)) => {
+    const set = (value: O) => {
       if (!Object.is(prevStateRef.current, value)) {
-        prevStateRef.current = value
-        if (typeof value === "function") {
-          setState(() => [(value as any)(), source$])
-        } else {
-          setState([value, source$])
-        }
+        setState([(prevStateRef.current = value), source$])
       }
     }
 
-    if (syncVal === EMPTY_VALUE) {
-      set(defaultValue)
-    }
+    if (syncVal === EMPTY_VALUE) set(defaultValue)
 
     const t = subscription
     subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
-      set(value === SUSPENSE ? gV : value)
+      if (value !== SUSPENSE) set(value)
+      else setState(gV as any)
     }, onError)
     t.unsubscribe()
 
