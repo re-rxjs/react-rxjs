@@ -5,17 +5,16 @@ import { BehaviorObservable } from "../internal/BehaviorObservable"
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
-  keys: Array<any>,
   defaultValue: O,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState<[O, any[]]>(() => [source$.gV(), keys])
+  const [state, setState] = useState<[O, BehaviorObservable<O>]>(() => [
+    source$.gV(),
+    source$,
+  ])
   const prevStateRef = useRef<O | (() => O)>(state[0])
 
-  if (
-    keys.length !== state[1].length ||
-    keys.some((k, i) => state[1][i] !== k)
-  ) {
-    setState([source$.gV(), keys])
+  if (source$ !== state[1]) {
+    setState([source$.gV(), source$])
   }
 
   useEffect(() => {
@@ -39,9 +38,9 @@ export const useObservable = <O>(
       if (!Object.is(prevStateRef.current, value)) {
         prevStateRef.current = value
         if (typeof value === "function") {
-          setState(() => [(value as any)(), keys])
+          setState(() => [(value as any)(), source$])
         } else {
-          setState([value, keys])
+          setState([value, source$])
         }
       }
     }
@@ -59,7 +58,7 @@ export const useObservable = <O>(
     return () => {
       subscription.unsubscribe()
     }
-  }, keys)
+  }, [source$])
 
   return state[0] as Exclude<O, typeof SUSPENSE>
 }
