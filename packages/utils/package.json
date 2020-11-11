@@ -37,10 +37,10 @@
   ],
   "devDependencies": {
     "@react-rxjs/core": "0.6.0",
-    "@testing-library/react": "^11.1.0",
+    "@testing-library/react": "^11.1.2",
     "@testing-library/react-hooks": "^3.4.2",
     "@types/jest": "^26.0.15",
-    "@types/react": "^16.9.55",
+    "@types/react": "^16.9.56",
     "@types/react-dom": "^16.9.9",
     "jest-marbles": "^2.5.1",
     "react": "^17.0.1",
