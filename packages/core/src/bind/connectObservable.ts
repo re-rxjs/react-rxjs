@@ -17,13 +17,12 @@ import { useObservable } from "../internal/useObservable"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-const emptyArr: Array<any> = []
 export default function connectObservable<T>(
   observable: Observable<T>,
   defaultValue: T,
 ) {
   const sharedObservable$ = shareLatest<T>(observable, false, defaultValue)
   const useStaticObservable = () =>
-    useObservable(sharedObservable$, emptyArr, defaultValue)
+    useObservable(sharedObservable$, defaultValue)
   return [useStaticObservable, sharedObservable$] as const
 }
