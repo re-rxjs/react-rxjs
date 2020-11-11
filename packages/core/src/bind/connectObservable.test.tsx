@@ -359,6 +359,33 @@ describe("connectObservable", () => {
     unmount()
   })
 
+  it("allows sync errors to be caught in error boundaries when there is a default value", () => {
+    const errStream = new Observable((observer) =>
+      observer.error("controlled error"),
+    )
+    const [useError, errStream$] = bind(errStream, 0)
+
+    const ErrorComponent = () => {
+      const value = useError()
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    const { unmount } = render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Subscribe>
+      </TestErrorBoundary>,
+    )
+
+    expect(errorCallback).toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+    unmount()
+  })
+
   it("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
     const [useError, errStream$] = bind(errStream)
