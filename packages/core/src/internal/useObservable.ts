@@ -5,7 +5,6 @@ import { BehaviorObservable } from "../internal/BehaviorObservable"
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
-  defaultValue: O,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState<[O, BehaviorObservable<O>]>(() => [
     source$.gV(),
@@ -20,7 +19,6 @@ export const useObservable = <O>(
   useEffect(() => {
     const { gV } = source$
     let err: any = EMPTY_VALUE
-    let syncVal: O | typeof SUSPENSE = EMPTY_VALUE
 
     const onError = (error: any) => {
       err = error
@@ -29,9 +27,7 @@ export const useObservable = <O>(
       })
     }
 
-    let subscription = source$.subscribe((val) => {
-      syncVal = val
-    }, onError)
+    let subscription = source$.subscribe(null, onError)
     if (err !== EMPTY_VALUE) return
 
     const set = (value: O) => {
@@ -39,8 +35,6 @@ export const useObservable = <O>(
         setState([(prevStateRef.current = value), source$])
       }
     }
-
-    if (syncVal === EMPTY_VALUE) set(defaultValue)
 
     const t = subscription
     subscription = source$.subscribe((value: O | typeof SUSPENSE) => {

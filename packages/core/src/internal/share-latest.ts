@@ -22,6 +22,14 @@ const shareLatest = <T>(
     let innerSub: Subscription
     if (!subject) {
       subject = new Subject<T>()
+      const emitIfEmpty =
+        defaultValue === EMPTY_VALUE
+          ? noop
+          : () => {
+              currentValue === EMPTY_VALUE &&
+                subject &&
+                subject!.next((currentValue = defaultValue))
+            }
       innerSub = subject.subscribe(subscriber)
       subscription = null
       subscription = source$.subscribe(
@@ -36,9 +44,11 @@ const shareLatest = <T>(
         },
         () => {
           subscription = null
+          emitIfEmpty()
           subject!.complete()
         },
       )
+      emitIfEmpty()
       if (subscription.closed) subscription = null
     } else {
       innerSub = subject.subscribe(subscriber)
