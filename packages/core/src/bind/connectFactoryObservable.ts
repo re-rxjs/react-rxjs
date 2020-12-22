@@ -74,7 +74,7 @@ export default function connectFactoryObservable<A extends [], O>(
   }
 
   return [
-    (...input: A) => useObservable(getSharedObservables$(input), defaultValue),
+    (...input: A) => useObservable(getSharedObservables$(input)),
     (...input: A) => getSharedObservables$(input),
   ]
 }

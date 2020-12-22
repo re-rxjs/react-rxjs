@@ -7,6 +7,8 @@ import {
   Observable,
   Subject,
   merge,
+  EMPTY,
+  NEVER,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
 import {
@@ -193,11 +195,7 @@ describe("connectFactoryObservable", () => {
 
     it("immediately switches the state to the new observable", () => {
       const [useNumber, getNumber$] = bind((x: number) => of(x))
-      const subs = merge(
-        getNumber$(0),
-        getNumber$(1),
-        getNumber$(2),
-      ).subscribe()
+      merge(getNumber$(0), getNumber$(1), getNumber$(2)).subscribe()
 
       const Form = ({ id }: { id: number }) => {
         const value = useNumber(id)
@@ -467,9 +465,9 @@ describe("connectFactoryObservable", () => {
 
     it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
       const valueStream = new Subject<number>()
-      const [useValue, value$] = bind(() => valueStream, 1)
+      const [useValue] = bind(() => valueStream, 1)
       const [useError] = bind(
-        () => value$().pipe(switchMapTo(throwError("error"))),
+        () => valueStream.pipe(switchMapTo(throwError("error"))),
         1,
       )
 
@@ -488,9 +486,7 @@ describe("connectFactoryObservable", () => {
       const errorCallback = jest.fn()
       render(
         <TestErrorBoundary onError={errorCallback}>
-          <Container>
-            <ErrorComponent />
-          </Container>
+          <Container />
         </TestErrorBoundary>,
       )
 
@@ -547,6 +543,29 @@ describe("connectFactoryObservable", () => {
 
       unmount()
     })
+  })
+
+  it("when a defaultValue is provided, the resulting observable should emmit the defaultValue first if the source doesn't synchronously emmit anything", () => {
+    let value = 0
+    let [, result$] = bind<[], number>(() => NEVER, 10)
+    result$().subscribe((v) => {
+      value = v
+    })
+    expect(value).toBe(10)
+
+    value = 0
+    ;[, result$] = bind(() => EMPTY, 10)
+    result$().subscribe((v) => {
+      value = v
+    })
+    expect(value).toBe(10)
+
+    value = 0
+    ;[, result$] = bind(() => of(5), 10)
+    result$().subscribe((v) => {
+      value += v
+    })
+    expect(value).toBe(5)
   })
 
   describe("observable", () => {

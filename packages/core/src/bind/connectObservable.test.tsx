@@ -15,6 +15,7 @@ import {
   Observable,
   merge,
   EMPTY,
+  NEVER,
 } from "rxjs"
 import {
   delay,
@@ -492,8 +493,11 @@ describe("connectObservable", () => {
 
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
     const valueStream = new Subject<number>()
-    const [useValue, value$] = bind(valueStream, 1)
-    const [useError] = bind(value$.pipe(switchMapTo(throwError("error"))), 1)
+    const [useValue] = bind(valueStream, 1)
+    const [useError] = bind(
+      valueStream.pipe(switchMapTo(throwError("error"))),
+      1,
+    )
 
     const ErrorComponent: FC = () => {
       const value = useError()
@@ -510,9 +514,7 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     render(
       <TestErrorBoundary onError={errorCallback}>
-        <Container>
-          <ErrorComponent />
-        </Container>
+        <Container />
       </TestErrorBoundary>,
     )
 
@@ -610,5 +612,27 @@ describe("connectObservable", () => {
     expect(nTopSubscriptions).toBe(1)
 
     unmount()
+  })
+
+  it("when a defaultValue is provided, the resulting observable should emmit the defaultValue first if the source doesn't synchronously emmit anything", () => {
+    let value = 0
+    let [, result$] = bind<number>(NEVER, 10)
+    result$.subscribe((v) => {
+      value = v
+    })
+    expect(value).toBe(10)
+
+    value = 0
+    ;[, result$] = bind(EMPTY, 10)
+    result$.subscribe((v) => {
+      value = v
+    })
+
+    value = 0
+    ;[, result$] = bind(of(5), 10)
+    result$.subscribe((v) => {
+      value += v
+    })
+    expect(value).toBe(5)
   })
 })
