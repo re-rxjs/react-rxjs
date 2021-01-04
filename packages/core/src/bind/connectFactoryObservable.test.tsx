@@ -18,6 +18,7 @@ import {
   map,
   switchMapTo,
   first,
+  startWith,
 } from "rxjs/operators"
 import { FC, useState } from "react"
 import React from "react"
@@ -495,6 +496,27 @@ describe("connectFactoryObservable", () => {
       })
 
       expect(errorCallback).not.toHaveBeenCalled()
+    })
+
+    it("supports streams that emit functions", () => {
+      const values$ = new Subject<number>()
+
+      const [useFunction, function$] = bind(() =>
+        values$.pipe(
+          startWith(0),
+          map((value) => () => value),
+        ),
+      )
+      const subscription = function$().subscribe()
+
+      const { result } = renderHook(() => useFunction())
+
+      expect(result.current()).toBe(0)
+
+      values$.next(1)
+      expect(result.current()).toBe(1)
+
+      subscription.unsubscribe()
     })
 
     it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
