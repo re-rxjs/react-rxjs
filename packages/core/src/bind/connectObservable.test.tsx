@@ -493,6 +493,27 @@ describe("connectObservable", () => {
     expect(errorCallback).not.toHaveBeenCalled()
   })
 
+  it("supports streams that emit functions", () => {
+    const values$ = new Subject<number>()
+
+    const [useFunction, function$] = bind(
+      values$.pipe(
+        startWith(0),
+        map((value) => () => value),
+      ),
+    )
+    const subscription = function$.subscribe()
+
+    const { result } = renderHook(() => useFunction())
+
+    expect(result.current()).toBe(0)
+
+    values$.next(1)
+    expect(result.current()).toBe(1)
+
+    subscription.unsubscribe()
+  })
+
   it("should not trigger suspense when the stream emits synchronously", () => {
     const [useValue] = bind(NEVER.pipe(startWith("Hello")))
 

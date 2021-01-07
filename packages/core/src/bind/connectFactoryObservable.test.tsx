@@ -1,23 +1,29 @@
 import {
-  from,
-  of,
-  defer,
-  concat,
-  BehaviorSubject,
-  throwError,
-  Observable,
-  Subject,
-} from "rxjs"
-import { renderHook, act as actHook } from "@testing-library/react-hooks"
-import { switchMap, delay, take, catchError, map } from "rxjs/operators"
-import { FC, Suspense, useState } from "react"
-import React from "react"
-import {
   act as componentAct,
   fireEvent,
-  screen,
   render,
+  screen,
 } from "@testing-library/react"
+import { act as actHook, renderHook } from "@testing-library/react-hooks"
+import React, { FC, Suspense, useState } from "react"
+import {
+  BehaviorSubject,
+  concat,
+  defer,
+  from,
+  Observable,
+  of,
+  Subject,
+  throwError,
+} from "rxjs"
+import {
+  catchError,
+  delay,
+  map,
+  startWith,
+  switchMap,
+  take,
+} from "rxjs/operators"
 import { bind } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
@@ -425,6 +431,27 @@ describe("connectFactoryObservable", () => {
       expect(nTopSubscriptions).toBe(2)
 
       unmount()
+    })
+
+    it("supports streams that emit functions", () => {
+      const values$ = new Subject<number>()
+
+      const [useFunction, function$] = bind(() =>
+        values$.pipe(
+          startWith(0),
+          map((value) => () => value),
+        ),
+      )
+      const subscription = function$().subscribe()
+
+      const { result } = renderHook(() => useFunction())
+
+      expect(result.current()).toBe(0)
+
+      values$.next(1)
+      expect(result.current()).toBe(1)
+
+      subscription.unsubscribe()
     })
 
     it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
