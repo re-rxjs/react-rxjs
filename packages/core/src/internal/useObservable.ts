@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
+import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
-import { Observable } from "rxjs"
 
 export const useObservable = <O>(
   source$: Observable<O>,
@@ -9,7 +9,6 @@ export const useObservable = <O>(
   keys: Array<any>,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState(getValue)
-  const prevStateRef = useRef<O | (() => O)>(state)
 
   useEffect(() => {
     let err: any = EMPTY_VALUE
@@ -27,19 +26,14 @@ export const useObservable = <O>(
     }, onError)
     if (err !== EMPTY_VALUE) return
 
-    const set = (value: O | (() => O)) => {
-      if (!Object.is(prevStateRef.current, value))
-        setState((prevStateRef.current = value))
-    }
-
     const defaultValue = (getValue as any).d
     if (syncVal === EMPTY_VALUE) {
-      set(defaultValue === EMPTY_VALUE ? getValue : defaultValue)
+      setState(defaultValue === EMPTY_VALUE ? getValue : () => defaultValue)
     }
 
     const t = subscription
     subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
-      set(value === SUSPENSE ? getValue : value)
+      setState(value === SUSPENSE ? getValue : () => value)
     }, onError)
     t.unsubscribe()
 
