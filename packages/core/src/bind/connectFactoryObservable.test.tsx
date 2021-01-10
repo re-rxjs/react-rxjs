@@ -59,6 +59,22 @@ describe("connectFactoryObservable", () => {
       expect(result.current).toBe(3)
     })
 
+    it("accepts a changing number of arguments", async () => {
+      const [useConcatNumber] = bind((...args: number[]) => of(args.join(",")))
+      const { result, rerender } = renderHook(
+        ({ args }) => useConcatNumber(...args),
+        {
+          initialProps: {
+            args: [1],
+          },
+        },
+      )
+      expect(result.current).toBe("1")
+
+      rerender({ args: [1, 2] })
+      expect(result.current).toBe("1,2")
+    })
+
     it("suspends the component when the observable hasn't emitted yet.", async () => {
       const source$ = of(1).pipe(delay(100))
       const [useDelayedNumber, getDelayedNumber$] = bind(() => source$)

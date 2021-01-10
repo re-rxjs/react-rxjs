@@ -19,14 +19,12 @@ import { EMPTY_VALUE } from "../internal/empty-value"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-const emptyArr: Array<any> = []
 export default function connectObservable<T>(
   observable: Observable<T>,
   defaultValue: T = EMPTY_VALUE,
 ) {
   const sharedObservable$ = shareLatest<T>(observable, false)
   const getValue = reactEnhancer(sharedObservable$, defaultValue)
-  const useStaticObservable = () =>
-    useObservable(sharedObservable$, getValue, emptyArr)
+  const useStaticObservable = () => useObservable(sharedObservable$, getValue)
   return [useStaticObservable, sharedObservable$] as const
 }

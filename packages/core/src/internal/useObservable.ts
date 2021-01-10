@@ -6,7 +6,6 @@ import { EMPTY_VALUE } from "./empty-value"
 export const useObservable = <O>(
   source$: Observable<O>,
   getValue: () => O,
-  keys: Array<any>,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState(getValue)
 
@@ -40,7 +39,7 @@ export const useObservable = <O>(
     return () => {
       subscription.unsubscribe()
     }
-  }, keys)
+  }, [source$])
 
   return state as Exclude<O, typeof SUSPENSE>
 }
