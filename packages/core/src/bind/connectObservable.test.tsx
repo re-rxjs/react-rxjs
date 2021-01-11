@@ -5,7 +5,7 @@ import {
   screen,
 } from "@testing-library/react"
 import { act, renderHook } from "@testing-library/react-hooks"
-import React, { Suspense, useEffect, FC, StrictMode } from "react"
+import React, { Suspense, useEffect, FC, StrictMode, useState } from "react"
 import {
   defer,
   from,
@@ -304,6 +304,62 @@ describe("connectObservable", () => {
     fireEvent.click(screen.getByText(/Next/i))
 
     expect(screen.queryByText("Result 3")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+  })
+
+  it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
+    const subject$ = new Subject()
+    const [useNumber, number$] = bind(subject$.pipe(scan((a) => a + 1, 0)))
+
+    const Result: React.FC = () => <div>Result {useNumber()}</div>
+    const TestSuspense: React.FC = () => {
+      const [key, setKey] = useState(1)
+      return (
+        <div>
+          <button onClick={() => setKey((x) => x + 1)}>NextKey</button>
+          <button onClick={() => subject$.next()}>NextVal</button>
+          <Subscribe
+            key={key}
+            source$={number$}
+            fallback={<span>Waiting</span>}
+          >
+            <Result />
+          </Subscribe>
+        </div>
+      )
+    }
+
+    render(<TestSuspense />)
+
+    expect(screen.queryByText("Result 0")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    fireEvent.click(screen.getByText(/NextVal/i))
+
+    await wait(10)
+
+    expect(screen.queryByText("Waiting")).toBeNull()
+    expect(screen.queryByText("Result 1")).not.toBeNull()
+
+    fireEvent.click(screen.getByText(/NextVal/i))
+
+    expect(screen.queryByText("Result 2")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+
+    fireEvent.click(screen.getByText(/NextKey/i))
+
+    await wait(10)
+
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    fireEvent.click(screen.getByText(/NextVal/i))
+
+    expect(screen.queryByText("Result 1")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+
+    fireEvent.click(screen.getByText(/NextVal/i))
+
+    expect(screen.queryByText("Result 2")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
   })
 

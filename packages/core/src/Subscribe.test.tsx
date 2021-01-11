@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react"
-import React, { useLayoutEffect, useState } from "react"
+import React, { useState } from "react"
 import { defer, Observable, of } from "rxjs"
 import { bind, Subscribe } from "./"
 

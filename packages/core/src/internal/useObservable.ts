@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react"
 import { SUSPENSE } from "../SUSPENSE"
-import { EMPTY_VALUE } from "./empty-value"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 
 export const useObservable = <O>(
@@ -17,31 +16,28 @@ export const useObservable = <O>(
   }
 
   useEffect(() => {
-    const { gV } = source$
-    let err: any = EMPTY_VALUE
+    const { gV }: { gV: any } = source$
 
-    const onError = (error: any) => {
-      err = error
-      setState(() => {
-        throw error
-      })
-    }
-
-    let subscription = source$.subscribe(null, onError)
-    if (err !== EMPTY_VALUE) return
-
-    const set = (value: O) => {
-      if (!Object.is(prevStateRef.current, value)) {
-        setState([(prevStateRef.current = value), source$])
-      }
-    }
-
-    const t = subscription
-    subscription = source$.subscribe((value: O | typeof SUSPENSE) => {
-      if (value !== SUSPENSE) set(value)
-      else setState(gV as any)
-    }, onError)
-    t.unsubscribe()
+    let isEmtpy = true
+    const subscription = source$.aH(
+      (value: O | typeof SUSPENSE) => {
+        isEmtpy = false
+        if (value === SUSPENSE) {
+          setState(gV)
+        } else {
+          if (!Object.is(prevStateRef.current, value)) {
+            setState([(prevStateRef.current = value), source$])
+          }
+        }
+      },
+      (error: any) => {
+        isEmtpy = false
+        setState(() => {
+          throw error
+        })
+      },
+    )
+    if (isEmtpy) setState(gV)
 
     return () => {
       subscription.unsubscribe()
