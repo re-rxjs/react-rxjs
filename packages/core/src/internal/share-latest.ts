@@ -15,6 +15,15 @@ const shareLatest = <T>(
   let currentValue: T = EMPTY_VALUE
   let promise: Promise<T> | null
 
+  const emitIfEmpty =
+    defaultValue === EMPTY_VALUE
+      ? noop
+      : () => {
+          currentValue === EMPTY_VALUE &&
+            subject &&
+            subject!.next((currentValue = defaultValue))
+        }
+
   const result = new Observable<T>((subscriber) => {
     if (!shouldComplete) subscriber.complete = noop
 
@@ -22,14 +31,6 @@ const shareLatest = <T>(
     let innerSub: Subscription
     if (!subject) {
       subject = new Subject<T>()
-      const emitIfEmpty =
-        defaultValue === EMPTY_VALUE
-          ? noop
-          : () => {
-              currentValue === EMPTY_VALUE &&
-                subject &&
-                subject!.next((currentValue = defaultValue))
-            }
       innerSub = subject.subscribe(subscriber)
       subscription = null
       subscription = source$.subscribe(
@@ -72,6 +73,19 @@ const shareLatest = <T>(
       }
     }
   }) as BehaviorObservable<T>
+
+  result.aH = (n: any, e: any) => {
+    let subscription
+    if (defaultValue === EMPTY_VALUE) {
+      subscription = subject!.subscribe(n, e)
+      if (currentValue !== EMPTY_VALUE) {
+        n(currentValue)
+      }
+    } else {
+      subscription = result.subscribe(n, e)
+    }
+    return subscription
+  }
 
   let error: any = EMPTY_VALUE
   let timeoutToken: any
