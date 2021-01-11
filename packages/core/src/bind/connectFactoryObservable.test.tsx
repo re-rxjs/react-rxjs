@@ -513,7 +513,10 @@ describe("connectFactoryObservable", () => {
 
       expect(result.current()).toBe(0)
 
-      values$.next(1)
+      actHook(() => {
+        values$.next(1)
+      })
+
       expect(result.current()).toBe(1)
 
       subscription.unsubscribe()
