@@ -16,14 +16,16 @@ export const useObservable = <O>(
   }
 
   useEffect(() => {
-    const { gV }: { gV: any } = source$
+    const suspend = () => {
+      setState(() => [source$.gV(), source$])
+    }
 
-    let isEmtpy = true
+    let isEmpty = true
     const subscription = source$.aH(
       (value: O | typeof SUSPENSE) => {
-        isEmtpy = false
+        isEmpty = false
         if (value === SUSPENSE) {
-          setState(gV)
+          suspend()
         } else {
           if (!Object.is(prevStateRef.current, value)) {
             setState([(prevStateRef.current = value), source$])
@@ -31,13 +33,13 @@ export const useObservable = <O>(
         }
       },
       (error: any) => {
-        isEmtpy = false
+        isEmpty = false
         setState(() => {
           throw error
         })
       },
     )
-    if (isEmtpy) setState(gV)
+    if (isEmpty) suspend()
 
     return () => {
       subscription.unsubscribe()
