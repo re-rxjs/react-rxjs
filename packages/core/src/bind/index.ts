@@ -46,8 +46,11 @@ export function bind<A extends unknown[], O>(
   defaultValue?: O,
 ): [(...args: A) => Exclude<O, typeof SUSPENSE>, (...args: A) => Observable<O>]
 
-export function bind(observable: any, defaultValue: any = EMPTY_VALUE) {
+export function bind(observable: any, defaultValue: any) {
   return (typeof observable === "function"
     ? (connectFactoryObservable as any)
-    : connectObservable)(observable, defaultValue)
+    : connectObservable)(
+    observable,
+    arguments.length > 1 ? defaultValue : EMPTY_VALUE,
+  )
 }

@@ -45,8 +45,8 @@ export default function connectFactoryObservable<A extends [], O>(
 
     const sharedObservable$ = shareLatest(
       getObservable(...input),
-      false,
       defaultValue,
+      false,
       () => {
         cache.delete(keys)
       },

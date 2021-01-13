@@ -650,6 +650,23 @@ describe("connectObservable", () => {
     expect(errorCallback).toHaveBeenCalled()
   })
 
+  it("the defaultValue can be undefined", () => {
+    const number$ = new Subject<number>()
+    const [useNumber] = bind(number$, undefined)
+
+    const { result, unmount } = renderHook(() => useNumber())
+
+    expect(result.current).toBe(undefined)
+
+    act(() => {
+      number$.next(5)
+    })
+
+    expect(result.current).toBe(5)
+
+    unmount()
+  })
+
   it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
     const number$ = new Subject<number>()
     const [useNumber] = bind(number$, 0)
