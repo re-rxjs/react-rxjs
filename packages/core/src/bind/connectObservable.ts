@@ -21,7 +21,7 @@ export default function connectObservable<T>(
   observable: Observable<T>,
   defaultValue: T,
 ) {
-  const sharedObservable$ = shareLatest<T>(observable, false, defaultValue)
+  const sharedObservable$ = shareLatest<T>(observable, defaultValue, false)
   const useStaticObservable = () => useObservable(sharedObservable$)
   return [useStaticObservable, sharedObservable$] as const
 }

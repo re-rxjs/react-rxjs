@@ -5,8 +5,8 @@ import { SUSPENSE } from "../SUSPENSE"
 
 const shareLatest = <T>(
   source$: Observable<T>,
+  defaultValue: T,
   shouldComplete = true,
-  defaultValue: T = EMPTY_VALUE,
   teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | null

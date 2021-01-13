@@ -1,5 +1,6 @@
 import { Observable, MonoTypeOperatorFunction } from "rxjs"
 import internalShareLatest from "./internal/share-latest"
+import { EMPTY_VALUE } from "./internal/empty-value"
 
 /**
  * A RxJS pipeable operator which shares and replays the latest emitted value.
@@ -17,4 +18,4 @@ import internalShareLatest from "./internal/share-latest"
  */
 export const shareLatest = <T>(): MonoTypeOperatorFunction<T> => (
   source$: Observable<T>,
-) => internalShareLatest(source$)
+) => internalShareLatest(source$, EMPTY_VALUE)
