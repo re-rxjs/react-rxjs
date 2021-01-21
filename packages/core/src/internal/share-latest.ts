@@ -108,13 +108,13 @@ const shareLatest = <T>(
     }
     if (promise) throw promise
 
-    throw (promise = new Promise<T>((res) => {
+    throw (promise = new Promise<T>((res, rej) => {
       const setError = (e: any) => {
         error = e
         timeoutToken = setTimeout(() => {
           error = EMPTY_VALUE
         }, 50)
-        res()
+        rej(e)
         promise = null
       }
       const pSubs = subject!.subscribe(

@@ -51,7 +51,7 @@ describe("collectValues", () => {
   })
 
   it("handles synchronous values", () => {
-    scheduler().run(({ expectObservable, cold }) => {
+    scheduler().run(({ expectObservable }) => {
       const source = from([
         {
           key: "group1",
