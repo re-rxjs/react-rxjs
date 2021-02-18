@@ -22,7 +22,7 @@
     "test": "tsdx test --coverage",
     "lint": "prettier --check README.md && tsdx lint src",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
-    "prepare": "tsdx build"
+    "prepare": "yarn build"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
