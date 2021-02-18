@@ -3,4 +3,9 @@
 node_modules
 coverage
 .cache
-dist
+packages/core/dist/**
+!packages/core/dist/index.js
+packages/utils/dist/**
+!packages/utils/dist/index.js
+packages/dom/dist/**
+!packages/dom/dist/index.js

@@ -1,5 +1,5 @@
 {
-  "version": "0.6.4",
+  "version": "0.6.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -14,7 +14,11 @@
   ],
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build",
+    "build": "yarn build:ts && yarn build:esm && yarn build:cjs:dev && yarn build:cjs:prod",
+    "build:esm": "esbuild src/index.tsx --bundle --outfile=./dist/core.esm.js --external:react --external:rxjs --format=esm --sourcemap",
+    "build:cjs:dev": "esbuild src/index.tsx --bundle --outfile=./dist/core.cjs.development.js --external:react --external:rxjs --format=cjs --sourcemap",
+    "build:cjs:prod": "esbuild src/index.tsx --bundle --outfile=./dist/core.cjs.production.min.js --external:react --external:rxjs --format=cjs --minify --sourcemap",
+    "build:ts": "tsc -p ./tsconfig.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
     "test": "tsdx test --coverage",
     "lint": "prettier --check README.md && tsdx lint src",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
@@ -40,6 +44,7 @@
     "@types/jest": "^26.0.20",
     "@types/react": "^16.9.56",
     "@types/react-dom": "^16.9.9",
+    "esbuild": "^0.8.46",
     "jest-marbles": "^2.5.1",
     "lint-staged": "^10.5.3",
     "react": "^17.0.1",
