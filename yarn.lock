@@ -1325,11 +1325,6 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@react-rxjs/core@0.6.4":
-  version "0.6.4"
-  resolved "https://registry.yarnpkg.com/@react-rxjs/core/-/core-0.6.4.tgz#26d8007692d9e4c959cc83ae2df4378c07ab71eb"
-  integrity sha512-CZdtxzjbiGA6D0+DU5aw/x6gk8dm8uCPCeXfvqVfzKpjjphZbT2GjsZG7tYbCB4zENy/VuzOwZYkO3SaLiadnA==
-
 "@rollup/plugin-babel@^5.1.0":
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.2.1.tgz#20fc8f8864dc0eaa1c5578408459606808f72924"
