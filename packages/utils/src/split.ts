@@ -4,6 +4,7 @@ import {
   Subject,
   ReplaySubject,
   OperatorFunction,
+  noop,
 } from "rxjs"
 import { shareReplay } from "rxjs/operators"
 
@@ -58,7 +59,7 @@ export function split<T, K, R>(
 
           res.key = key
           const onFinish = () => groups.delete(key)
-          res.subscribe(undefined, onFinish, onFinish)
+          res.subscribe(noop, onFinish, onFinish)
 
           subject.next(x)
           subscriber.next(res)

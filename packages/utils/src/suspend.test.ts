@@ -11,8 +11,8 @@ const scheduler = () =>
 describe("operators/suspend", () => {
   it("prepends the source stream with SUSPENSE", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const source = cold("----a")
-      const expected = "   s---a"
+      const source = cold("----#")
+      const expected = "   s---#"
 
       const suspended = suspend(source)
 

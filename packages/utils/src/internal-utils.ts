@@ -1,13 +1,5 @@
-import { Observable, defer, GroupedObservable, pipe } from "rxjs"
+import { Observable, GroupedObservable, Subscription } from "rxjs"
 import { shareLatest } from "@react-rxjs/core"
-import {
-  scan,
-  publish,
-  endWith,
-  takeLast,
-  takeUntil,
-  mergeMap,
-} from "rxjs/operators"
 
 export const defaultStart = <T, D>(value: D) => (source$: Observable<T>) =>
   new Observable<T | D>((observer) => {
@@ -17,8 +9,12 @@ export const defaultStart = <T, D>(value: D) => (source$: Observable<T>) =>
         emitted = true
         observer.next(x)
       },
-      (e) => observer.error(e),
-      () => observer.complete(),
+      (e) => {
+        observer.error(e)
+      },
+      () => {
+        observer.complete()
+      },
     )
 
     if (!emitted) {
@@ -28,44 +24,46 @@ export const defaultStart = <T, D>(value: D) => (source$: Observable<T>) =>
     return subscription
   })
 
-export const scanWithDefaultValue = <I, O>(
-  accumulator: (acc: O, current: I) => O,
-  getSeed: () => O,
-) => (source: Observable<I>) =>
-  defer(() => {
-    const seed = getSeed()
-    return source.pipe(scan(accumulator, seed), defaultStart(seed))
-  })
-
-export const enum CollectorAction {
-  Set,
-  Delete,
-  Complete,
-}
-
 export const collector = <K, V, VV>(
-  enhancer: (
-    source: GroupedObservable<K, V>,
-  ) => Observable<
-    | { t: CollectorAction.Delete; k: K }
-    | { t: CollectorAction.Set; k: K; v: VV }
-  >,
-): ((source: Observable<GroupedObservable<K, V>>) => Observable<Map<K, VV>>) =>
-  pipe(
-    publish((x) => x.pipe(mergeMap(enhancer), takeUntil(takeLast(1)(x)))),
-    endWith({ t: CollectorAction.Complete as const }),
-    scanWithDefaultValue(
-      (acc, val) => {
-        if (val.t === CollectorAction.Set) {
-          acc.set(val.k, val.v)
-        } else if (val.t === CollectorAction.Delete) {
-          acc.delete(val.k)
-        } else {
-          acc.clear()
-        }
-        return acc
-      },
-      () => new Map<K, VV>(),
-    ),
-    shareLatest(),
-  )
+  enhancer: (source: GroupedObservable<K, V>) => Observable<VV>,
+): ((
+  source: Observable<GroupedObservable<K, V>>,
+) => Observable<Map<K, VV>>) => (source$) =>
+  new Observable<Map<K, VV>>((observer) => {
+    const subscription = new Subscription()
+    const map = new Map<K, VV>()
+    let emitted = false
+
+    subscription.add(
+      source$.subscribe(
+        (x) => {
+          subscription.add(
+            enhancer(x).subscribe(
+              (v) => {
+                map.set(x.key, v)
+                emitted = true
+                observer.next(map)
+              },
+              (e) => {
+                observer.error(e)
+              },
+              () => {
+                map.delete(x.key)
+                observer.next(map)
+              },
+            ),
+          )
+        },
+        (e) => {
+          observer.error(e)
+        },
+        () => {
+          map.clear()
+          observer.next(map)
+          observer.complete()
+        },
+      ),
+    )
+    if (!emitted) observer.next(map)
+    return subscription
+  }).pipe(shareLatest())
