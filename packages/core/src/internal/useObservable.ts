@@ -21,7 +21,7 @@ export const useObservable = <O>(
     }
 
     let isEmpty = true
-    const subscription = source$.aH(
+    const subscription = source$.subscribe(
       (value: O | typeof SUSPENSE) => {
         isEmpty = false
         if (value === SUSPENSE) {

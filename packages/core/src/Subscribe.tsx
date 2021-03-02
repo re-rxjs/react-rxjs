@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useLayoutEffect, ReactNode } from "react"
+import React, { useState, Suspense, useEffect, ReactNode } from "react"
 import { Observable, noop } from "rxjs"
 
 const p = Promise.resolve()
@@ -38,7 +38,7 @@ export const Subscribe: React.FC<{
     }
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const subscription = source$.subscribe(noop, (e) =>
       setSubscribedSource(() => {
         throw e
