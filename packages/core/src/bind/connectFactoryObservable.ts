@@ -61,13 +61,11 @@ export default function connectFactoryObservable<A extends [], O>(
       } else if (inCache !== publicShared$) {
         source$ = inCache
         publicShared$.gV = source$.gV
-        publicShared$.aH = source$.aH
       }
 
       return source$.subscribe(subscriber)
     }) as BehaviorObservable<O>
     publicShared$.gV = sharedObservable$.gV
-    publicShared$.aH = sharedObservable$.aH
 
     const result: BehaviorObservable<O> = publicShared$
 

@@ -19,6 +19,7 @@ import {
   switchMapTo,
   first,
   startWith,
+  switchMap,
 } from "rxjs/operators"
 import { FC, useState } from "react"
 import React from "react"
@@ -28,6 +29,7 @@ import {
   screen,
   render,
   act,
+  waitFor,
 } from "@testing-library/react"
 import { bind, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
@@ -608,6 +610,66 @@ describe("connectFactoryObservable", () => {
       value += v
     })
     expect(value).toBe(5)
+  })
+
+  it("ensures that components subscriptions are being taken into account", async () => {
+    const ticks$ = new Subject<void>()
+    const [useValue, getValue$] = bind((_: string) =>
+      ticks$.pipe(map((_, idx) => idx)),
+    )
+    const update$ = new Subject<void>()
+
+    const key = "foo"
+    const subscription$ = update$.pipe(
+      startWith(""),
+      switchMap(() => getValue$(key)),
+    )
+
+    const Result: React.FC = () => <div>Result {useValue(key)}</div>
+    const Container: React.FC = () => {
+      return (
+        <>
+          <Subscribe source$={subscription$} fallback={<span>Waiting</span>}>
+            <Result />
+          </Subscribe>
+          <button onClick={() => update$.next()}>Next</button>
+        </>
+      )
+    }
+
+    render(<Container />)
+
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+    componentAct(() => {
+      ticks$.next()
+    })
+
+    await waitFor(() => expect(screen.queryByText("Waiting")).toBeNull())
+    expect(screen.getByText("Result 0")).not.toBeNull()
+
+    componentAct(() => {
+      ticks$.next()
+    })
+
+    await waitFor(() => expect(screen.getByText("Result 1")).not.toBeNull())
+
+    componentAct(() => {
+      ticks$.next()
+    })
+
+    await waitFor(() => expect(screen.getByText("Result 2")).not.toBeNull())
+
+    componentAct(() => {
+      fireEvent.click(screen.getByText(/Next/i))
+    })
+
+    expect(screen.getByText("Result 2")).not.toBeNull()
+
+    componentAct(() => {
+      ticks$.next()
+    })
+
+    await waitFor(() => expect(screen.getByText("Result 3")).not.toBeNull())
   })
 
   describe("observable", () => {

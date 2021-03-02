@@ -74,19 +74,6 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
 
-  result.aH = (n: any, e: any) => {
-    let subscription
-    if (defaultValue === EMPTY_VALUE) {
-      subscription = subject!.subscribe(n, e)
-      if (currentValue !== EMPTY_VALUE) {
-        n(currentValue)
-      }
-    } else {
-      subscription = result.subscribe(n, e)
-    }
-    return subscription
-  }
-
   let error: any = EMPTY_VALUE
   let timeoutToken: any
   result.gV = (): T => {
