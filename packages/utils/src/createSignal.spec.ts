@@ -1,8 +1,9 @@
+import { createSignal } from "./"
 import { createListener } from "./"
 
-describe("createListener", () => {
+describe("createSignal", () => {
   it('receives an "event creator" and it returns a tuple with an observable and its corresponding event-emitter', () => {
-    const [fooBar$, onFooBar] = createListener((foo: number, bar: string) => ({
+    const [fooBar$, onFooBar] = createSignal((foo: number, bar: string) => ({
       foo,
       bar,
     }))
@@ -15,7 +16,7 @@ describe("createListener", () => {
     expect(receivedValue).toEqual({ foo: 0, bar: "1" })
   })
   it('returns a tuple with a typed observable and its corresponding event-emitter when no "event creator" is provided', () => {
-    const [foo$, onFoo] = createListener<string>()
+    const [foo$, onFoo] = createSignal<string>()
     let receivedValue
     foo$.subscribe((val) => {
       receivedValue = val
