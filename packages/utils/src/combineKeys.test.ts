@@ -1,4 +1,4 @@
-import { Observable } from "rxjs"
+import { concat, NEVER, Observable, of } from "rxjs"
 import { map, scan } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { combineKeys } from "./"
@@ -30,6 +30,53 @@ describe("combineKeys", () => {
         f: { a: "1", c: "1" },
         g: { a: "2", c: "1" },
         h: { a: "2", c: "1", d: "9" },
+      })
+    })
+  })
+
+  it("doesn't emit if the inner value hasn't changed", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const keys = cold("  ab---cd---").pipe(scan((acc, v) => [...acc, v], []))
+      const a = cold("     --11112---")
+      const b = cold("      ---------")
+      const c = cold("          1----")
+      const d = cold("           9---")
+      const expectedStr = "--e--f(gh)"
+
+      const innerStreams = { a, b, c, d }
+
+      const result = combineKeys(
+        keys,
+        (v): Observable<string> => innerStreams[v],
+      ).pipe(map((x) => Object.fromEntries(x.entries())))
+
+      expectObservable(result).toBe(expectedStr, {
+        e: { a: "1" },
+        f: { a: "1", c: "1" },
+        g: { a: "2", c: "1" },
+        h: { a: "2", c: "1", d: "9" },
+      })
+    })
+  })
+
+  it("does not emit more than once synchronously on subscribe", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const keys = concat(of(["a", "b", "c"]), NEVER)
+      const a = of("1", "2", "3")
+      const b = of("4")
+      const c = cold("     ---5")
+      const expectedStr = "e--f"
+
+      const innerStreams = { a, b, c }
+
+      const result = combineKeys(
+        keys,
+        (v): Observable<string> => innerStreams[v],
+      ).pipe(map((x) => Object.fromEntries(x.entries())))
+
+      expectObservable(result).toBe(expectedStr, {
+        e: { a: "3", b: "4" },
+        f: { a: "3", b: "4", c: "5" },
       })
     })
   })
