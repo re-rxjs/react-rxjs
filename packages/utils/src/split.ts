@@ -10,7 +10,8 @@ import { shareReplay } from "rxjs/operators"
 
 const emptyError = {}
 
-/**
+/** @deprecated split is deprecated and it will be removed in the next version, please use partitionByKey
+ *
  * Groups the items emitted by the source based on the keySelector function,
  * emitting one Observable for each group.
  *
@@ -20,7 +21,8 @@ export function split<T, K>(
   keySelector: (value: T) => K,
 ): OperatorFunction<T, GroupedObservable<K, T>>
 
-/**
+/** @deprecated split is deprecated and it will be removed in the next version, please use partitionByKey
+ *
  * Groups the items emitted by the source based on the keySelector function,
  * emitting one Observable for each group.
  *
