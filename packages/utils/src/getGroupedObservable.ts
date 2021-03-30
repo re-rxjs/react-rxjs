@@ -18,7 +18,7 @@ export const getGroupedObservable = <K, T>(
       },
     )
     return () => {
-      innerSub && innerSub.unsubscribe()
+      innerSub?.unsubscribe()
       outterSub.unsubscribe()
     }
   }) as GroupedObservable<K, T>
