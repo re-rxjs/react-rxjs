@@ -10,7 +10,8 @@ const enhancer = <K, V>(source: GroupedObservable<K, V>) =>
     return source.subscribe(noop, done, done)
   })
 
-/**
+/** @deprecated collect is deprecated and it will be removed in the next version, please use partitionByKey
+ *
  * A pipeable operator that collects all the GroupedObservables emitted by
  * the source and emits a Map with the active inner observables
  */
