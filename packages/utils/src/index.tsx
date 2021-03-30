@@ -1,5 +1,6 @@
 export { collectValues } from "./collectValues"
 export { collect } from "./collect"
+export { combineKeys } from "./combineKeys"
 export { getGroupedObservable } from "./getGroupedObservable"
 export { createSignal } from "./createSignal"
 export { createKeyedSignal } from "./createKeyedSignal"
