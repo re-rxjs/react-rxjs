@@ -39,20 +39,20 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@testing-library/react": "^11.2.3",
-    "@testing-library/react-hooks": "^3.4.2",
-    "@types/jest": "^26.0.20",
-    "@types/react": "^16.9.56",
-    "@types/react-dom": "^16.9.9",
-    "esbuild": "^0.8.46",
+    "@testing-library/react": "^11.2.6",
+    "@testing-library/react-hooks": "^5.1.1",
+    "@types/jest": "^26.0.22",
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.3",
+    "esbuild": "^0.11.2",
     "jest-marbles": "^2.5.1",
-    "lint-staged": "^10.5.3",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-test-renderer": "^17.0.1",
-    "rxjs": "^6.6.3",
+    "lint-staged": "^10.5.4",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-test-renderer": "^17.0.2",
+    "rxjs": "^6.6.7",
     "tsdx": "^0.14.1",
     "tslib": "^2.1.0",
-    "typescript": "^4.1.3"
+    "typescript": "^4.2.3"
   }
 }

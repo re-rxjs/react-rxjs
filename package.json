@@ -41,23 +41,23 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "esbuild": "^0.8.46",
+    "esbuild": "^0.11.2",
     "eslint-plugin-prettier": "^3.3.1",
     "husky": "^4.3.7",
-    "lint-staged": "^10.5.3",
+    "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
-    "typescript": "^4.1.3",
+    "typescript": "^4.2.3",
     "wsrun": "^5.2.4"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md}": "prettier --write"
   },
   "resolutions": {
     "**/@typescript-eslint/eslint-plugin": "^4.11.1",
     "**/@typescript-eslint/parser": "^4.11.1",
     "**/jest": "^26.6.3",
     "**/ts-jest": "^26.4.4",
-    "**/typescript": "^4.1.3"
+    "**/typescript": "^4.2.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md}": "prettier --write"
   },
   "husky": {
     "hooks": {
