@@ -14,7 +14,7 @@ describe("partitionByKey", () => {
       scheduler().run(({ expectObservable, cold }) => {
         const source = cold("-ab---cd---")
         const expectedStr = "efg---hi---"
-        const [result] = partitionByKey(
+        const [, result] = partitionByKey(
           source,
           (v) => v,
           () => NEVER,
@@ -38,7 +38,7 @@ describe("partitionByKey", () => {
         const c = cold("           1-|")
         const expectedStr = "efg--hi-j"
         const innerStreams = { a, b, c }
-        const [result] = partitionByKey(
+        const [, result] = partitionByKey(
           source,
           (v) => v,
           (v$) =>
@@ -72,7 +72,7 @@ describe("partitionByKey", () => {
         const expectC = "    ------1-|"
 
         const innerStreams = { a, b, c }
-        const [, getInstance$] = partitionByKey(
+        const [getInstance$] = partitionByKey(
           source,
           (v) => v,
           (v$) =>
@@ -91,7 +91,7 @@ describe("partitionByKey", () => {
     it("replays the latest value for each key", () => {
       const source$ = new Subject<string>()
       const inner$ = new Subject<number>()
-      const [, getInstance$] = partitionByKey(
+      const [getInstance$] = partitionByKey(
         source$,
         (v) => v,
         () => inner$,
