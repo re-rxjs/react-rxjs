@@ -22,7 +22,7 @@ export function createKeyedSignal<T>(): [
  */
 export function createKeyedSignal<T, K, A extends any[]>(
   keySelector: (signal: T) => K,
-): [(key: K) => GroupedObservable<K, T>, (key: K) => void]
+): [(key: K) => GroupedObservable<K, T>, (signal: T) => void]
 
 /**
  * Creates a "keyed" signal. It's sugar for splitting the Observer and the Observable of a keyed signal.
