@@ -541,6 +541,33 @@ describe("connectFactoryObservable", () => {
       unmount()
     })
 
+    it("the defaultValue can be a function that receives the keys", () => {
+      const subj$ = new Subject<number>()
+      const [useNumber, number$] = bind(
+        (_: number) => subj$,
+        (key) => key,
+      )
+
+      const { result, unmount } = renderHook(() => useNumber(10))
+
+      expect(result.current).toBe(10)
+      let res = 0
+      number$(10)
+        .subscribe((x) => {
+          res = x
+        })
+        .unsubscribe()
+      expect(res).toBe(10)
+
+      actHook(() => {
+        subj$.next(5)
+      })
+
+      expect(result.current).toBe(5)
+
+      unmount()
+    })
+
     it("if the observable hasn't emitted and a defaultValue is provided, it does not start suspense", () => {
       const number$ = new Subject<number>()
       const [useNumber] = bind(

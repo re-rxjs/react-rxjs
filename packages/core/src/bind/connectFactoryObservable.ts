@@ -25,12 +25,15 @@ import { SUSPENSE } from "../SUSPENSE"
  */
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
-  defaultValue: O,
+  defaultValue: O | ((...args: A) => O),
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
   (...args: A) => Observable<O>,
 ] {
   const cache = new NestedMap<A, BehaviorObservable<O>>()
+  const getDefaultValue = (typeof defaultValue === "function"
+    ? defaultValue
+    : () => defaultValue) as (...args: A) => O
 
   const getSharedObservables$ = (input: A): BehaviorObservable<O> => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
@@ -45,7 +48,7 @@ export default function connectFactoryObservable<A extends [], O>(
 
     const sharedObservable$ = shareLatest(
       getObservable(...input),
-      defaultValue,
+      getDefaultValue(...input),
       false,
       () => {
         cache.delete(keys)
