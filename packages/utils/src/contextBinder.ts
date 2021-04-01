@@ -1,11 +1,6 @@
 import { Observable } from "rxjs"
 import { bind } from "@react-rxjs/core"
-
-type SubstractTuples<A1, A2> = A2 extends [unknown, ...infer Rest2]
-  ? A1 extends [unknown, ...infer Rest1]
-    ? SubstractTuples<Rest1, Rest2>
-    : []
-  : A1
+import type { SubstractTuples } from "./internal-utils"
 
 const execSelf = <T>(fn: () => T) => fn()
 

@@ -67,3 +67,9 @@ export const collector = <K, V, VV>(
     if (!emitted) observer.next(map)
     return subscription
   }).pipe(shareLatest())
+
+export type SubstractTuples<A1, A2> = A2 extends [unknown, ...infer Rest2]
+  ? A1 extends [unknown, ...infer Rest1]
+    ? SubstractTuples<Rest1, Rest2>
+    : []
+  : A1
