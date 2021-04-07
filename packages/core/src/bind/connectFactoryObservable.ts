@@ -47,7 +47,9 @@ export default function connectFactoryObservable<A extends [], O>(
     }
 
     const sharedObservable$ = shareLatest(
-      getObservable(...input),
+      new Observable<O>((observer) =>
+        getObservable(...input).subscribe(observer),
+      ),
       getDefaultValue(...input),
       false,
       () => {
