@@ -9,6 +9,7 @@ import {
   merge,
   EMPTY,
   NEVER,
+  noop,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
 import {
@@ -829,6 +830,22 @@ describe("connectFactoryObservable", () => {
         expect(val).toBe(2)
 
         subscription.unsubscribe()
+      })
+
+      it("does not crash when the observable lazily references its enhanced self", () => {
+        const [, obs$] = bind(
+          (key: number) => defer(() => obs$(key)).pipe(take(1)),
+          (key) => key,
+        )
+
+        let error = null
+        obs$(1)
+          .subscribe(noop, (e: any) => {
+            error = e
+          })
+          .unsubscribe()
+
+        expect(error).toBeNull()
       })
     })
   })
