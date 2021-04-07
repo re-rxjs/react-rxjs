@@ -847,6 +847,47 @@ describe("connectFactoryObservable", () => {
 
         expect(error).toBeNull()
       })
+
+      it("does not crash when the factory function self-references its enhanced self", () => {
+        let nSubscriptions = 0
+        const [, me$] = bind(
+          (key: number): Observable<number> => {
+            nSubscriptions++
+            return me$(key).pipe(
+              take(1),
+              map((x) => x * 2),
+            )
+          },
+          (key: number) => key,
+        )
+
+        let value = 0
+        const sub1 = me$(5).subscribe((val) => {
+          value = val
+        })
+
+        expect(value).toBe(10)
+        expect(sub1.closed).toBe(false)
+
+        value = 0
+        const sub2 = me$(5).subscribe((val) => {
+          value = val
+        })
+
+        expect(value).toBe(10)
+        expect(nSubscriptions).toBe(1)
+
+        sub1.unsubscribe()
+        sub2.unsubscribe()
+
+        const sub3 = me$(5).subscribe((val) => {
+          value = val
+        })
+
+        expect(value).toBe(10)
+        expect(nSubscriptions).toBe(2)
+        sub3.unsubscribe()
+      })
     })
   })
 })
