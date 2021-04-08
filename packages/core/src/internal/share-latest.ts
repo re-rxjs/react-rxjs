@@ -49,8 +49,8 @@ const shareLatest = <T>(
           subject!.complete()
         },
       )
+      if (subscription.closed) subscription = null
       emitIfEmpty()
-      if (subscription && subscription.closed) subscription = null
     } else {
       innerSub = subject.subscribe(subscriber)
       if (currentValue !== EMPTY_VALUE) {
