@@ -1,18 +1,20 @@
 import { useEffect, useState, useRef } from "react"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
+import { Subscription } from "rxjs"
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
+  subscription?: Subscription,
 ): Exclude<O, typeof SUSPENSE> => {
   const [state, setState] = useState<[O, BehaviorObservable<O>]>(() => [
-    source$.gV(),
+    source$.gV(subscription),
     source$,
   ])
   const prevStateRef = useRef<O | (() => O)>(state[0])
 
   if (source$ !== state[1]) {
-    setState([source$.gV(), source$])
+    setState([source$.gV(subscription), source$])
   }
 
   useEffect(() => {
@@ -20,10 +22,8 @@ export const useObservable = <O>(
       setState(() => [source$.gV(), source$])
     }
 
-    let isEmpty = true
     const subscription = source$.subscribe(
       (value: O | typeof SUSPENSE) => {
-        isEmpty = false
         if (value === SUSPENSE) {
           suspend()
         } else {
@@ -33,13 +33,11 @@ export const useObservable = <O>(
         }
       },
       (error: any) => {
-        isEmpty = false
         setState(() => {
           throw error
         })
       },
     )
-    if (isEmpty) suspend()
 
     return () => {
       subscription.unsubscribe()

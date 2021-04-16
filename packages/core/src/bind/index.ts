@@ -7,7 +7,9 @@ import { EMPTY_VALUE } from "../internal/empty-value"
 /**
  * Binds an observable to React
  *
- * @param observable Source observable to be used by the hook.
+ * @param {Observable<T>} observable - Source observable to be used by the hook.
+ * @param {T} [defaultValue] - Default value that will be used if the observable
+ * has not emitted any values.
  * @returns [1, 2]
  * 1. A React Hook that yields the latest emitted value of the observable
  * 2. A `sharedLatest` version of the observable. It can be used for composing
@@ -26,8 +28,10 @@ export function bind<T>(
 /**
  * Binds a factory observable to React
  *
- * @param getObservable Factory of observables. The arguments of this function
+ * @param getObservable - Factory of observables. The arguments of this function
  *  will be the ones used in the hook.
+ * @param [defaultValue] - Function or value that will be used of the observable
+ * has not emitted.
  * @returns [1, 2]
  * 1. A React Hook function with the same parameters as the factory function.
  *  This hook will yield the latest update from the observable returned from

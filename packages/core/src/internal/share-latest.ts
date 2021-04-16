@@ -76,7 +76,7 @@ const shareLatest = <T>(
 
   let error: any = EMPTY_VALUE
   let timeoutToken: any
-  result.gV = (): T => {
+  result.gV = (outterSubscription?: Subscription): T => {
     if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
       return currentValue
     }
@@ -91,7 +91,18 @@ const shareLatest = <T>(
     }
 
     if (!subscription) {
-      throw new Error("Missing subscription")
+      if (!outterSubscription) throw new Error("Missing Subscribe")
+
+      let err = EMPTY_VALUE
+      const sub = result.subscribe({
+        error(e) {
+          err = e
+        },
+      })
+      if (err !== EMPTY_VALUE) throw err
+
+      outterSubscription.add(sub)
+      return result.gV()
     }
     if (promise) throw promise
 

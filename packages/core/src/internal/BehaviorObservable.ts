@@ -1,6 +1,6 @@
-import { Observable } from "rxjs"
+import { Observable, Subscription } from "rxjs"
 
 export interface BehaviorObservable<T> extends Observable<T> {
-  gV: () => T
+  gV: (subscription?: Subscription) => T
   aH: any
 }
