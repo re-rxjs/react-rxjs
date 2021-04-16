@@ -354,6 +354,8 @@ describe("connectObservable", () => {
 
     fireEvent.click(screen.getByText(/NextVal/i))
 
+    await wait(10)
+
     expect(screen.queryByText("Result 1")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
 
@@ -389,7 +391,7 @@ describe("connectObservable", () => {
     )
   })
 
-  it("allows sync errors to be caught in error boundaries with suspense", () => {
+  it("allows sync errors to be caught in error boundaries with suspense, using source$", () => {
     const errStream = new Observable((observer) =>
       observer.error("controlled error"),
     )
@@ -404,6 +406,33 @@ describe("connectObservable", () => {
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
+          <ErrorComponent />
+        </Subscribe>
+      </TestErrorBoundary>,
+    )
+
+    expect(errorCallback).toHaveBeenCalledWith(
+      "controlled error",
+      expect.any(Object),
+    )
+    unmount()
+  })
+
+  it("allows sync errors to be caught in error boundaries with suspense, without using source$", () => {
+    const errStream = new Observable((observer) =>
+      observer.error("controlled error"),
+    )
+    const [useError] = bind(errStream)
+
+    const ErrorComponent = () => {
+      const value = useError()
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    const { unmount } = render(
+      <TestErrorBoundary onError={errorCallback}>
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,

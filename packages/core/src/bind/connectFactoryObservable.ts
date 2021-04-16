@@ -1,8 +1,10 @@
-import { Observable } from "rxjs"
+import { noop, Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { useObservable } from "../internal/useObservable"
 import { SUSPENSE } from "../SUSPENSE"
+import { EMPTY_VALUE } from "../internal/empty-value"
+import { useSubscription } from "../Subscribe"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -78,8 +80,10 @@ export default function connectFactoryObservable<A extends [], O>(
     return result
   }
 
+  const useSub = defaultValue === EMPTY_VALUE ? useSubscription : noop
   return [
-    (...input: A) => useObservable(getSharedObservables$(input)),
+    (...input: A) =>
+      useObservable(getSharedObservables$(input), useSub() as any),
     (...input: A) => getSharedObservables$(input),
   ]
 }

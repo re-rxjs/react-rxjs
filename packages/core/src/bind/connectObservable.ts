@@ -1,4 +1,6 @@
-import { Observable } from "rxjs"
+import { EMPTY_VALUE } from "../internal/empty-value"
+import { noop, Observable } from "rxjs"
+import { useSubscription } from "../Subscribe"
 import shareLatest from "../internal/share-latest"
 import { useObservable } from "../internal/useObservable"
 
@@ -22,6 +24,8 @@ export default function connectObservable<T>(
   defaultValue: T,
 ) {
   const sharedObservable$ = shareLatest<T>(observable, defaultValue, false)
-  const useStaticObservable = () => useObservable(sharedObservable$)
+  const useSub = defaultValue === EMPTY_VALUE ? useSubscription : noop
+  const useStaticObservable = () =>
+    useObservable(sharedObservable$, useSub() as any)
   return [useStaticObservable, sharedObservable$] as const
 }
