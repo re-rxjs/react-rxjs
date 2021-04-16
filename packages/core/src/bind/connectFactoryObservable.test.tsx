@@ -20,7 +20,6 @@ import {
   switchMapTo,
   first,
   startWith,
-  switchMap,
 } from "rxjs/operators"
 import { FC, useState } from "react"
 import React from "react"
@@ -69,14 +68,11 @@ describe("connectFactoryObservable", () => {
 
     it("suspends the component when the observable hasn't emitted yet.", async () => {
       const source$ = of(1).pipe(delay(100))
-      const [useDelayedNumber, getDelayedNumber$] = bind(() => source$)
+      const [useDelayedNumber] = bind(() => source$)
       const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
       const TestSuspense: React.FC = () => {
         return (
-          <Subscribe
-            source$={getDelayedNumber$()}
-            fallback={<span>Waiting</span>}
-          >
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         )
@@ -95,14 +91,11 @@ describe("connectFactoryObservable", () => {
 
     it("synchronously mounts the emitted value if the observable emits synchronously", () => {
       const source$ = of(1)
-      const [useDelayedNumber, getDelayedNumber$] = bind(() => source$)
+      const [useDelayedNumber] = bind(() => source$)
       const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
       const TestSuspense: React.FC = () => {
         return (
-          <Subscribe
-            source$={getDelayedNumber$()}
-            fallback={<span>Waiting</span>}
-          >
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         )
@@ -120,10 +113,7 @@ describe("connectFactoryObservable", () => {
       const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
       const TestSuspense: React.FC = () => {
         return (
-          <Subscribe
-            source$={getDelayedNumber$()}
-            fallback={<span>Waiting</span>}
-          >
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         )
@@ -235,10 +225,7 @@ describe("connectFactoryObservable", () => {
         const [input, setInput] = useState(0)
         return (
           <>
-            <Subscribe
-              source$={getDelayedNumber$(input)}
-              fallback={<span>Waiting</span>}
-            >
+            <Subscribe fallback={<span>Waiting</span>}>
               <Result input={input} />
             </Subscribe>
             <button onClick={() => setInput((x) => x + 1)}>increase</button>
@@ -343,7 +330,7 @@ describe("connectFactoryObservable", () => {
       const errStream = new Observable((observer) =>
         observer.error("controlled error"),
       )
-      const [useError, getErrStream$] = bind((_: string) => errStream)
+      const [useError] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {
         const value = useError("foo")
@@ -354,10 +341,7 @@ describe("connectFactoryObservable", () => {
       const errorCallback = jest.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
-          <Subscribe
-            source$={getErrStream$("foo")}
-            fallback={<div>Loading...</div>}
-          >
+          <Subscribe fallback={<div>Loading...</div>}>
             <ErrorComponent />
           </Subscribe>
         </TestErrorBoundary>,
@@ -372,7 +356,7 @@ describe("connectFactoryObservable", () => {
 
     it("allows async errors to be caught in error boundaries with suspense", async () => {
       const errStream = new Subject()
-      const [useError, getErrStream$] = bind((_: string) => errStream)
+      const [useError] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {
         const value = useError("foo")
@@ -383,10 +367,7 @@ describe("connectFactoryObservable", () => {
       const errorCallback = jest.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
-          <Subscribe
-            source$={getErrStream$("foo")}
-            fallback={<div>Loading...</div>}
-          >
+          <Subscribe fallback={<div>Loading...</div>}>
             <ErrorComponent />
           </Subscribe>
         </TestErrorBoundary>,
@@ -427,7 +408,7 @@ describe("connectFactoryObservable", () => {
           const [ok, setOk] = useState(true)
 
           return (
-            <Subscribe source$={getObs$(ok)} fallback={<div>Loading...</div>}>
+            <Subscribe fallback={<div>Loading...</div>}>
               <span onClick={() => setOk(false)}>
                 <Ok ok={ok} />
               </span>
@@ -642,22 +623,16 @@ describe("connectFactoryObservable", () => {
 
   it("ensures that components subscriptions are being taken into account", async () => {
     const ticks$ = new Subject<void>()
-    const [useValue, getValue$] = bind((_: string) =>
-      ticks$.pipe(map((_, idx) => idx)),
-    )
+    const [useValue] = bind((_: string) => ticks$.pipe(map((_, idx) => idx)))
     const update$ = new Subject<void>()
 
     const key = "foo"
-    const subscription$ = update$.pipe(
-      startWith(""),
-      switchMap(() => getValue$(key)),
-    )
 
     const Result: React.FC = () => <div>Result {useValue(key)}</div>
     const Container: React.FC = () => {
       return (
         <>
-          <Subscribe source$={subscription$} fallback={<span>Waiting</span>}>
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
           <button onClick={() => update$.next()}>Next</button>

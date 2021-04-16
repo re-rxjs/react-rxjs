@@ -2,6 +2,7 @@ import { Observable, Subscription, Subject, noop } from "rxjs"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { SUSPENSE } from "../SUSPENSE"
+import { MissingSubscription } from "./MissingSubscription"
 
 const shareLatest = <T>(
   source$: Observable<T>,
@@ -91,7 +92,7 @@ const shareLatest = <T>(
     }
 
     if (!subscription) {
-      throw new Error("Missing subscription")
+      return MissingSubscription as any
     }
     if (promise) throw promise
 

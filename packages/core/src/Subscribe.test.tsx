@@ -1,12 +1,12 @@
 import { render } from "@testing-library/react"
 import React, { useState } from "react"
-import { defer, Observable, of } from "rxjs"
+import { defer, EMPTY, Observable, of } from "rxjs"
 import { bind, Subscribe } from "./"
 
 describe("Subscribe", () => {
   it("subscribes to the provided observable and remains subscribed until it's unmounted", () => {
     let nSubscriptions = 0
-    const [useNumber, number$] = bind(
+    const [useNumber] = bind(
       new Observable<number>(() => {
         nSubscriptions++
         return () => {
@@ -17,7 +17,7 @@ describe("Subscribe", () => {
 
     const Number: React.FC = () => <>{useNumber()}</>
     const TestSubscribe: React.FC = () => (
-      <Subscribe source$={number$}>
+      <Subscribe>
         <Number />
       </Subscribe>
     )
@@ -34,8 +34,7 @@ describe("Subscribe", () => {
 
   it("doesn't render its content until it has subscribed to a new source", () => {
     let nSubscriptions = 0
-    let errored = false
-    const [useInstance, instance$] = bind((id: number) => {
+    const [useInstance] = bind((id: number) => {
       if (id === 0) {
         return of(0)
       }
@@ -48,31 +47,25 @@ describe("Subscribe", () => {
     const Child = ({ id }: { id: number }) => {
       const value = useInstance(id)
 
-      if (id !== 0 && nSubscriptions === 0) {
-        errored = true
-      }
-
       return <>{value}</>
     }
     const { rerender } = render(
-      <Subscribe source$={instance$(0)}>
+      <Subscribe>
         <Child id={0} />
       </Subscribe>,
     )
     expect(nSubscriptions).toBe(0)
-    expect(errored).toBe(false)
 
     rerender(
-      <Subscribe source$={instance$(1)}>
+      <Subscribe>
         <Child id={1} />
       </Subscribe>,
     )
     expect(nSubscriptions).toBe(1)
-    expect(errored).toBe(false)
   })
 
   it("prevents the issue of stale data when switching keys", () => {
-    const [useInstance, instance$] = bind((id: number) => of(id))
+    const [useInstance] = bind((id: number) => of(id))
 
     const Child = ({
       id,
@@ -97,13 +90,13 @@ describe("Subscribe", () => {
       return <Child key={id} id={id} initialValue={value} />
     }
     const { rerender, getByTestId } = render(
-      <Subscribe source$={instance$(0)}>
+      <Subscribe>
         <Parent id={0} />
       </Subscribe>,
     )
 
     rerender(
-      <Subscribe source$={instance$(1)}>
+      <Subscribe>
         <Parent id={1} />
       </Subscribe>,
     )

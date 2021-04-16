@@ -17,14 +17,7 @@ import {
   EMPTY,
   NEVER,
 } from "rxjs"
-import {
-  delay,
-  scan,
-  startWith,
-  map,
-  catchError,
-  switchMapTo,
-} from "rxjs/operators"
+import { delay, scan, startWith, map, switchMapTo } from "rxjs/operators"
 import { bind, SUSPENSE, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
@@ -235,13 +228,13 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
+    const [useDelayedNumber] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
         <div>
           <button onClick={() => subject$.next()}>Next</button>
-          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         </div>
@@ -275,13 +268,13 @@ describe("connectObservable", () => {
       }),
       startWith(0),
     )
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
+    const [useDelayedNumber] = bind(source$)
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
     const TestSuspense: React.FC = () => {
       return (
         <div>
           <button onClick={() => subject$.next()}>Next</button>
-          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
+          <Subscribe fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         </div>
@@ -309,7 +302,7 @@ describe("connectObservable", () => {
 
   it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
     const subject$ = new Subject()
-    const [useNumber, number$] = bind(subject$.pipe(scan((a) => a + 1, 0)))
+    const [useNumber] = bind(subject$.pipe(scan((a) => a + 1, 0)))
 
     const Result: React.FC = () => <div>Result {useNumber()}</div>
     const TestSuspense: React.FC = () => {
@@ -318,11 +311,7 @@ describe("connectObservable", () => {
         <div>
           <button onClick={() => setKey((x) => x + 1)}>NextKey</button>
           <button onClick={() => subject$.next()}>NextVal</button>
-          <Subscribe
-            key={key}
-            source$={number$}
-            fallback={<span>Waiting</span>}
-          >
+          <Subscribe key={key} fallback={<span>Waiting</span>}>
             <Result />
           </Subscribe>
         </div>
@@ -353,6 +342,8 @@ describe("connectObservable", () => {
     expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/NextVal/i))
+
+    await wait(10)
 
     expect(screen.queryByText("Result 1")).not.toBeNull()
     expect(screen.queryByText("Waiting")).toBeNull()
@@ -393,7 +384,7 @@ describe("connectObservable", () => {
     const errStream = new Observable((observer) =>
       observer.error("controlled error"),
     )
-    const [useError, errStream$] = bind(errStream)
+    const [useError] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -403,7 +394,7 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,
@@ -420,7 +411,7 @@ describe("connectObservable", () => {
     const errStream = new Observable((observer) =>
       observer.error("controlled error"),
     )
-    const [useError, errStream$] = bind(errStream, 0)
+    const [useError] = bind(errStream, 0)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -430,7 +421,7 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,
@@ -445,8 +436,7 @@ describe("connectObservable", () => {
 
   it("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
-    const [useError, errStream$] = bind(errStream)
-    const errStream$WithoutErrors = errStream$.pipe(catchError(() => EMPTY))
+    const [useError] = bind(errStream)
 
     const ErrorComponent = () => {
       const value = useError()
@@ -456,10 +446,7 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe
-          source$={errStream$WithoutErrors}
-          fallback={<div>Loading...</div>}
-        >
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,
@@ -499,7 +486,7 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe source$={error$} fallback={<div>Loading...</div>}>
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,
@@ -528,7 +515,7 @@ describe("connectObservable", () => {
 
     render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe source$={error$} fallback={<div>Loading...</div>}>
+        <Subscribe fallback={<div>Loading...</div>}>
           <ErrorComponent />
         </Subscribe>
       </TestErrorBoundary>,
@@ -623,14 +610,14 @@ describe("connectObservable", () => {
 
   it("should throw an error if the stream completes without emitting while on SUSPENSE", async () => {
     const subject = new Subject()
-    const [useValue, value$] = bind(subject)
+    const [useValue] = bind(subject)
     const errorCallback = jest.fn()
 
     const Component: FC = () => <>{useValue()}</>
     render(
       <StrictMode>
         <TestErrorBoundary onError={errorCallback}>
-          <Subscribe source$={value$} fallback={<div>Loading...</div>}>
+          <Subscribe fallback={<div>Loading...</div>}>
             <Component />
           </Subscribe>
         </TestErrorBoundary>

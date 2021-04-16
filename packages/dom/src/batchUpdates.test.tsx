@@ -102,7 +102,7 @@ describe("batchUpdates", () => {
   test("it triggers nested updates when batchUpdates is not used", async () => {
     const mockFn = jest.fn()
     render(
-      <Subscribe source$={latestNumber$(false, false)}>
+      <Subscribe>
         <Father onRender={mockFn} />
       </Subscribe>,
     )
@@ -125,7 +125,7 @@ describe("batchUpdates", () => {
   test("batchUpdates prevents unnecessary updates", async () => {
     const mockFn = jest.fn()
     render(
-      <Subscribe source$={latestNumber$(true, false)}>
+      <Subscribe>
         <Father batched onRender={mockFn} />
       </Subscribe>,
     )

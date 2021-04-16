@@ -1,18 +1,47 @@
 import { useEffect, useState, useRef } from "react"
 import { SUSPENSE } from "../SUSPENSE"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
+import { useSubscription } from "../Subscribe"
+import { MissingSubscription } from "./MissingSubscription"
+import { Subscription } from "rxjs"
+
+const getStateFromSource$ = <T>(
+  source$: BehaviorObservable<T>,
+  subscription?: Subscription,
+): [T, BehaviorObservable<T>] => {
+  let value: any = source$.gV()
+
+  if (value === MissingSubscription) {
+    let err: any = MissingSubscription
+
+    if (!subscription) throw new Error("Missing Subscribe")
+
+    subscription.add(
+      source$.subscribe({
+        error: (e) => {
+          err = e
+        },
+      }),
+    )
+
+    if (err !== MissingSubscription) throw err
+
+    value = source$.gV()
+  }
+  return [value, source$]
+}
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState<[O, BehaviorObservable<O>]>(() => [
-    source$.gV(),
-    source$,
-  ])
+  const subscription = useSubscription()
+  const [state, setState] = useState<[O, BehaviorObservable<O>]>(() =>
+    getStateFromSource$(source$, subscription),
+  )
   const prevStateRef = useRef<O | (() => O)>(state[0])
 
   if (source$ !== state[1]) {
-    setState([source$.gV(), source$])
+    setState(getStateFromSource$(source$, subscription))
   }
 
   useEffect(() => {
@@ -20,10 +49,8 @@ export const useObservable = <O>(
       setState(() => [source$.gV(), source$])
     }
 
-    let isEmpty = true
     const subscription = source$.subscribe(
       (value: O | typeof SUSPENSE) => {
-        isEmpty = false
         if (value === SUSPENSE) {
           suspend()
         } else {
@@ -33,13 +60,11 @@ export const useObservable = <O>(
         }
       },
       (error: any) => {
-        isEmpty = false
         setState(() => {
           throw error
         })
       },
     )
-    if (isEmpty) suspend()
 
     return () => {
       subscription.unsubscribe()
