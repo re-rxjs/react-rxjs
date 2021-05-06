@@ -1,7 +1,7 @@
 import { TestScheduler } from "rxjs/testing"
-import { from, merge, defer } from "rxjs"
+import { from, merge, defer, Observable, noop } from "rxjs"
 import { shareLatest } from "./"
-import { withLatestFrom, startWith, map } from "rxjs/operators"
+import { withLatestFrom, startWith, map, take } from "rxjs/operators"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -75,15 +75,29 @@ describe("shareLatest", () => {
 
     // prettier-ignore
     it("should not skip values on a sync source", () => {
-    scheduler().run(({ expectObservable }) => {
-      const source = from(['a', 'b', 'c', 'd']) // cold("(abcd|)")
-      const sub1 =         '^';
-      const expected1 = "  (abcd|)"
+      scheduler().run(({ expectObservable }) => {
+        const source = from(['a', 'b', 'c', 'd']) // cold("(abcd|)")
+        const sub1 =         '^';
+        const expected1 = "  (abcd|)"
 
-      const shared = shareLatest()(source);
+        const shared = shareLatest()(source);
 
-      expectObservable(shared, sub1).toBe(expected1);
+        expectObservable(shared, sub1).toBe(expected1);
+      })
     })
-  })
+
+    it("should stop listening to a synchronous observable when unsubscribed", () => {
+      let sideEffects = 0
+      const synchronousObservable = new Observable<number>((subscriber) => {
+        // This will check to see if the subscriber was closed on each loop
+        // when the unsubscribe hits (from the `take`), it should be closed
+        for (let i = 0; !subscriber.closed && i < 10; i++) {
+          sideEffects++
+          subscriber.next(i)
+        }
+      })
+      synchronousObservable.pipe(shareLatest(), take(3)).subscribe(noop)
+      expect(sideEffects).toBe(3)
+    })
   })
 })

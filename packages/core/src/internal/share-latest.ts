@@ -1,4 +1,4 @@
-import { Observable, Subscription, Subject, noop } from "rxjs"
+import { Observable, Subscription, Subject, noop, Subscriber } from "rxjs"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { SUSPENSE } from "../SUSPENSE"
@@ -10,7 +10,7 @@ const shareLatest = <T>(
   teardown = noop,
 ): BehaviorObservable<T> => {
   let subject: Subject<T> | null
-  let subscription: Subscription | null
+  let subscription: Subscriber<T> | null
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
   let promise: Promise<T> | null
@@ -29,36 +29,8 @@ const shareLatest = <T>(
 
     refCount++
     let innerSub: Subscription
-    if (!subject) {
-      subject = new Subject<T>()
-      innerSub = subject.subscribe(subscriber)
-      subscription = null
-      subscription = source$.subscribe(
-        (value) => {
-          subject!.next((currentValue = value))
-        },
-        (err) => {
-          const _subject = subject
-          subscription = null
-          subject = null
-          _subject!.error(err)
-        },
-        () => {
-          subscription = null
-          emitIfEmpty()
-          subject!.complete()
-        },
-      )
-      if (subscription.closed) subscription = null
-      emitIfEmpty()
-    } else {
-      innerSub = subject.subscribe(subscriber)
-      if (currentValue !== EMPTY_VALUE) {
-        subscriber.next(currentValue)
-      }
-    }
 
-    return () => {
+    subscriber.add(() => {
       refCount--
       innerSub.unsubscribe()
       if (refCount === 0) {
@@ -70,6 +42,35 @@ const shareLatest = <T>(
         subject = null
         subscription = null
         promise = null
+      }
+    })
+
+    if (!subject) {
+      subject = new Subject<T>()
+      innerSub = subject.subscribe(subscriber)
+      subscription = null
+      subscription = new Subscriber<T>(
+        (value: T) => {
+          subject!.next((currentValue = value))
+        },
+        (err: any) => {
+          const _subject = subject
+          subscription = null
+          subject = null
+          _subject!.error(err)
+        },
+        () => {
+          subscription = null
+          emitIfEmpty()
+          subject!.complete()
+        },
+      )
+      source$.subscribe(subscription)
+      emitIfEmpty()
+    } else {
+      innerSub = subject.subscribe(subscriber)
+      if (currentValue !== EMPTY_VALUE) {
+        subscriber.next(currentValue)
       }
     }
   }) as BehaviorObservable<T>
