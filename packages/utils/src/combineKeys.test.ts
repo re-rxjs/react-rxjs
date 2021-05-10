@@ -166,4 +166,32 @@ describe("combineKeys", () => {
       })
     })
   })
+
+  it("accounts for reentrant keys", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const activeKeys = {
+        a: ["a"],
+        b: ["a", "b"],
+        z: [],
+      }
+
+      const keys = cold("  abzab", activeKeys)
+      const a = cold("     1----")
+      const b = cold("      2---")
+      const expectedStr = "efgef"
+
+      const innerStreams = { a, b }
+
+      const result = combineKeys(
+        keys,
+        (v): Observable<string> => innerStreams[v],
+      ).pipe(map((x) => Object.fromEntries(x.entries())))
+
+      expectObservable(result).toBe(expectedStr, {
+        e: { a: "1" },
+        f: { a: "1", b: "2" },
+        g: {},
+      })
+    })
+  })
 })
