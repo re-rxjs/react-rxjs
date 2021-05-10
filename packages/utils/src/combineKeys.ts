@@ -27,6 +27,7 @@ export const combineKeys = <K, T>(
         innerSubscriptions.forEach((sub, key) => {
           if (!nextKeys.has(key)) {
             sub.unsubscribe()
+            innerSubscriptions.delete(key)
             if (currentValue.has(key)) {
               changes = true
               currentValue.delete(key)
