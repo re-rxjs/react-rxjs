@@ -1,5 +1,9 @@
 import { Observable, Subscription } from "rxjs"
 
+export interface MapWithChanges<K, V> extends Map<K, V> {
+  changes: Set<K>
+}
+
 /**
  * Creates a stream that combines the result of the streams from each key of the input stream.
  *
@@ -10,26 +14,32 @@ import { Observable, Subscription } from "rxjs"
 export const combineKeys = <K, T>(
   keys$: Observable<Array<K> | Set<K>>,
   getInner$: (key: K) => Observable<T>,
-): Observable<Map<K, T>> =>
+): Observable<MapWithChanges<K, T>> =>
   new Observable((observer) => {
     const innerSubscriptions = new Map<K, Subscription>()
+    let changes = new Set<K>()
     const currentValue = new Map<K, T>()
     let updatingSource = false
     const next = () => {
-      if (!updatingSource) observer.next(new Map(currentValue))
+      if (!updatingSource) {
+        const result = Object.assign(new Map(currentValue), {
+          changes,
+        })
+        changes = new Set<K>()
+        observer.next(result)
+      }
     }
 
     const subscription = keys$.subscribe(
       (nextKeysArr) => {
         updatingSource = true
         const nextKeys = new Set(nextKeysArr)
-        let changes = false
         innerSubscriptions.forEach((sub, key) => {
           if (!nextKeys.has(key)) {
             sub.unsubscribe()
             innerSubscriptions.delete(key)
             if (currentValue.has(key)) {
-              changes = true
+              changes.add(key)
               currentValue.delete(key)
             }
           } else {
@@ -42,7 +52,7 @@ export const combineKeys = <K, T>(
             getInner$(key).subscribe(
               (x) => {
                 if (!currentValue.has(key) || currentValue.get(key) !== x) {
-                  changes = true
+                  changes.add(key)
                   currentValue.set(key, x)
                   next()
                 }
@@ -54,7 +64,7 @@ export const combineKeys = <K, T>(
           )
         })
         updatingSource = false
-        if (changes) next()
+        if (changes.size) next()
       },
       (e) => {
         observer.error(e)

@@ -204,4 +204,60 @@ describe("combineKeys", () => {
       })
     })
   })
+
+  describe("change set", () => {
+    it("contains all of the keys initially present in the stream", () => {
+      scheduler().run(({ expectObservable }) => {
+        const keys = concat(of(["a", "b", "c"]), NEVER)
+
+        const result = combineKeys(keys, (v) => of(v)).pipe(
+          map((x) => Array.from(x.changes)),
+        )
+
+        expectObservable(result).toBe("x", {
+          x: ["a", "b", "c"],
+        })
+      })
+    })
+
+    it("only contains those values that have changed from the previous emission", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const keys = concat(of(["a", "b", "c"]), NEVER)
+        const a = concat(["1"], cold("--2--"))
+        const b = concat(["1"], cold("---2-"))
+        const c = concat(["1"], cold("-----"))
+        const expected = "            x-yz-"
+        const streams: Record<string, Observable<string>> = { a, b, c }
+
+        const result = combineKeys(keys, (v) => streams[v]).pipe(
+          map((x) => Array.from(x.changes)),
+        )
+
+        expectObservable(result).toBe(expected, {
+          x: ["a", "b", "c"],
+          y: ["a"],
+          z: ["b"],
+        })
+      })
+    })
+
+    it("contains removed keys", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const keys = cold("x--y-", {
+          x: ["a", "b", "c"],
+          y: ["b"],
+        })
+        const expected = " x--y-"
+
+        const result = combineKeys(keys, (v) => of(v)).pipe(
+          map((x) => Array.from(x.changes)),
+        )
+
+        expectObservable(result).toBe(expected, {
+          x: ["a", "b", "c"],
+          y: ["a", "c"],
+        })
+      })
+    })
+  })
 })
