@@ -9,7 +9,6 @@ import {
   merge,
   EMPTY,
   NEVER,
-  noop,
 } from "rxjs"
 import { renderHook, act as actHook } from "@testing-library/react-hooks"
 import {
@@ -145,11 +144,9 @@ describe("connectFactoryObservable", () => {
         return from([1, 2, 3, 4, 5])
       })
 
-      const [
-        useLatestNumber,
-        latestNumber$,
-      ] = bind((id: number, value: { val: number }) =>
-        concat(observable$, of(id + value.val)),
+      const [useLatestNumber, latestNumber$] = bind(
+        (id: number, value: { val: number }) =>
+          concat(observable$, of(id + value.val)),
       )
       expect(subscriberCount).toBe(0)
 
@@ -835,13 +832,15 @@ describe("connectFactoryObservable", () => {
       it("does not crash when the observable lazily references its enhanced self", () => {
         const [, obs$] = bind(
           (key: number) => defer(() => obs$(key)).pipe(take(1)),
-          (key) => key,
-        )
+          (key: number) => key,
+        ) as [(key: number) => number, (key: number) => Observable<number>]
 
         let error = null
         obs$(1)
-          .subscribe(noop, (e: any) => {
-            error = e
+          .subscribe({
+            error: (e: any) => {
+              error = e
+            },
           })
           .unsubscribe()
 

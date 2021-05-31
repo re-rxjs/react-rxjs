@@ -18,7 +18,7 @@
       },
       {
         "path": "./packages/dom/dist/dom.cjs.production.min.js",
-        "maxSize": "1 kB",
+        "maxSize": "2 kB",
         "compression": "none"
       },
       {
@@ -40,21 +40,28 @@
     "trailingComma": "all"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "esbuild": "^0.11.2",
-    "eslint-plugin-prettier": "^3.3.1",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-typescript": "^7.13.0",
+    "@testing-library/jest-dom": "^5.12.0",
+    "@testing-library/react": "^11.2.7",
+    "@testing-library/react-hooks": "^7.0.0",
+    "@types/jest": "^26.0.23",
+    "@types/react": "^17.0.8",
+    "@types/react-dom": "^17.0.5",
+    "esbuild": "^0.12.3",
+    "jest": "^27.0.1",
+    "jest-marbles": "^2.5.1",
     "husky": "^4.3.7",
     "lint-staged": "^10.5.4",
-    "prettier": "^2.2.1",
-    "typescript": "^4.2.3",
+    "prettier": "^2.3.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-test-renderer": "^17.0.2",
+    "rxjs": "^7.1.0",
+    "typescript": "^4.2.4",
+    "ts-jest": "^27.0.1",
+    "tslib": "^2.2.0",
     "wsrun": "^5.2.4"
-  },
-  "resolutions": {
-    "**/@typescript-eslint/eslint-plugin": "^4.11.1",
-    "**/@typescript-eslint/parser": "^4.11.1",
-    "**/jest": "^26.6.3",
-    "**/ts-jest": "^26.4.4",
-    "**/typescript": "^4.2.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md}": "prettier --write"

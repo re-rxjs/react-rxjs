@@ -46,9 +46,8 @@ export const Subscribe: React.FC<{
     subscriptionRef.current = new Subscription()
   }
 
-  const [subscribedSource, setSubscribedSource] = useState<
-    Observable<any> | null | undefined
-  >(null)
+  const [subscribedSource, setSubscribedSource] =
+    useState<Observable<any> | null | undefined>(null)
 
   if (subscribedSource !== null && subscribedSource !== source$) {
     if (source$ === undefined) {

@@ -72,7 +72,7 @@ export function createKeyedSignal<K, T, A extends any[]>(
           }
         }
       }) as GroupedObservable<K, T>
-      res.key = key
+      ;(res as any).key = key
       return res
     },
     (...args: A) => {

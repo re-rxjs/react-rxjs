@@ -1,7 +1,7 @@
 {
   "include": ["src"],
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext",
     "module": "esnext",
     "lib": ["dom", "esnext"],
     "importHelpers": true,
@@ -26,6 +26,5 @@
     },
     "jsx": "react",
     "esModuleInterop": true
-  },
-  "exclude": ["**/*.test.*", "**/test-helpers/*.*"]
+  }
 }
