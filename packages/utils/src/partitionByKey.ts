@@ -29,7 +29,7 @@ export function partitionByKey<T, K, R>(
     (subscriber) => {
       const groups: Map<K, InnerGroup<T, K, R>> = new Map()
 
-      let warmup = true
+      let emitted = false
       let sourceCompleted = false
       const sub = stream.subscribe(
         (x) => {
@@ -43,7 +43,7 @@ export function partitionByKey<T, K, R>(
           const res = streamSelector(subject, key).pipe(
             shareLatest(),
           ) as GroupedObservable<K, R>
-          res.key = key
+          ;(res as any).key = key
 
           const innerGroup: InnerGroup<T, K, R> = {
             source: subject,
@@ -52,35 +52,42 @@ export function partitionByKey<T, K, R>(
           }
           groups.set(key, innerGroup)
 
-          const onFinish = () => {
-            groups.delete(key)
-            subscriber.next(mapGroups(groups))
+          innerGroup.subscription = res.subscribe(
+            noop,
+            (e) => subscriber.error(e),
+            () => {
+              groups.delete(key)
+              subscriber.next(mapGroups(groups))
 
-            if (groups.size === 0 && sourceCompleted) {
-              subscriber.complete()
-            }
-          }
-          innerGroup.subscription = res.subscribe(noop, onFinish, onFinish)
+              if (groups.size === 0 && sourceCompleted) {
+                subscriber.complete()
+              }
+            },
+          )
 
           subject.next(x)
-          if (!warmup) {
-            subscriber.next(mapGroups(groups))
-          }
+          subscriber.next(mapGroups(groups))
+          emitted = true
         },
         (e) => {
-          subscriber.error(e)
+          sourceCompleted = true
+          if (groups.size) {
+            groups.forEach((g) => g.source.error(e))
+          } else {
+            subscriber.error(e)
+          }
         },
         () => {
           sourceCompleted = true
-          if (groups.size === 0) {
+          if (groups.size) {
+            groups.forEach((g) => g.source.complete())
+          } else {
             subscriber.complete()
           }
-          groups.forEach((g) => g.source.complete())
         },
       )
 
-      warmup = false
-      subscriber.next(mapGroups(groups))
+      if (!emitted) subscriber.next(mapGroups(groups))
 
       return () => {
         sub.unsubscribe()
