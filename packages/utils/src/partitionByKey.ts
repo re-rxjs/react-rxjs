@@ -7,7 +7,6 @@ import {
   Subscription,
 } from "rxjs"
 import { map } from "rxjs/operators"
-import { getGroupedObservable } from "./"
 
 /**
  * Groups the elements from the source stream by using `keySelector`, returning
@@ -117,4 +116,30 @@ function mapGroups<T, K, R>(
   return new Map(
     Array.from(groups.entries()).map(([key, group]) => [key, group.observable]),
   )
+}
+
+const getGroupedObservable = <K, T>(
+  source$: Observable<Map<K, GroupedObservable<K, T>>>,
+  key: K,
+) => {
+  const result = new Observable<T>((observer) => {
+    let innerSub: Subscription | undefined
+    let outterSub: Subscription = source$.subscribe(
+      (n) => {
+        innerSub = innerSub || n.get(key)?.subscribe(observer)
+      },
+      (e) => {
+        observer.error(e)
+      },
+      () => {
+        observer.complete()
+      },
+    )
+    return () => {
+      innerSub?.unsubscribe()
+      outterSub.unsubscribe()
+    }
+  }) as GroupedObservable<K, T>
+  ;(result as any).key = key
+  return result
 }
