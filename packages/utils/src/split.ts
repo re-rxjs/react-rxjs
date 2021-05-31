@@ -55,11 +55,13 @@ export function split<T, K, R>(
             : new ReplaySubject<T>(1)
           groups.set(key, subject)
 
-          const res = (streamSelector
-            ? streamSelector(subject, key).pipe(shareReplay(1))
-            : subject.asObservable()) as GroupedObservable<K, R>
+          const res = (
+            streamSelector
+              ? streamSelector(subject, key).pipe(shareReplay(1))
+              : subject.asObservable()
+          ) as GroupedObservable<K, R>
 
-          res.key = key
+          ;(res as any).key = key
           const onFinish = () => groups.delete(key)
           res.subscribe(noop, onFinish, onFinish)
 

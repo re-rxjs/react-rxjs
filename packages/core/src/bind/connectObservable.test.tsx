@@ -224,7 +224,7 @@ describe("connectObservable", () => {
   })
 
   it("suspends the component when the observable emits SUSPENSE", async () => {
-    const subject$ = new Subject()
+    const subject$ = new Subject<void>()
     const source$ = subject$.pipe(
       scan((a) => a + 1, 0),
       map((x) => {
@@ -264,7 +264,7 @@ describe("connectObservable", () => {
   })
 
   it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
-    const subject$ = new Subject()
+    const subject$ = new Subject<void>()
     const source$ = subject$.pipe(
       scan((a) => a + 1, 0),
       map((x) => {
@@ -308,7 +308,7 @@ describe("connectObservable", () => {
   })
 
   it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
-    const subject$ = new Subject()
+    const subject$ = new Subject<void>()
     const [useNumber, number$] = bind(subject$.pipe(scan((a) => a + 1, 0)))
 
     const Result: React.FC = () => <div>Result {useNumber()}</div>

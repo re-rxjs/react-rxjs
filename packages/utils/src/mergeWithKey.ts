@@ -13,13 +13,13 @@ export const mergeWithKey: <
     [K in keyof O]: O[K] extends ObservableInput<infer V>
       ? { type: K; payload: V }
       : unknown
-  }
+  },
 >(
   x: O,
   concurrent?: number,
   scheduler?: SchedulerLike,
 ) => Observable<OT[keyof O]> = (input, ...optionalArgs) =>
-  merge(
+  merge<any[]>(
     ...(Object.entries(input)
       .map(
         ([type, stream]) =>

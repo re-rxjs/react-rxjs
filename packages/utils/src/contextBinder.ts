@@ -19,7 +19,7 @@ export function contextBinder<
   A extends (() => any)[],
   OT extends {
     [K in keyof A]: A[K] extends () => infer V ? V : unknown
-  }
+  },
 >(
   ...args: A
 ): <AA extends any[], T, ARGS extends [...OT, ...AA]>(

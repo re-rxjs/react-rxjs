@@ -33,15 +33,15 @@ export default function connectFactoryObservable<A extends [], O>(
   (...args: A) => Observable<O>,
 ] {
   const cache = new NestedMap<A, BehaviorObservable<O>>()
-  const getDefaultValue = (typeof defaultValue === "function"
-    ? defaultValue
-    : () => defaultValue) as (...args: A) => O
+  const getDefaultValue = (
+    typeof defaultValue === "function" ? defaultValue : () => defaultValue
+  ) as (...args: A) => O
 
   const getSharedObservables$ = (input: A): BehaviorObservable<O> => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
       input.splice(-1)
     }
-    const keys = ([input.length, ...input] as any) as A
+    const keys = [input.length, ...input] as any as A
     const cachedVal = cache.get(keys)
 
     if (cachedVal !== undefined) {

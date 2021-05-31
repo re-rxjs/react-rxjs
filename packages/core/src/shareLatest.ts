@@ -16,6 +16,7 @@ import { EMPTY_VALUE } from "./internal/empty-value"
  * @remarks The enhanced observables returned from `connectObservable` and
  * `connectFactoryObservable` have been enhanced with this operator.
  */
-export const shareLatest = <T>(): MonoTypeOperatorFunction<T> => (
-  source$: Observable<T>,
-) => internalShareLatest(source$, EMPTY_VALUE)
+export const shareLatest =
+  <T>(): MonoTypeOperatorFunction<T> =>
+  (source$: Observable<T>) =>
+    internalShareLatest(source$, EMPTY_VALUE)

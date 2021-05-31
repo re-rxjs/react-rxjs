@@ -49,22 +49,22 @@ const shareLatest = <T>(
       subject = new Subject<T>()
       innerSub = subject.subscribe(subscriber)
       subscription = null
-      subscription = new Subscriber<T>(
-        (value: T) => {
+      subscription = new Subscriber<T>({
+        next: (value: T) => {
           subject!.next((currentValue = value))
         },
-        (err: any) => {
+        error: (err: any) => {
           const _subject = subject
           subscription = null
           subject = null
           _subject!.error(err)
         },
-        () => {
+        complete: () => {
           subscription = null
           emitIfEmpty()
           subject!.complete()
         },
-      )
+      })
       source$.subscribe(subscription)
       emitIfEmpty()
     } else {

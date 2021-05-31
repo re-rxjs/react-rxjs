@@ -11,14 +11,16 @@ const scheduler = () =>
 describe("combineKeys", () => {
   it("emits a map with the latest value of the stream of each key", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const keys = cold("  ab---cd---").pipe(scan((acc, v) => [...acc, v], []))
+      const keys = cold("  ab---cd---").pipe(
+        scan((acc, v) => [...acc, v], [] as Array<string>),
+      )
       const a = cold("     --1---2---")
       const b = cold("      ---------")
       const c = cold("          1----")
       const d = cold("           9---")
       const expectedStr = "--e--f(gh)"
 
-      const innerStreams = { a, b, c, d }
+      const innerStreams: Record<string, Observable<string>> = { a, b, c, d }
 
       const result = combineKeys(
         keys,
@@ -36,14 +38,16 @@ describe("combineKeys", () => {
 
   it("doesn't emit if the inner value hasn't changed", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const keys = cold("  ab---cd---").pipe(scan((acc, v) => [...acc, v], []))
+      const keys = cold("  ab---cd---").pipe(
+        scan((acc, v) => [...acc, v], [] as Array<string>),
+      )
       const a = cold("     --11112---")
       const b = cold("      ---------")
       const c = cold("          1----")
       const d = cold("           9---")
       const expectedStr = "--e--f(gh)"
 
-      const innerStreams = { a, b, c, d }
+      const innerStreams: Record<string, Observable<string>> = { a, b, c, d }
 
       const result = combineKeys(
         keys,
@@ -67,7 +71,7 @@ describe("combineKeys", () => {
       const c = cold("     ---5")
       const expectedStr = "e--f"
 
-      const innerStreams = { a, b, c }
+      const innerStreams: Record<string, Observable<string>> = { a, b, c }
 
       const result = combineKeys(
         keys,
@@ -89,7 +93,7 @@ describe("combineKeys", () => {
       const c = cold("           -2-3")
       const expectedStr = "---e-fgh-i"
 
-      const innerStreams = { a, b, c }
+      const innerStreams: Record<string, Observable<string>> = { a, b, c }
 
       const result = combineKeys(
         keys,
@@ -108,12 +112,14 @@ describe("combineKeys", () => {
 
   it("completes when the key stream completes", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const keys = cold("  a-b---|").pipe(scan((acc, v) => [...acc, v], []))
+      const keys = cold("  a-b---|").pipe(
+        scan((acc, v) => [...acc, v], [] as Array<string>),
+      )
       const a = cold("     -1-----")
       const b = cold("       -1---")
       const expectedStr = "-e-f--|"
 
-      const innerStreams = { a, b }
+      const innerStreams: Record<string, Observable<string>> = { a, b }
 
       const result = combineKeys(
         keys,
@@ -129,12 +135,14 @@ describe("combineKeys", () => {
 
   it("propagates errors from the inner streams", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const keys = cold("  a-b---|").pipe(scan((acc, v) => [...acc, v], []))
+      const keys = cold("  a-b---|").pipe(
+        scan((acc, v) => [...acc, v], [] as Array<string>),
+      )
       const a = cold("     -1-----")
       const b = cold("       -#")
       const expectedStr = "-e-#"
 
-      const innerStreams = { a, b }
+      const innerStreams: Record<string, Observable<string>> = { a, b }
 
       const result = combineKeys(
         keys,
@@ -149,12 +157,14 @@ describe("combineKeys", () => {
 
   it("propagates errors from the key stream", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const keys = cold("  a-b#").pipe(scan((acc, v) => [...acc, v], []))
+      const keys = cold("  a-b#").pipe(
+        scan((acc, v) => [...acc, v], [] as Array<string>),
+      )
       const a = cold("     -1--")
       const b = cold("       -1")
       const expectedStr = "-e-#"
 
-      const innerStreams = { a, b }
+      const innerStreams: Record<string, Observable<string>> = { a, b }
 
       const result = combineKeys(
         keys,
@@ -180,7 +190,7 @@ describe("combineKeys", () => {
       const b = cold("      2---")
       const expectedStr = "efgef"
 
-      const innerStreams = { a, b }
+      const innerStreams: Record<string, Observable<string>> = { a, b }
 
       const result = combineKeys(
         keys,

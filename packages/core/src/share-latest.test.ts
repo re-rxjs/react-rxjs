@@ -56,7 +56,7 @@ describe("shareLatest", () => {
       const values$ = hot('----b-c-d---')
       const latest$ = hot('----------x-')
       const expected = '   a---b-c-d-d-'
-      const input$ = merge(
+      const input$: any = merge(
         values$,
         latest$.pipe(
           withLatestFrom(defer(() => result$)),
@@ -64,7 +64,7 @@ describe("shareLatest", () => {
         )
       )
 
-      const result$ = input$.pipe(
+      const result$: any = input$.pipe(
         startWith('a'),
         shareLatest()
       )

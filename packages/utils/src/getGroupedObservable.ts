@@ -22,6 +22,6 @@ export const getGroupedObservable = <K, T>(
       outterSub.unsubscribe()
     }
   }) as GroupedObservable<K, T>
-  result.key = key
+  ;(result as any).key = key
   return result
 }

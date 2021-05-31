@@ -16,7 +16,7 @@ describe("collect", () => {
           string,
           string
         >
-        result.key = key
+        ;(result as any).key = key
         return result
       }
 

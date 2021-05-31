@@ -1,4 +1,4 @@
-import { NEVER, Subject } from "rxjs"
+import { NEVER, Observable, Subject } from "rxjs"
 import { switchMap, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { partitionByKey } from "./"
@@ -37,7 +37,7 @@ describe("partitionByKey", () => {
         const b = cold("       ---|")
         const c = cold("           1-|")
         const expectedStr = "efg--hi-j"
-        const innerStreams = { a, b, c }
+        const innerStreams: Record<string, Observable<any>> = { a, b, c }
         const [, result] = partitionByKey(
           source,
           (v) => v,
@@ -71,7 +71,7 @@ describe("partitionByKey", () => {
         const expectB = "    -----|"
         const expectC = "    ------1-|"
 
-        const innerStreams = { a, b, c }
+        const innerStreams: Record<string, Observable<any>> = { a, b, c }
         const [getInstance$] = partitionByKey(
           source,
           (v) => v,
