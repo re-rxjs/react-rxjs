@@ -5,7 +5,10 @@ coverage
 .cache
 packages/core/dist/**
 !packages/core/dist/index.cjs
+!packages/core/dist/index.js
 packages/utils/dist/**
 !packages/utils/dist/index.cjs
+!packages/utils/dist/index.js
 packages/dom/dist/**
 !packages/dom/dist/index.cjs
+!packages/dom/dist/index.js
