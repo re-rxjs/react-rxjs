@@ -16,11 +16,7 @@ describe("partitionByKey", () => {
         const expectOdd = "  -1--3-5--"
         const expectEven = " --2--4-6-"
 
-        const [getInstance$] = partitionByKey(
-          source,
-          (v) => Number(v) % 2,
-          (v$) => v$,
-        )
+        const [getInstance$] = partitionByKey(source, (v) => Number(v) % 2)
 
         expectObservable(getInstance$(0)).toBe(expectEven)
         expectObservable(getInstance$(1)).toBe(expectOdd)

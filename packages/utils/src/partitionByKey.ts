@@ -5,6 +5,7 @@ import {
   Observable,
   Subject,
   Subscription,
+  identity,
 } from "rxjs"
 import { map } from "rxjs/operators"
 
@@ -23,6 +24,27 @@ export function partitionByKey<T, K, R>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
   streamSelector: (grouped: Observable<T>, key: K) => Observable<R>,
+): [(key: K) => GroupedObservable<K, R>, Observable<K[]>]
+
+/**
+ * Groups the elements from the source stream by using `keySelector`, returning
+ * a stream of the active keys, and a function to get the stream of a specific group
+ *
+ * @param stream Input stream
+ * @param keySelector Function that specifies the key for each element in `stream`
+ * @returns [1, 2]
+ * 1. A function that accepts a key and returns the stream for the group of that key.
+ * 2. A stream with the list of active keys
+ */
+export function partitionByKey<T, K>(
+  stream: Observable<T>,
+  keySelector: (value: T) => K,
+): [(key: K) => GroupedObservable<K, T>, Observable<K[]>]
+
+export function partitionByKey<T, K, R>(
+  stream: Observable<T>,
+  keySelector: (value: T) => K,
+  streamSelector?: (grouped: Observable<T>, key: K) => Observable<R>,
 ): [(key: K) => GroupedObservable<K, R>, Observable<K[]>] {
   const groupedObservables$ = new Observable<Map<K, GroupedObservable<K, R>>>(
     (subscriber) => {
@@ -39,8 +61,8 @@ export function partitionByKey<T, K, R>(
 
           const subject = new Subject<T>()
 
-          const res = streamSelector(subject, key).pipe(
-            shareLatest(),
+          const res = shareLatest()(
+            (streamSelector || identity)(subject, key),
           ) as GroupedObservable<K, R>
           ;(res as any).key = key
 
