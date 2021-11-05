@@ -46,7 +46,7 @@ export function partitionByKey<T, K, R>(
   keySelector: (value: T) => K,
   streamSelector?: (grouped: Observable<T>, key: K) => Observable<R>,
 ): [(key: K) => GroupedObservable<K, R>, Observable<K[]>] {
-  const groupedObservables$ = new Observable<Map<K, GroupedObservable<K, R>>>(
+  const groupedObservables$ = new Observable<Map<K, InnerGroup<T, K, R>>>(
     (subscriber) => {
       const groups: Map<K, InnerGroup<T, K, R>> = new Map()
 
@@ -78,7 +78,7 @@ export function partitionByKey<T, K, R>(
             (e) => subscriber.error(e),
             () => {
               groups.delete(key)
-              subscriber.next(mapGroups(groups))
+              subscriber.next(groups)
 
               if (groups.size === 0 && sourceCompleted) {
                 subscriber.complete()
@@ -87,7 +87,7 @@ export function partitionByKey<T, K, R>(
           )
 
           subject.next(x)
-          subscriber.next(mapGroups(groups))
+          subscriber.next(groups)
           emitted = true
         },
         (e) => {
@@ -108,7 +108,7 @@ export function partitionByKey<T, K, R>(
         },
       )
 
-      if (!emitted) subscriber.next(mapGroups(groups))
+      if (!emitted) subscriber.next(groups)
 
       return () => {
         sub.unsubscribe()
@@ -132,23 +132,15 @@ interface InnerGroup<T, K, R> {
   subscription: Subscription
 }
 
-function mapGroups<T, K, R>(
-  groups: Map<K, InnerGroup<T, K, R>>,
-): Map<K, GroupedObservable<K, R>> {
-  return new Map(
-    Array.from(groups.entries()).map(([key, group]) => [key, group.observable]),
-  )
-}
-
 const getGroupedObservable = <K, T>(
-  source$: Observable<Map<K, GroupedObservable<K, T>>>,
+  source$: Observable<Map<K, InnerGroup<any, K, T>>>,
   key: K,
 ) => {
   const result = new Observable<T>((observer) => {
     let innerSub: Subscription | undefined
     let outterSub: Subscription = source$.subscribe(
       (n) => {
-        innerSub = innerSub || n.get(key)?.subscribe(observer)
+        innerSub = innerSub || n.get(key)?.observable.subscribe(observer)
       },
       (e) => {
         observer.error(e)
