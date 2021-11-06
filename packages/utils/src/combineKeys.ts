@@ -12,7 +12,7 @@ export interface MapWithChanges<K, V> extends Map<K, V> {
  * @returns An stream with a map containing the latest value from the stream of each key.
  */
 export const combineKeys = <K, T>(
-  keys$: Observable<Array<K> | Set<K>>,
+  keys$: Observable<Iterable<K>>,
   getInner$: (key: K) => Observable<T>,
 ): Observable<MapWithChanges<K, T>> =>
   new Observable((observer) => {

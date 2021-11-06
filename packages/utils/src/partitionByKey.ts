@@ -24,7 +24,7 @@ export function partitionByKey<T, K, R>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
   streamSelector: (grouped: Observable<T>, key: K) => Observable<R>,
-): [(key: K) => GroupedObservable<K, R>, Observable<K[]>]
+): [(key: K) => GroupedObservable<K, R>, Observable<IterableIterator<K>>]
 
 /**
  * Groups the elements from the source stream by using `keySelector`, returning
@@ -39,13 +39,13 @@ export function partitionByKey<T, K, R>(
 export function partitionByKey<T, K>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
-): [(key: K) => GroupedObservable<K, T>, Observable<K[]>]
+): [(key: K) => GroupedObservable<K, T>, Observable<IterableIterator<K>>]
 
 export function partitionByKey<T, K, R>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
   streamSelector?: (grouped: Observable<T>, key: K) => Observable<R>,
-): [(key: K) => GroupedObservable<K, R>, Observable<K[]>] {
+): [(key: K) => GroupedObservable<K, R>, Observable<IterableIterator<K>>] {
   const groupedObservables$ = new Observable<Map<K, InnerGroup<T, K, R>>>(
     (subscriber) => {
       const groups: Map<K, InnerGroup<T, K, R>> = new Map()
@@ -122,7 +122,7 @@ export function partitionByKey<T, K, R>(
 
   return [
     (key: K) => getGroupedObservable(groupedObservables$, key),
-    groupedObservables$.pipe(map((x) => Array.from(x.keys()))),
+    groupedObservables$.pipe(map((m) => m.keys())),
   ]
 }
 

@@ -1,5 +1,5 @@
 import { concat, from, NEVER, Observable, of, Subject } from "rxjs"
-import { catchError, switchMap, take } from "rxjs/operators"
+import { catchError, map, switchMap, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { partitionByKey } from "./"
 
@@ -127,7 +127,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(keys$).toBe(expectKey, { x: [] })
+        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
       })
     })
 
@@ -146,7 +146,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(keys$).toBe(expectKey, { x: [] })
+        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
       })
     })
 
@@ -165,7 +165,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(keys$).toBe(expectKey, { x: [] })
+        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
       })
     })
 
@@ -180,7 +180,7 @@ describe("partitionByKey", () => {
           (v) => Number(v) % 2,
           (v$) => v$,
         )
-        expectObservable(keys$).toBe(expectKeys, {
+        expectObservable(getKeyValues(keys$)).toBe(expectKeys, {
           w: [1],
           x: [1, 0],
           y: [0],
@@ -203,7 +203,7 @@ describe("partitionByKey", () => {
           () => NEVER,
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -231,7 +231,7 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -259,7 +259,7 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -286,7 +286,7 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -313,7 +313,7 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -340,7 +340,7 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -363,7 +363,7 @@ describe("partitionByKey", () => {
           (_, v) => innerStreams[v],
         )
 
-        expectObservable(result).toBe(expectedStr, {
+        expectObservable(getKeyValues(result)).toBe(expectedStr, {
           e: [],
           f: ["a"],
           g: ["a", "b"],
@@ -461,3 +461,7 @@ describe("partitionByKey", () => {
     })
   })
 })
+
+function getKeyValues<T>(observable: Observable<Iterable<T>>) {
+  return observable.pipe(map((v) => Array.from(v)))
+}
