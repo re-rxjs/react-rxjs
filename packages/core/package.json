@@ -48,5 +48,8 @@
   "authors": [
     "Josep M Sobrepere (https://github.com/josepot)",
     "Victor Oliva (https://github.com/voliva)"
-  ]
+  ],
+  "dependencies": {
+    "use-sync-external-store": "^1.0.0-rc.0"
+  }
 }
