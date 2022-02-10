@@ -24,6 +24,9 @@ const shareLatest = <T>(
             subject!.next((currentValue = defaultValue))
         }
 
+  let error: any = EMPTY_VALUE
+  let resetErrorTimeout: any
+  let teardownTimeout: any
   const result = new Observable<T>((subscriber) => {
     if (!shouldComplete) subscriber.complete = noop
 
@@ -38,11 +41,22 @@ const shareLatest = <T>(
         if (subscription) {
           subscription.unsubscribe()
         }
-        teardown()
         subject = null
         subscription = null
         promise = null
       }
+      // For factoryObservable we want to remove it from the cache after a small delay
+      // this is relevant when the observable emits an error: On that case refCount goes to 0
+      // it's removed from the cache, and when react re-renders the component a new observable instance is created.
+      // The alternative is to use a `const [, setError] = useState(); ... setError(() => { throw error })`
+      // instead. On that case, when react re-renders, useState will retrigger the function from within setError,
+      // this way skipping creating a new observable instance.
+      clearTimeout(teardownTimeout)
+      teardownTimeout = setTimeout(() => {
+        if (refCount === 0) {
+          teardown()
+        }
+      }, 50)
     })
 
     if (!subject) {
@@ -57,6 +71,10 @@ const shareLatest = <T>(
           const _subject = subject
           subscription = null
           subject = null
+          error = err
+          resetErrorTimeout = setTimeout(() => {
+            error = EMPTY_VALUE
+          }, 50)
           _subject!.error(err)
         },
         complete: () => {
@@ -75,21 +93,19 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
 
-  let error: any = EMPTY_VALUE
-  let timeoutToken: any
   result.gV = (outterSubscription?: Subscription): T => {
-    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
-      return currentValue
-    }
-    if (defaultValue !== EMPTY_VALUE) return defaultValue
-
     if (error !== EMPTY_VALUE) {
-      clearTimeout(timeoutToken)
-      timeoutToken = setTimeout(() => {
+      clearTimeout(resetErrorTimeout)
+      resetErrorTimeout = setTimeout(() => {
         error = EMPTY_VALUE
       }, 50)
       throw error
     }
+
+    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
+      return currentValue
+    }
+    if (defaultValue !== EMPTY_VALUE) return defaultValue
 
     if (!subscription) {
       if (!outterSubscription) throw new Error("Missing Subscribe")
@@ -109,10 +125,6 @@ const shareLatest = <T>(
 
     throw (promise = new Promise<T>((res, rej) => {
       const setError = (e: any) => {
-        error = e
-        timeoutToken = setTimeout(() => {
-          error = EMPTY_VALUE
-        }, 50)
         rej(e)
         promise = null
       }
