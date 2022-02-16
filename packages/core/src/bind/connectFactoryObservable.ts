@@ -75,6 +75,7 @@ export default function connectFactoryObservable<A extends [], O>(
     }) as BehaviorObservable<O>
     publicShared$.gV = sharedObservable$.gV
     publicShared$.sB = sharedObservable$.sB
+    publicShared$.gVS = sharedObservable$.gVS
 
     const result: BehaviorObservable<O> = publicShared$
 

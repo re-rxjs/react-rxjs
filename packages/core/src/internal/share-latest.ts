@@ -152,6 +152,17 @@ const shareLatest = <T>(
     return () => sub.unsubscribe()
   }
 
+  const cachedCallback: WeakMap<Subscription, () => any> = new WeakMap()
+  result.gVS = (subscription) => {
+    if (!subscription) {
+      return result.gV
+    }
+    if (!cachedCallback.has(subscription)) {
+      cachedCallback.set(subscription, () => result.gV(subscription))
+    }
+    return cachedCallback.get(subscription)!
+  }
+
   return result
 }
 export default shareLatest

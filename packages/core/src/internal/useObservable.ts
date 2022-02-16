@@ -1,4 +1,3 @@
-import { useCallback } from "react"
 import { Subscription } from "rxjs"
 // @ts-ignore
 import { useSyncExternalStore } from "use-sync-external-store/shim"
@@ -9,8 +8,5 @@ export const useObservable = <O>(
   source$: BehaviorObservable<O>,
   subscription?: Subscription,
 ): Exclude<O, typeof SUSPENSE> => {
-  return useSyncExternalStore(
-    source$.sB,
-    useCallback(() => source$.gV(subscription), [source$, subscription]),
-  )
+  return useSyncExternalStore(source$.sB, source$.gVS(subscription))
 }
