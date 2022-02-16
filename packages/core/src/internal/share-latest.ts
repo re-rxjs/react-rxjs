@@ -144,6 +144,13 @@ const shareLatest = <T>(
       subscription!.add(pSubs)
     }))
   }
+  result.sB = (callback) => {
+    const sub = result.subscribe({
+      next: callback,
+      error: callback,
+    })
+    return () => sub.unsubscribe()
+  }
 
   return result
 }

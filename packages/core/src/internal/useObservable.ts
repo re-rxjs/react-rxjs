@@ -10,16 +10,7 @@ export const useObservable = <O>(
   subscription?: Subscription,
 ): Exclude<O, typeof SUSPENSE> => {
   return useSyncExternalStore(
-    useCallback(
-      (callback: () => void) => {
-        const sub = source$.subscribe({
-          next: callback,
-          error: callback,
-        })
-        return () => sub.unsubscribe()
-      },
-      [source$],
-    ),
+    source$.sB,
     useCallback(() => source$.gV(subscription), [source$, subscription]),
   )
 }
