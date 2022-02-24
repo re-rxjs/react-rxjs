@@ -756,7 +756,7 @@ describe("connectFactoryObservable", () => {
     })
 
     describe("re-subscriptions on disposed observables", () => {
-      it("registers itself when no other observable has been registered for that key", () => {
+      it("registers itself when no other observable has been registered for that key", async () => {
         const key = 0
         let sideEffects = 0
 
@@ -774,15 +774,21 @@ describe("connectFactoryObservable", () => {
         })
         expect(val).toBe(1)
 
+        await wait(60) // Wait for teardown grace period
+
         stream.pipe(take(1)).subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
 
+        await wait(60) // Wait for teardown grace period
+
         const subscription = stream.subscribe((x) => {
           val = x
         })
         expect(val).toBe(3)
+
+        await wait(60) // Wait for teardown grace period
 
         getShared(key)
           .pipe(take(1))
@@ -793,7 +799,7 @@ describe("connectFactoryObservable", () => {
         subscription.unsubscribe()
       })
 
-      it("subscribes to the currently registered observable if a new observalbe has been registered for that key", () => {
+      it("subscribes to the currently registered observable if a new observalbe has been registered for that key", async () => {
         const key = 0
         let sideEffects = 0
 
@@ -811,15 +817,21 @@ describe("connectFactoryObservable", () => {
         })
         expect(val).toBe(1)
 
+        await wait(60) // Wait for teardown grace period
+
         const subscription = getShared(key).subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
 
+        await wait(60) // Wait for teardown grace period
+
         stream.pipe(take(1)).subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
+
+        await wait(60) // Wait for teardown grace period
 
         stream.pipe(take(1)).subscribe((x) => {
           val = x
