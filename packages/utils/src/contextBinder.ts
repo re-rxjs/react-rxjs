@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import { bind, SUSPENSE } from "@react-rxjs/core"
+import { bind } from "@react-rxjs/core"
 
 type SubstractTuples<A1, A2> = A2 extends [unknown, ...infer Rest2]
   ? A1 extends [unknown, ...infer Rest1]
@@ -26,7 +26,7 @@ export function contextBinder<
   getObservable: (...args: ARGS) => Observable<T>,
   defaultValue?: T | undefined,
 ) => [
-  (...args: SubstractTuples<ARGS, OT>) => Exclude<T, typeof SUSPENSE>,
+  (...args: SubstractTuples<ARGS, OT>) => T,
   (...args: ARGS) => Observable<T>,
 ]
 export function contextBinder(...args: any[]) {

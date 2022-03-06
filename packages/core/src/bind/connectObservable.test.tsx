@@ -25,7 +25,7 @@ import {
   catchError,
   switchMapTo,
 } from "rxjs/operators"
-import { bind, SUSPENSE, Subscribe } from "../"
+import { bind, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -63,31 +63,6 @@ describe("connectObservable", () => {
 
   it("suspends the component when the observable hasn't emitted yet.", async () => {
     const source$ = of(1).pipe(delay(100))
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
-    const sub = delayedNumber$.subscribe()
-    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
-    const TestSuspense: React.FC = () => {
-      return (
-        <Suspense fallback={<span>Waiting</span>}>
-          <Result />
-        </Suspense>
-      )
-    }
-
-    render(<TestSuspense />)
-
-    expect(screen.queryByText("Result")).toBeNull()
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    await wait(110)
-
-    expect(screen.queryByText("Result 1")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
-    sub.unsubscribe()
-  })
-
-  it("suspends the component when the observable starts emitting suspense", async () => {
-    const source$ = of(1).pipe(delay(100), startWith(SUSPENSE))
     const [useDelayedNumber, delayedNumber$] = bind(source$)
     const sub = delayedNumber$.subscribe()
     const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
@@ -221,90 +196,6 @@ describe("connectObservable", () => {
     subs = latestNumber$.subscribe()
     renderHook(() => useLatestNumber())
     expect(nInitCount).toBe(2)
-  })
-
-  it("suspends the component when the observable emits SUSPENSE", async () => {
-    const subject$ = new Subject<void>()
-    const source$ = subject$.pipe(
-      scan((a) => a + 1, 0),
-      map((x) => {
-        if (x === 1) {
-          return SUSPENSE
-        }
-        return x
-      }),
-      startWith(0),
-    )
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
-    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
-    const TestSuspense: React.FC = () => {
-      return (
-        <div>
-          <button onClick={() => subject$.next()}>Next</button>
-          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
-            <Result />
-          </Subscribe>
-        </div>
-      )
-    }
-
-    render(<TestSuspense />)
-
-    expect(screen.queryByText("Result 0")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Result 2")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
-  })
-
-  it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
-    const subject$ = new Subject<void>()
-    const source$ = subject$.pipe(
-      scan((a) => a + 1, 0),
-      map((x) => {
-        if (x <= 2) {
-          return SUSPENSE
-        }
-        return x
-      }),
-      startWith(0),
-    )
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
-    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
-    const TestSuspense: React.FC = () => {
-      return (
-        <div>
-          <button onClick={() => subject$.next()}>Next</button>
-          <Subscribe source$={delayedNumber$} fallback={<span>Waiting</span>}>
-            <Result />
-          </Subscribe>
-        </div>
-      )
-    }
-
-    render(<TestSuspense />)
-
-    expect(screen.queryByText("Result 0")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Waiting")).not.toBeNull()
-
-    fireEvent.click(screen.getByText(/Next/i))
-
-    expect(screen.queryByText("Result 3")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
   })
 
   it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
@@ -650,7 +541,7 @@ describe("connectObservable", () => {
     expect(errorCallback).toHaveBeenCalled()
   })
 
-  it("should throw an error if the stream completes without emitting while on SUSPENSE", async () => {
+  it("should throw an error if the stream completes without emitting while on suspense", async () => {
     const subject = new Subject()
     const [useValue, value$] = bind(subject)
     const errorCallback = jest.fn()

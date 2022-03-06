@@ -2,7 +2,6 @@ import { noop, Observable } from "rxjs"
 import shareLatest from "../internal/share-latest"
 import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { useObservable } from "../internal/useObservable"
-import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "../internal/empty-value"
 import { useSubscription } from "../Subscribe"
 
@@ -28,10 +27,7 @@ import { useSubscription } from "../Subscribe"
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
   defaultValue: O | ((...args: A) => O),
-): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => Observable<O>,
-] {
+): [(...args: A) => O, (...args: A) => Observable<O>] {
   const cache = new NestedMap<A, BehaviorObservable<O>>()
   const getDefaultValue = (
     typeof defaultValue === "function" ? defaultValue : () => defaultValue

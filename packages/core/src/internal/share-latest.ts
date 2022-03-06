@@ -1,7 +1,6 @@
 import { Observable, Subscription, Subject, noop, Subscriber } from "rxjs"
 import { BehaviorObservable } from "./BehaviorObservable"
 import { EMPTY_VALUE } from "./empty-value"
-import { SUSPENSE } from "../SUSPENSE"
 
 const shareLatest = <T>(
   source$: Observable<T>,
@@ -78,7 +77,7 @@ const shareLatest = <T>(
   let error: any = EMPTY_VALUE
   let timeoutToken: any
   result.gV = (outterSubscription?: Subscription): T => {
-    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
+    if (currentValue !== EMPTY_VALUE) {
       return currentValue
     }
     if (defaultValue !== EMPTY_VALUE) return defaultValue
@@ -116,19 +115,17 @@ const shareLatest = <T>(
         rej(e)
         promise = null
       }
-      const pSubs = subject!.subscribe(
-        (v) => {
-          if (v !== (SUSPENSE as any)) {
-            pSubs.unsubscribe()
-            res(v)
-            promise = null
-          }
+      const pSubs = subject!.subscribe({
+        next: (v) => {
+          pSubs.unsubscribe()
+          res(v)
+          promise = null
         },
-        setError,
-        () => {
+        error: setError,
+        complete: () => {
           setError(new Error("Empty observable"))
         },
-      )
+      })
       subscription!.add(pSubs)
     }))
   }
