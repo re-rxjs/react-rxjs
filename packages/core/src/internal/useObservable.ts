@@ -1,48 +1,42 @@
-import { useEffect, useState, useRef } from "react"
-import { SUSPENSE } from "../SUSPENSE"
-import { BehaviorObservable } from "../internal/BehaviorObservable"
 import { Subscription } from "rxjs"
+import { useSyncExternalStore } from "use-sync-external-store/shim"
+import { useRef, useState } from "react"
+import { BehaviorObservable } from "../internal/BehaviorObservable"
+import { SUSPENSE } from "../SUSPENSE"
+
+type VoidCb = () => void
+
+interface Ref<T> {
+  args: [(cb: VoidCb) => VoidCb, () => Exclude<T, typeof SUSPENSE>]
+  source$: BehaviorObservable<T>
+}
 
 export const useObservable = <O>(
   source$: BehaviorObservable<O>,
   subscription?: Subscription,
 ): Exclude<O, typeof SUSPENSE> => {
-  const [state, setState] = useState<[O, BehaviorObservable<O>]>(() => [
-    source$.gV(subscription),
-    source$,
-  ])
-  const prevStateRef = useRef<O | (() => O)>(state[0])
+  const [, setError] = useState()
+  const callbackRef = useRef<Ref<O>>()
 
-  if (source$ !== state[1]) {
-    setState([source$.gV(subscription), source$])
+  if (!callbackRef.current || callbackRef.current.source$ !== source$) {
+    callbackRef.current = {
+      source$,
+      args: [
+        (next: () => void) => {
+          const subscription = source$.subscribe({
+            next,
+            error: (e) => {
+              setError(() => {
+                throw e
+              })
+            },
+          })
+
+          return () => subscription.unsubscribe()
+        },
+        () => source$.gV(subscription),
+      ],
+    }
   }
-
-  useEffect(() => {
-    const suspend = () => {
-      setState(() => [source$.gV(), source$])
-    }
-
-    const subscription = source$.subscribe(
-      (value: O | typeof SUSPENSE) => {
-        if (value === SUSPENSE) {
-          suspend()
-        } else {
-          if (!Object.is(prevStateRef.current, value)) {
-            setState([(prevStateRef.current = value), source$])
-          }
-        }
-      },
-      (error: any) => {
-        setState(() => {
-          throw error
-        })
-      },
-    )
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [source$])
-
-  return state[0] as Exclude<O, typeof SUSPENSE>
+  return useSyncExternalStore(...callbackRef.current!.args)
 }
