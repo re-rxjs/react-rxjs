@@ -697,6 +697,44 @@ describe("connectFactoryObservable", () => {
     await waitFor(() => expect(screen.getByText("Result 3")).not.toBeNull())
   })
 
+  it("properly tears down the underlying Observable", () => {
+    const finished: string[] = []
+    const [useValue, getValue$] = bind(
+      (val: string) =>
+        new Observable<string>((observer) => {
+          observer.next(val)
+          return () => {
+            finished.push(val)
+          }
+        }),
+    )
+
+    const Component: React.FC<{ value: string }> = ({ value }) => {
+      const val = useValue(value)
+      return <>{val}</>
+    }
+
+    const TestComponent: React.FC<{ value: string }> = ({ value }) => (
+      <Subscribe source$={getValue$(value)} fallback={<div>Loading...</div>}>
+        <Component {...{ value }} />
+      </Subscribe>
+    )
+
+    const { unmount, rerender } = render(<TestComponent value="first" />)
+
+    expect(finished).toEqual([])
+    expect(screen.getByText("first")).not.toBeNull()
+
+    rerender(<TestComponent value="second" />)
+
+    expect(finished).toEqual(["first"])
+    expect(screen.getByText("second")).not.toBeNull()
+
+    unmount()
+
+    expect(finished).toEqual(["first", "second"])
+  })
+
   describe("observable", () => {
     it("it does not complete when the source observable completes", async () => {
       let diff = -1
