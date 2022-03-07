@@ -74,21 +74,9 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
 
-  let error: any = EMPTY_VALUE
-  let timeoutToken: any
   result.gV = (outterSubscription?: Subscription): T => {
-    if (currentValue !== EMPTY_VALUE) {
-      return currentValue
-    }
+    if (currentValue !== EMPTY_VALUE) return currentValue
     if (defaultValue !== EMPTY_VALUE) return defaultValue
-
-    if (error !== EMPTY_VALUE) {
-      clearTimeout(timeoutToken)
-      timeoutToken = setTimeout(() => {
-        error = EMPTY_VALUE
-      }, 50)
-      throw error
-    }
 
     if (!subscription) {
       if (!outterSubscription) throw new Error("Missing Subscribe")
@@ -108,10 +96,6 @@ const shareLatest = <T>(
 
     throw (promise = new Promise<T>((res, rej) => {
       const setError = (e: any) => {
-        error = e
-        timeoutToken = setTimeout(() => {
-          error = EMPTY_VALUE
-        }, 50)
         rej(e)
         promise = null
       }
