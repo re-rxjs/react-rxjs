@@ -13,7 +13,7 @@
     "files": [
       {
         "path": "./packages/core/dist/core.cjs.production.min.js",
-        "maxSize": "5 kB",
+        "maxSize": "6 kB",
         "compression": "none"
       },
       {
