@@ -205,6 +205,34 @@ describe("combineKeys", () => {
     })
   })
 
+  it("emits an empty map if the initial keys are an empty iterator", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const activeKeys = {
+        a: ["a"],
+        b: ["a", "b"],
+        z: [],
+      }
+
+      const keys = cold("  zzabzzab", activeKeys)
+      const a = cold("       1----")
+      const b = cold("        2---")
+      const expectedStr = "g-efg-ef"
+
+      const innerStreams: Record<string, Observable<string>> = { a, b }
+
+      const result = combineKeys(
+        keys,
+        (v): Observable<string> => innerStreams[v],
+      ).pipe(map((x) => Object.fromEntries(x.entries())))
+
+      expectObservable(result).toBe(expectedStr, {
+        e: { a: "1" },
+        f: { a: "1", b: "2" },
+        g: {},
+      })
+    })
+  })
+
   describe("change set", () => {
     it("contains all of the keys initially present in the stream", () => {
       scheduler().run(({ expectObservable }) => {

@@ -75,21 +75,13 @@ const shareLatest = <T>(
     }
   }) as BehaviorObservable<T>
 
-  let error: any = EMPTY_VALUE
-  let timeoutToken: any
-  result.gV = (outterSubscription?: Subscription): T => {
-    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE) {
-      return currentValue
-    }
-    if (defaultValue !== EMPTY_VALUE) return defaultValue
+  result.gV = (
+    outterSubscription?: Subscription,
+  ): Exclude<T, typeof SUSPENSE> => {
+    if ((currentValue as any) !== SUSPENSE && currentValue !== EMPTY_VALUE)
+      return currentValue as any
 
-    if (error !== EMPTY_VALUE) {
-      clearTimeout(timeoutToken)
-      timeoutToken = setTimeout(() => {
-        error = EMPTY_VALUE
-      }, 50)
-      throw error
-    }
+    if (defaultValue !== EMPTY_VALUE) return defaultValue as any
 
     if (!subscription) {
       if (!outterSubscription) throw new Error("Missing Subscribe")
@@ -108,27 +100,23 @@ const shareLatest = <T>(
     if (promise) throw promise
 
     throw (promise = new Promise<T>((res, rej) => {
-      const setError = (e: any) => {
-        error = e
-        timeoutToken = setTimeout(() => {
-          error = EMPTY_VALUE
-        }, 50)
+      const error = (e: any) => {
         rej(e)
         promise = null
       }
-      const pSubs = subject!.subscribe(
-        (v) => {
+      const pSubs = subject!.subscribe({
+        next: (v) => {
           if (v !== (SUSPENSE as any)) {
             pSubs.unsubscribe()
             res(v)
             promise = null
           }
         },
-        setError,
-        () => {
-          setError(new Error("Empty observable"))
+        error,
+        complete: () => {
+          error(new Error("Empty observable"))
         },
-      )
+      })
       subscription!.add(pSubs)
     }))
   }

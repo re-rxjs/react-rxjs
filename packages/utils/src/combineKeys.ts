@@ -20,12 +20,15 @@ export const combineKeys = <K, T>(
     let changes = new Set<K>()
     const currentValue = new Map<K, T>()
     let updatingSource = false
+    let isPristine = true
+
     const next = () => {
       if (!updatingSource) {
         const result = Object.assign(new Map(currentValue), {
           changes,
         })
         changes = new Set<K>()
+        isPristine = false
         observer.next(result)
       }
     }
@@ -64,7 +67,11 @@ export const combineKeys = <K, T>(
           )
         })
         updatingSource = false
-        if (changes.size) next()
+        // If there are no changes but the nextKeys are an empty iterator
+        // and we have never emitted before, that means that the first
+        // value that keys$ has emitted is an empty iterator, therefore
+        // we should emit an empy Map
+        if (changes.size || (isPristine && !nextKeys.size)) next()
       },
       (e) => {
         observer.error(e)

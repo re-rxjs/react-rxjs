@@ -1,11 +1,12 @@
 {
-  "version": "0.8.3",
+  "version": "0.8.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
   },
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "node": {
@@ -48,5 +49,11 @@
   "authors": [
     "Josep M Sobrepere (https://github.com/josepot)",
     "Victor Oliva (https://github.com/voliva)"
-  ]
+  ],
+  "dependencies": {
+    "use-sync-external-store": "^1.0.0-rc.0"
+  },
+  "devDependencies": {
+    "@types/use-sync-external-store": "^0.0.3"
+  }
 }

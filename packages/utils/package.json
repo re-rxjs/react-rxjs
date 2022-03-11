@@ -1,11 +1,12 @@
 {
-  "version": "0.9.2",
+  "version": "0.9.4",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
   },
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "node": {
@@ -51,6 +52,6 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@react-rxjs/core": "0.8.3"
+    "@react-rxjs/core": "0.8.5"
   }
 }

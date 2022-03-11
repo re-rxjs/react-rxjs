@@ -46,8 +46,9 @@ export const Subscribe: React.FC<{
     subscriptionRef.current = new Subscription()
   }
 
-  const [subscribedSource, setSubscribedSource] =
-    useState<Observable<any> | null | undefined>(null)
+  const [subscribedSource, setSubscribedSource] = useState<
+    Observable<any> | null | undefined
+  >(null)
 
   if (subscribedSource !== null && subscribedSource !== source$) {
     if (source$ === undefined) {
@@ -57,7 +58,7 @@ export const Subscribe: React.FC<{
       try {
         ;(source$ as any).gV()
         result = source$
-      } catch (e) {
+      } catch (e: any) {
         result = e.then ? source$ : null
       }
       if (result) {
