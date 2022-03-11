@@ -1,5 +1,5 @@
 {
-  "version": "0.9.4",
+  "version": "0.9.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -51,6 +51,6 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@react-rxjs/core": "0.8.6"
+    "@react-rxjs/core": "0.8.7"
   }
 }
