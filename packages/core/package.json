@@ -50,6 +50,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
+    "@josepot/rxjs-state": "^0.0.1",
     "use-sync-external-store": "^1.0.0-rc.0"
   },
   "devDependencies": {
