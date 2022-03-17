@@ -1441,6 +1441,11 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
+"@josepot/rxjs-state@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@josepot/rxjs-state/-/rxjs-state-0.0.1.tgz#ae2ce3684049cabac264f185a911f8a8da07f00d"
+  integrity sha512-vchVrD2FyOKmTkIiGBKAqqq1vjzYqMfTBkWPmxDr4hIUPcDeZFcL+v/N3HoQvYJTOg4SG3qMBy/V4RLCuSSM7Q==
+
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/@jridgewell/resolve-uri/-/resolve-uri-3.0.5.tgz#68eb521368db76d040a6315cdb24bf2483037b9c"

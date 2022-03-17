@@ -2,24 +2,14 @@ import { Subscription } from "rxjs"
 import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { useRef, useState } from "react"
 import { SUSPENSE } from "../SUSPENSE"
-import {
-  DefaultedStateObservable,
-  StateObservable,
-  StatePromise,
-} from "@josepot/rxjs-state"
+import { DefaultedStateObservable, StateObservable } from "@josepot/rxjs-state"
 import { EMPTY_VALUE } from "./empty-value"
 
 type VoidCb = () => void
 
 interface Ref<T> {
-  args: [(cb: VoidCb) => VoidCb, () => Exclude<T, typeof SUSPENSE>]
   source$: StateObservable<T>
-}
-
-function getState<O>(source$: StateObservable<O>): O {
-  const result = source$.getValue()
-  if (result instanceof StatePromise) throw result
-  return result
+  args: [(cb: VoidCb) => VoidCb, () => Exclude<T, typeof SUSPENSE>]
 }
 
 export const useObservable = <O>(
@@ -46,10 +36,15 @@ export const useObservable = <O>(
           return () => subscription.unsubscribe()
         },
         () => {
-          if (source$.getRefCount() > 0) return getState(source$)
-          if (!source$.getDefaultValue)
-            return (source$ as any).getDefaultValue()
-          if (!subscription) throw new Error("Missing Subscribe!")
+          if (source$.getRefCount() > 0 || source$.getDefaultValue) {
+            const result = source$.getValue((x) => x !== (SUSPENSE as any))
+            if (result instanceof Promise) throw result
+            return result as any
+          }
+
+          if (!subscription) {
+            throw new Error("Missing Subscribe!")
+          }
 
           let error = EMPTY_VALUE
           subscription.add(
@@ -59,13 +54,13 @@ export const useObservable = <O>(
               },
             }),
           )
-          if (error !== EMPTY_VALUE) {
-            setError(() => {
-              throw error
-            })
-            throw error
+          if (error === EMPTY_VALUE) {
+            const result = source$.getValue((x) => x !== (SUSPENSE as any))
+            if (result instanceof Promise) throw result
+            return result as any
           }
-          return getState(source$)
+
+          throw error
         },
       ],
     }
