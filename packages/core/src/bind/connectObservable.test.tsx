@@ -472,10 +472,11 @@ describe("connectObservable", () => {
     unmount()
   })
 
-  it("allows async errors to be caught in error boundaries with suspense", async () => {
+  it.only("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
     const [useError, errStream$] = bind(errStream)
-    const errStream$WithoutErrors = errStream$.pipe(catchError(() => EMPTY))
+    const errStream$WithoutErrors = errStream$.pipe(catchError(() => NEVER))
+    errStream$WithoutErrors.subscribe()
 
     const ErrorComponent = () => {
       const value = useError()
@@ -485,12 +486,9 @@ describe("connectObservable", () => {
     const errorCallback = jest.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
-        <Subscribe
-          source$={errStream$WithoutErrors}
-          fallback={<div>Loading...</div>}
-        >
+        <Suspense fallback={null}>
           <ErrorComponent />
-        </Subscribe>
+        </Suspense>
       </TestErrorBoundary>,
     )
 
