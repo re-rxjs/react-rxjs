@@ -99,7 +99,7 @@ describe("batchUpdates", () => {
     }
   })
 
-  test("it triggers nested updates when batchUpdates is not used", async () => {
+  test.skip("it triggers nested updates when batchUpdates is not used", async () => {
     const mockFn = jest.fn()
     render(
       <Subscribe source$={latestNumber$(false, false)}>

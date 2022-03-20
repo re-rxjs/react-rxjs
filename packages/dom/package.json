@@ -52,6 +52,6 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@react-rxjs/core": "0.8.7"
+    "@react-rxjs/core": "0.9.0"
   }
 }

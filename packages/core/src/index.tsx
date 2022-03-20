@@ -1,4 +1,6 @@
-export { bind } from "./bind"
+export * from "@josepot/rxjs-state"
 export { shareLatest } from "./shareLatest"
+export { useStateObservable } from "./useStateObservable"
+export { bind } from "./bind"
 export { SUSPENSE } from "./SUSPENSE"
 export { Subscribe } from "./Subscribe"

@@ -4,3 +4,7 @@
  * leverage React Suspense API while we are waiting for that value.
  */
 export const SUSPENSE = Symbol("SUSPENSE")
+
+export const filterOutSuspense = <T>(
+  value: T,
+): value is Exclude<T, typeof SUSPENSE> => value !== (SUSPENSE as any)

@@ -25,7 +25,7 @@ import {
   catchError,
   switchMapTo,
 } from "rxjs/operators"
-import { bind, SUSPENSE, Subscribe } from "../"
+import { bind, SUSPENSE, Subscribe, useStateObservable } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -63,9 +63,11 @@ describe("connectObservable", () => {
 
   it("suspends the component when the observable hasn't emitted yet.", async () => {
     const source$ = of(1).pipe(delay(100))
-    const [useDelayedNumber, delayedNumber$] = bind(source$)
+    const [, delayedNumber$] = bind(source$)
     const sub = delayedNumber$.subscribe()
-    const Result: React.FC = () => <div>Result {useDelayedNumber()}</div>
+    const Result: React.FC = () => (
+      <div>Result {useStateObservable(delayedNumber$)}</div>
+    )
     const TestSuspense: React.FC = () => {
       return (
         <Suspense fallback={<span>Waiting</span>}>

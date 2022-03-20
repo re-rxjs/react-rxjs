@@ -1,5 +1,5 @@
 {
-  "version": "0.8.7",
+  "version": "0.9.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "react": ">=16.8.0",
-    "rxjs": ">=6"
+    "rxjs": ">=7"
   },
   "prettier": {
     "printWidth": 80,
@@ -50,6 +50,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
+    "@josepot/rxjs-state": "^0.1.0",
     "use-sync-external-store": "^1.0.0-rc.0"
   },
   "devDependencies": {
