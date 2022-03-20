@@ -42,9 +42,7 @@ export const Subscribe: React.FC<{
 }> = ({ source$, children, fallback }) => {
   const subscriptionRef = useRef<Subscription>()
 
-  if (!subscriptionRef.current) {
-    subscriptionRef.current = new Subscription()
-  }
+  if (!subscriptionRef.current) subscriptionRef.current = new Subscription()
 
   const [subscribedSource, setSubscribedSource] = useState<
     Observable<any> | null | undefined
@@ -54,31 +52,25 @@ export const Subscribe: React.FC<{
     if (source$ === undefined) {
       setSubscribedSource(source$)
     } else {
-      let result: any
       try {
-        ;(source$ as any).gV()
-        result = source$
-      } catch (e: any) {
-        result = e.then ? source$ : null
-      }
-      if (result) {
-        setSubscribedSource(result)
-      }
+        ;(source$ as any).getValue()
+        setSubscribedSource(source$)
+      } catch (e: any) {}
     }
   }
 
   useEffect(() => {
-    const subscription =
-      source$ &&
-      source$.subscribe({
-        error: (e) =>
-          setSubscribedSource(() => {
-            throw e
-          }),
-      })
     setSubscribedSource(source$)
+    if (!source$) return
+
+    const subscription = source$.subscribe({
+      error: (e) =>
+        setSubscribedSource(() => {
+          throw e
+        }),
+    })
     return () => {
-      subscription && subscription.unsubscribe()
+      subscription.unsubscribe()
     }
   }, [source$])
 
