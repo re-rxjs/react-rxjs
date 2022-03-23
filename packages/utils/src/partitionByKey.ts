@@ -1,13 +1,18 @@
 import { shareLatest } from "@react-rxjs/core"
 import {
   GroupedObservable,
+  identity,
   noop,
   Observable,
   Subject,
   Subscription,
-  identity,
 } from "rxjs"
 import { map } from "rxjs/operators"
+
+export interface KeyChanges<K> {
+  type: "add" | "remove"
+  keys: Iterable<K>
+}
 
 /**
  * Groups the elements from the source stream by using `keySelector`, returning
@@ -24,7 +29,7 @@ export function partitionByKey<T, K, R>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
   streamSelector: (grouped: Observable<T>, key: K) => Observable<R>,
-): [(key: K) => GroupedObservable<K, R>, Observable<IterableIterator<K>>]
+): [(key: K) => GroupedObservable<K, R>, Observable<KeyChanges<K>>]
 
 /**
  * Groups the elements from the source stream by using `keySelector`, returning
@@ -39,90 +44,125 @@ export function partitionByKey<T, K, R>(
 export function partitionByKey<T, K>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
-): [(key: K) => GroupedObservable<K, T>, Observable<IterableIterator<K>>]
+): [(key: K) => GroupedObservable<K, T>, Observable<KeyChanges<K>>]
 
 export function partitionByKey<T, K, R>(
   stream: Observable<T>,
   keySelector: (value: T) => K,
   streamSelector?: (grouped: Observable<T>, key: K) => Observable<R>,
-): [(key: K) => GroupedObservable<K, R>, Observable<IterableIterator<K>>] {
-  const groupedObservables$ = new Observable<Map<K, InnerGroup<T, K, R>>>(
-    (subscriber) => {
-      const groups: Map<K, InnerGroup<T, K, R>> = new Map()
+): [(key: K) => GroupedObservable<K, R>, Observable<KeyChanges<K>>] {
+  const groupedObservables$ = new Observable<{
+    groups: Map<K, InnerGroup<T, K, R>>
+    changes: KeyChanges<K>
+  }>((subscriber) => {
+    const groups: Map<K, InnerGroup<T, K, R>> = new Map()
 
-      let emitted = false
-      let sourceCompleted = false
-      const sub = stream.subscribe(
-        (x) => {
-          const key = keySelector(x)
-          if (groups.has(key)) {
-            return groups.get(key)!.source.next(x)
-          }
+    let emitted = false
+    let sourceCompleted = false
+    const sub = stream.subscribe(
+      (x) => {
+        const key = keySelector(x)
+        if (groups.has(key)) {
+          return groups.get(key)!.source.next(x)
+        }
 
-          const subject = new Subject<T>()
+        const subject = new Subject<T>()
 
-          const res = shareLatest()(
-            (streamSelector || identity)(subject, key),
-          ) as GroupedObservable<K, R>
-          ;(res as any).key = key
+        const res = shareLatest()(
+          (streamSelector || identity)(subject, key),
+        ) as GroupedObservable<K, R>
+        ;(res as any).key = key
 
-          const innerGroup: InnerGroup<T, K, R> = {
-            source: subject,
-            observable: res,
-            subscription: new Subscription(),
-          }
-          groups.set(key, innerGroup)
+        const innerGroup: InnerGroup<T, K, R> = {
+          source: subject,
+          observable: res,
+          subscription: new Subscription(),
+        }
+        groups.set(key, innerGroup)
 
-          innerGroup.subscription = res.subscribe(
-            noop,
-            (e) => subscriber.error(e),
-            () => {
-              groups.delete(key)
-              subscriber.next(groups)
+        innerGroup.subscription = res.subscribe(
+          noop,
+          (e) => subscriber.error(e),
+          () => {
+            groups.delete(key)
+            subscriber.next({
+              groups,
+              changes: {
+                type: "remove",
+                keys: [key],
+              },
+            })
 
-              if (groups.size === 0 && sourceCompleted) {
-                subscriber.complete()
-              }
-            },
-          )
+            if (groups.size === 0 && sourceCompleted) {
+              subscriber.complete()
+            }
+          },
+        )
 
-          subject.next(x)
-          subscriber.next(groups)
-          emitted = true
-        },
-        (e) => {
-          sourceCompleted = true
-          if (groups.size) {
-            groups.forEach((g) => g.source.error(e))
-          } else {
-            subscriber.error(e)
-          }
-        },
-        () => {
-          sourceCompleted = true
-          if (groups.size) {
-            groups.forEach((g) => g.source.complete())
-          } else {
-            subscriber.complete()
-          }
-        },
-      )
-
-      if (!emitted) subscriber.next(groups)
-
-      return () => {
-        sub.unsubscribe()
-        groups.forEach((g) => {
-          g.source.unsubscribe()
-          g.subscription.unsubscribe()
+        subject.next(x)
+        subscriber.next({
+          groups,
+          changes: {
+            type: "add",
+            keys: [key],
+          },
         })
-      }
-    },
-  ).pipe(shareLatest())
+        emitted = true
+      },
+      (e) => {
+        sourceCompleted = true
+        if (groups.size) {
+          groups.forEach((g) => g.source.error(e))
+        } else {
+          subscriber.error(e)
+        }
+      },
+      () => {
+        sourceCompleted = true
+        if (groups.size) {
+          groups.forEach((g) => g.source.complete())
+        } else {
+          subscriber.complete()
+        }
+      },
+    )
+
+    if (!emitted)
+      subscriber.next({
+        groups,
+        changes: {
+          type: "add",
+          keys: [],
+        },
+      })
+
+    return () => {
+      sub.unsubscribe()
+      groups.forEach((g) => {
+        g.source.unsubscribe()
+        g.subscription.unsubscribe()
+      })
+    }
+  }).pipe(shareLatest())
 
   return [
-    (key: K) => getGroupedObservable(groupedObservables$, key),
-    groupedObservables$.pipe(map((m) => m.keys())),
+    (key: K) =>
+      getGroupedObservable(
+        groupedObservables$.pipe(map(({ groups }) => groups)),
+        key,
+      ),
+    groupedObservables$.pipe(
+      map((m, i): KeyChanges<K> => {
+        if (i === 0) {
+          // Replay all the previously added keys
+          return {
+            type: "add",
+            keys: m.groups.keys(),
+          }
+        }
+        return m.changes
+      }),
+    ),
   ]
 }
 

@@ -1,7 +1,14 @@
-import { concat, from, NEVER, Observable, of, Subject } from "rxjs"
-import { catchError, map, switchMap, take } from "rxjs/operators"
+import { concat, defer, from, NEVER, Observable, of, Subject } from "rxjs"
+import {
+  catchError,
+  defaultIfEmpty,
+  map,
+  scan,
+  switchMap,
+  take,
+} from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { partitionByKey } from "./"
+import { partitionByKey, KeyChanges } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -462,6 +469,21 @@ describe("partitionByKey", () => {
   })
 })
 
-function getKeyValues<T>(observable: Observable<Iterable<T>>) {
-  return observable.pipe(map((v) => Array.from(v)))
+function getKeyValues<T>(observable: Observable<KeyChanges<T>>) {
+  return defer(() =>
+    observable.pipe(
+      scan((acc, change) => {
+        for (let key of change.keys) {
+          if (change.type === "add") {
+            acc.add(key)
+          } else {
+            acc.delete(key)
+          }
+        }
+        return acc
+      }, new Set<T>()),
+      map((v) => [...v]),
+      defaultIfEmpty([]),
+    ),
+  )
 }
