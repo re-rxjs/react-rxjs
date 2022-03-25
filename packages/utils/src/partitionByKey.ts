@@ -57,7 +57,6 @@ export function partitionByKey<T, K, R>(
   }>((subscriber) => {
     const groups: Map<K, InnerGroup<T, K, R>> = new Map()
 
-    let emitted = false
     let sourceCompleted = false
     const sub = stream.subscribe(
       (x) => {
@@ -80,6 +79,14 @@ export function partitionByKey<T, K, R>(
         }
         groups.set(key, innerGroup)
 
+        subscriber.next({
+          groups,
+          changes: {
+            type: "add",
+            keys: [key],
+          },
+        })
+
         innerGroup.subscription = res.subscribe(
           noop,
           (e) => subscriber.error(e),
@@ -98,16 +105,7 @@ export function partitionByKey<T, K, R>(
             }
           },
         )
-
         subject.next(x)
-        subscriber.next({
-          groups,
-          changes: {
-            type: "add",
-            keys: [key],
-          },
-        })
-        emitted = true
       },
       (e) => {
         sourceCompleted = true
@@ -126,15 +124,6 @@ export function partitionByKey<T, K, R>(
         }
       },
     )
-
-    if (!emitted)
-      subscriber.next({
-        groups,
-        changes: {
-          type: "add",
-          keys: [],
-        },
-      })
 
     return () => {
       sub.unsubscribe()

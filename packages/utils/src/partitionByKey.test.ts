@@ -1,14 +1,7 @@
-import { concat, defer, from, NEVER, Observable, of, Subject } from "rxjs"
-import {
-  catchError,
-  defaultIfEmpty,
-  map,
-  scan,
-  switchMap,
-  take,
-} from "rxjs/operators"
+import { concat, EMPTY, from, NEVER, Observable, of, Subject } from "rxjs"
+import { catchError, map, switchMap, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { partitionByKey, KeyChanges } from "./"
+import { KeyChanges, partitionByKey } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -124,7 +117,7 @@ describe("partitionByKey", () => {
         const e1 = cold("  |")
         const e1subs = "   (^!)"
         const expectObs = "|"
-        const expectKey = "(x|)"
+        const expectKey = "|"
 
         const [getObs, keys$] = partitionByKey(
           e1,
@@ -134,7 +127,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
+        expectObservable(keys$).toBe(expectKey)
       })
     })
 
@@ -143,7 +136,7 @@ describe("partitionByKey", () => {
         const e1 = cold("  --")
         const e1subs = "   ^-"
         const expectObs = "--"
-        const expectKey = "x-"
+        const expectKey = "--"
 
         const [getObs, keys$] = partitionByKey(
           e1,
@@ -153,7 +146,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
+        expectObservable(keys$).toBe(expectKey)
       })
     })
 
@@ -162,7 +155,7 @@ describe("partitionByKey", () => {
         const e1 = cold("  #")
         const e1subs = "   (^!)"
         const expectObs = "#"
-        const expectKey = "(x#)"
+        const expectKey = "#"
 
         const [getObs, keys$] = partitionByKey(
           e1,
@@ -172,7 +165,7 @@ describe("partitionByKey", () => {
 
         expectObservable(getObs("")).toBe(expectObs)
         expectSubscriptions(e1.subscriptions).toBe(e1subs)
-        expectObservable(getKeyValues(keys$)).toBe(expectKey, { x: [] })
+        expectObservable(keys$).toBe(expectKey)
       })
     })
 
@@ -187,11 +180,23 @@ describe("partitionByKey", () => {
           (v) => Number(v) % 2,
           (v$) => v$,
         )
-        expectObservable(getKeyValues(keys$)).toBe(expectKeys, {
-          w: [1],
-          x: [1, 0],
-          y: [0],
-          z: [],
+        expectObservable(deltasToPOJO(keys$)).toBe(expectKeys, {
+          w: {
+            type: "add",
+            keys: [1],
+          },
+          x: {
+            type: "add",
+            keys: [0],
+          },
+          y: {
+            type: "remove",
+            keys: [1],
+          },
+          z: {
+            type: "remove",
+            keys: [0],
+          },
         })
         expectObservable(getObs(0)).toBe(expectEven)
         expectObservable(getObs(1)).toBe(expectOdd)
@@ -200,33 +205,44 @@ describe("partitionByKey", () => {
   })
 
   describe("activeKeys$", () => {
-    it("emits a list with all the active keys", () => {
+    it("emits deltas when keys are added", () => {
       scheduler().run(({ expectObservable, cold }) => {
         const source = cold("-ab-a-cd---")
-        const expectedStr = "efg---hi---"
+        const expectedStr = "-fg---hi---"
         const [, result] = partitionByKey(
           source,
           (v) => v,
           () => NEVER,
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["a", "b", "c"],
-          i: ["a", "b", "c", "d"],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "add",
+            keys: ["c"],
+          },
+          i: {
+            type: "add",
+            keys: ["d"],
+          },
         })
       })
     })
 
-    it("removes a key from the list when its inner stream completes", () => {
+    it("removes a key when its inner stream completes", () => {
       scheduler().run(({ expectObservable, cold }) => {
         const source = cold("-ab---c--")
         const a = cold("      --1---2-")
         const b = cold("       ---|")
         const c = cold("           1-|")
-        const expectedStr = "efg--hi-j"
+        const expectedStr = "-fg--hi-j"
         const innerStreams: Record<string, Observable<string>> = { a, b, c }
         const [, result] = partitionByKey(
           source,
@@ -238,13 +254,92 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["a"],
-          i: ["a", "c"],
-          j: ["a"],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "remove",
+            keys: ["b"],
+          },
+          i: {
+            type: "add",
+            keys: ["c"],
+          },
+          j: {
+            type: "remove",
+            keys: ["c"],
+          },
+        })
+      })
+    })
+
+    it("emits the changes on a key even if it's removed synchronously", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const source = cold("-ae----s----")
+        const expectedStr = "-f(gh)-(ij)-"
+        const [, result] = partitionByKey(
+          source,
+          (v) => v,
+          (_, key) => (key === "e" ? EMPTY : key === "s" ? of(1) : NEVER),
+        )
+
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["e"],
+          },
+          h: {
+            type: "remove",
+            keys: ["e"],
+          },
+          i: {
+            type: "add",
+            keys: ["s"],
+          },
+          j: {
+            type: "remove",
+            keys: ["s"],
+          },
+        })
+      })
+    })
+
+    it("emits all the existing keys when subscribing late", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const source = cold("-abe-a-cd---")
+        const sub1 = "       ^--------"
+        const sub2 = "       ----^----"
+        const expectedStr = "----f--gh---"
+        const [, result] = partitionByKey(
+          source,
+          (v) => v,
+          (_, key) => (key === "e" ? EMPTY : NEVER),
+        )
+
+        expectObservable(deltasToPOJO(result), sub1)
+        expectObservable(deltasToPOJO(result), sub2).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a", "b"],
+          },
+          g: {
+            type: "add",
+            keys: ["c"],
+          },
+          h: {
+            type: "add",
+            keys: ["d"],
+          },
         })
       })
     })
@@ -254,7 +349,7 @@ describe("partitionByKey", () => {
         const source = cold("-ab-|")
         const a = cold("      --1---2-|")
         const b = cold("       ---|")
-        const expectedStr = "efg--h---(i|)"
+        const expectedStr = "-fg--h---(i|)"
         const innerStreams: Record<string, Observable<string>> = { a, b }
         const [, result] = partitionByKey(
           source,
@@ -266,12 +361,23 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["a"],
-          i: [],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "remove",
+            keys: ["b"],
+          },
+          i: {
+            type: "remove",
+            keys: ["a"],
+          },
         })
       })
     })
@@ -281,7 +387,7 @@ describe("partitionByKey", () => {
         const source = cold("-ab---|")
         const a = cold("      --1|")
         const b = cold("       ---|")
-        const expectedStr = "efg-hi|"
+        const expectedStr = "-fg-hi|"
         const innerStreams: Record<string, Observable<string>> = { a, b }
         const [, result] = partitionByKey(
           source,
@@ -293,12 +399,23 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["b"],
-          i: [],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "remove",
+            keys: ["a"],
+          },
+          i: {
+            type: "remove",
+            keys: ["b"],
+          },
         })
       })
     })
@@ -308,7 +425,7 @@ describe("partitionByKey", () => {
         const source = cold("-ab--#")
         const a = cold("      --1|")
         const b = cold("       -|")
-        const expectedStr = "efghi#"
+        const expectedStr = "-fghi#"
         const innerStreams: Record<string, Observable<string>> = { a, b }
         const [, result] = partitionByKey(
           source,
@@ -320,12 +437,23 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["a"],
-          i: [],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "remove",
+            keys: ["b"],
+          },
+          i: {
+            type: "remove",
+            keys: ["a"],
+          },
         })
       })
     })
@@ -335,7 +463,7 @@ describe("partitionByKey", () => {
         const source = cold("-ab--#")
         const a = cold("      --1--2--3|")
         const b = cold("       ----|")
-        const expectedStr = "efg---h---(i|)"
+        const expectedStr = "-fg---h---(i|)"
         const innerStreams: Record<string, Observable<string>> = { a, b }
         const [, result] = partitionByKey(
           source,
@@ -347,12 +475,23 @@ describe("partitionByKey", () => {
             ),
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
-          h: ["a"],
-          i: [],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
+          h: {
+            type: "remove",
+            keys: ["b"],
+          },
+          i: {
+            type: "remove",
+            keys: ["a"],
+          },
         })
       })
     })
@@ -362,7 +501,7 @@ describe("partitionByKey", () => {
         const source = cold("-ab-----")
         const a = cold("      --1-#")
         const b = cold("       ------")
-        const expectedStr = "efg--#"
+        const expectedStr = "-fg--#"
         const innerStreams: Record<string, Observable<string>> = { a, b }
         const [, result] = partitionByKey(
           source,
@@ -370,10 +509,15 @@ describe("partitionByKey", () => {
           (_, v) => innerStreams[v],
         )
 
-        expectObservable(getKeyValues(result)).toBe(expectedStr, {
-          e: [],
-          f: ["a"],
-          g: ["a", "b"],
+        expectObservable(deltasToPOJO(result)).toBe(expectedStr, {
+          f: {
+            type: "add",
+            keys: ["a"],
+          },
+          g: {
+            type: "add",
+            keys: ["b"],
+          },
         })
       })
     })
@@ -469,21 +613,11 @@ describe("partitionByKey", () => {
   })
 })
 
-function getKeyValues<T>(observable: Observable<KeyChanges<T>>) {
-  return defer(() =>
-    observable.pipe(
-      scan((acc, change) => {
-        for (let key of change.keys) {
-          if (change.type === "add") {
-            acc.add(key)
-          } else {
-            acc.delete(key)
-          }
-        }
-        return acc
-      }, new Set<T>()),
-      map((v) => [...v]),
-      defaultIfEmpty([]),
-    ),
+function deltasToPOJO<T>(observable: Observable<KeyChanges<T>>) {
+  return observable.pipe(
+    map((change) => ({
+      type: change.type,
+      keys: Array.from(change.keys),
+    })),
   )
 }
