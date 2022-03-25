@@ -1,7 +1,7 @@
 import { concat, NEVER, Observable, of } from "rxjs"
 import { map, scan } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { combineKeys } from "./"
+import { combineKeys, KeyChanges } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -284,6 +284,134 @@ describe("combineKeys", () => {
         expectObservable(result).toBe(expected, {
           x: ["a", "b", "c"],
           y: ["a", "c"],
+        })
+      })
+    })
+  })
+
+  describe("with deltas", () => {
+    it("emits a map with the latest value of the stream of each key added", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const keys = cold<KeyChanges<string>>("  ab---cd---", {
+          a: {
+            type: "add",
+            keys: ["a"],
+          },
+          b: {
+            type: "add",
+            keys: ["b"],
+          },
+          c: {
+            type: "add",
+            keys: ["c"],
+          },
+          d: {
+            type: "add",
+            keys: ["d"],
+          },
+        })
+        const a = cold("     --1---2---")
+        const b = cold("      ---------")
+        const c = cold("          1----")
+        const d = cold("           9---")
+        const expectedStr = "--e--f(gh)"
+
+        const innerStreams: Record<string, Observable<string>> = { a, b, c, d }
+
+        const result = combineKeys(
+          keys,
+          (v): Observable<string> => innerStreams[v],
+        ).pipe(map((x) => Object.fromEntries(x.entries())))
+
+        expectObservable(result).toBe(expectedStr, {
+          e: { a: "1" },
+          f: { a: "1", c: "1" },
+          g: { a: "2", c: "1" },
+          h: { a: "2", c: "1", d: "9" },
+        })
+      })
+    })
+
+    it("removes the entry of a key when that key is removed", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const expectedStr = "                  e-f-g-h-"
+        const keys = cold<KeyChanges<string>>("a-b-c-d-", {
+          a: {
+            type: "add",
+            keys: ["a"],
+          },
+          b: {
+            type: "add",
+            keys: ["b"],
+          },
+          c: {
+            type: "remove",
+            keys: ["a"],
+          },
+          d: {
+            type: "remove",
+            keys: ["b"],
+          },
+        })
+
+        const result = combineKeys(keys, (v): Observable<string> => of(v)).pipe(
+          map((x) => Object.fromEntries(x.entries())),
+        )
+
+        expectObservable(result).toBe(expectedStr, {
+          e: { a: "a" },
+          f: { a: "a", b: "b" },
+          g: { b: "b" },
+          h: {},
+        })
+      })
+    })
+
+    it("accepts more than one key change at a time", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const expectedStr = "                  e-f-"
+        const keys = cold<KeyChanges<string>>("a-b-", {
+          a: {
+            type: "add",
+            keys: ["a", "b", "c"],
+          },
+          b: {
+            type: "remove",
+            keys: ["c", "b"],
+          },
+        })
+
+        const result = combineKeys(keys, (v): Observable<string> => of(v)).pipe(
+          map((x) => Object.fromEntries(x.entries())),
+        )
+
+        expectObservable(result).toBe(expectedStr, {
+          e: { a: "a", b: "b", c: "c" },
+          f: { a: "a" },
+        })
+      })
+    })
+
+    it("omits removing keys that don't exist", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const expectedStr = "                  e---"
+        const keys = cold<KeyChanges<string>>("a-b-", {
+          a: {
+            type: "add",
+            keys: ["a"],
+          },
+          b: {
+            type: "remove",
+            keys: ["b"],
+          },
+        })
+
+        const result = combineKeys(keys, (v): Observable<string> => of(v)).pipe(
+          map((x) => Object.fromEntries(x.entries())),
+        )
+
+        expectObservable(result).toBe(expectedStr, {
+          e: { a: "a" },
         })
       })
     })
