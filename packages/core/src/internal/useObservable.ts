@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs"
-import { useSyncExternalStore } from "use-sync-external-store/shim"
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js"
 import { useRef, useState } from "react"
 import { SUSPENSE, filterOutSuspense } from "../SUSPENSE"
 import { DefaultedStateObservable, StateObservable } from "@josepot/rxjs-state"
