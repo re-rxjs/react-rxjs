@@ -93,6 +93,16 @@
         "doc",
         "ideas"
       ]
+    },
+    {
+      "login": "skve",
+      "name": "Luke Shiels",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47612057?v=4",
+      "profile": "https://github.com/skve",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
