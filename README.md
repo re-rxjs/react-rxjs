@@ -46,6 +46,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/hoclun-rigsep"><img src="https://avatars.githubusercontent.com/u/20741358?v=4?s=100" width="100px;" alt=""/><br /><sub><b>hoclun-rigsep</b></sub></a><br /><a href="https://github.com/re-rxjs/react-rxjs/commits?author=hoclun-rigsep" title="Documentation">📖</a> <a href="#ideas-hoclun-rigsep" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/skve"><img src="https://avatars.githubusercontent.com/u/47612057?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Luke Shiels</b></sub></a><br /><a href="https://github.com/re-rxjs/react-rxjs/issues?q=author%3Askve" title="Bug reports">🐛</a> <a href="https://github.com/re-rxjs/react-rxjs/commits?author=skve" title="Code">💻</a></td>
   </tr>
 </table>
 
