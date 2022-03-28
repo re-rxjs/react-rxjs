@@ -1,5 +1,6 @@
 import { shareLatest } from "@react-rxjs/core"
 import {
+  defer,
   GroupedObservable,
   identity,
   noop,
@@ -7,7 +8,7 @@ import {
   Subject,
   Subscription,
 } from "rxjs"
-import { map } from "rxjs/operators"
+import { finalize, map } from "rxjs/operators"
 
 export interface KeyChanges<K> {
   type: "add" | "remove"
@@ -67,9 +68,14 @@ export function partitionByKey<T, K, R>(
 
         const subject = new Subject<T>()
 
-        const res = shareLatest()(
+        const shared$ = shareLatest()(
           (streamSelector || identity)(subject, key),
-        ) as GroupedObservable<K, R>
+        )
+
+        const res = defer(() => {
+          incRefcount()
+          return shared$
+        }).pipe(finalize(() => decRefcount())) as any as GroupedObservable<K, R>
         ;(res as any).key = key
 
         const innerGroup: InnerGroup<T, K, R> = {
@@ -87,7 +93,7 @@ export function partitionByKey<T, K, R>(
           },
         })
 
-        innerGroup.subscription = res.subscribe(
+        innerGroup.subscription = shared$.subscribe(
           noop,
           (e) => subscriber.error(e),
           () => {
@@ -134,6 +140,21 @@ export function partitionByKey<T, K, R>(
     }
   }).pipe(shareLatest())
 
+  let refCount = 0
+  let sub: Subscription | undefined
+  function incRefcount() {
+    refCount++
+    if (refCount === 1) {
+      sub = groupedObservables$.subscribe()
+    }
+  }
+  function decRefcount() {
+    refCount--
+    if (refCount === 0) {
+      sub?.unsubscribe()
+    }
+  }
+
   return [
     (key: K) =>
       getGroupedObservable(
@@ -167,9 +188,16 @@ const getGroupedObservable = <K, T>(
 ) => {
   const result = new Observable<T>((observer) => {
     let innerSub: Subscription | undefined
-    let outterSub: Subscription = source$.subscribe(
+    let outerSub: Subscription | undefined
+    let foundSynchronously = false
+    outerSub = source$.subscribe(
       (n) => {
-        innerSub = innerSub || n.get(key)?.observable.subscribe(observer)
+        const innerGroup = n.get(key)
+        if (innerGroup && !innerSub) {
+          innerSub = innerGroup.observable.subscribe(observer)
+          outerSub?.unsubscribe()
+          foundSynchronously = true
+        }
       },
       (e) => {
         observer.error(e)
@@ -178,9 +206,14 @@ const getGroupedObservable = <K, T>(
         observer.complete()
       },
     )
+    if (foundSynchronously) {
+      outerSub.unsubscribe()
+      outerSub = undefined
+    }
+
     return () => {
       innerSub?.unsubscribe()
-      outterSub.unsubscribe()
+      outerSub?.unsubscribe()
     }
   }) as GroupedObservable<K, T>
   ;(result as any).key = key
