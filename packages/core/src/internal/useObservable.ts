@@ -1,9 +1,9 @@
 import { Subscription } from "rxjs"
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js"
 import { useRef, useState } from "react"
 import { SUSPENSE, filterOutSuspense } from "../SUSPENSE"
 import { DefaultedStateObservable, StateObservable } from "@josepot/rxjs-state"
 import { EMPTY_VALUE } from "./empty-value"
+import useSyncExternalStore from "./useSyncExternalStore"
 
 type VoidCb = () => void
 
