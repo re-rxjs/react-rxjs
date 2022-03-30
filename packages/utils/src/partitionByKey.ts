@@ -74,10 +74,10 @@ export function partitionByKey<T, K, R>(
         const key = keySelector(x)
         if (groups.has(key)) return groups.get(key)!.source.next(x)
 
-        let pendingFirstAdd = false
+        let pendingFirstAdd = true
         const emitFirstAdd = () => {
-          if (!pendingFirstAdd) {
-            pendingFirstAdd = true
+          if (pendingFirstAdd) {
+            pendingFirstAdd = false
             subscriber.next({
               groups,
               changes: {
