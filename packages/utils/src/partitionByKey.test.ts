@@ -610,6 +610,47 @@ describe("partitionByKey", () => {
         expectObservable(getInstance$("b")).toBe(expectB)
       })
     })
+
+    it("synchronously emits when the group observable notifies of a new GroupedObservable", () => {
+      const subject = new Subject<number>()
+      const [getInner$, keys$] = partitionByKey(subject, (x) => x, take(1))
+
+      const key = 8
+      let receivedValue = 0
+      let deleted: number[] = []
+      let done = false
+      let order: string[] = []
+      keys$.subscribe((keys) => {
+        if (keys.type === "add") {
+          order.push("outer add")
+          getInner$([...keys.keys][0]).subscribe({
+            next: (x) => {
+              receivedValue = x
+              order.push("inner next")
+            },
+            complete: () => {
+              order.push("inner complete")
+              done = true
+            },
+          })
+        } else {
+          order.push("outer delete")
+          deleted = [...keys.keys]
+        }
+      })
+
+      subject.next(key)
+
+      expect(receivedValue).toBe(key)
+      expect(done).toBe(true)
+      expect(deleted).toEqual([key])
+      expect(order).toEqual([
+        "outer add",
+        "inner next",
+        "outer delete",
+        "inner complete",
+      ])
+    })
   })
 
   describe("performance", () => {

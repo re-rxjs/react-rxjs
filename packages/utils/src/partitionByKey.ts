@@ -1,6 +1,5 @@
 import { shareLatest } from "@react-rxjs/core"
 import {
-  defer,
   GroupedObservable,
   identity,
   noop,
@@ -8,7 +7,7 @@ import {
   Subject,
   Subscription,
 } from "rxjs"
-import { finalize, map } from "rxjs/operators"
+import { map } from "rxjs/operators"
 
 export interface KeyChanges<K> {
   type: "add" | "remove"
@@ -59,23 +58,55 @@ export function partitionByKey<T, K, R>(
     const groups: Map<K, InnerGroup<T, K, R>> = new Map()
 
     let sourceCompleted = false
+    const finalize =
+      (type: "error" | "complete") =>
+      (...args: any[]) => {
+        sourceCompleted = true
+        if (groups.size) {
+          groups.forEach((g) => (g.source[type] as any)(...args))
+        } else {
+          subscriber[type](...args)
+        }
+      }
+
     const sub = stream.subscribe(
       (x) => {
         const key = keySelector(x)
-        if (groups.has(key)) {
-          return groups.get(key)!.source.next(x)
+        if (groups.has(key)) return groups.get(key)!.source.next(x)
+
+        let pendingFirstAdd = true
+        const emitFirstAdd = () => {
+          if (pendingFirstAdd) {
+            pendingFirstAdd = false
+            subscriber.next({
+              groups,
+              changes: {
+                type: "add",
+                keys: [key],
+              },
+            })
+          }
         }
 
         const subject = new Subject<T>()
+        let pendingFirstVal = true
+        const emitFirstValue = () => {
+          if (pendingFirstVal) {
+            pendingFirstVal = false
+            subject.next(x)
+          }
+        }
 
         const shared$ = shareLatest()(
           (streamSelector || identity)(subject, key),
         )
-
-        const res = defer(() => {
+        const res = new Observable((observer) => {
           incRefcount()
-          return shared$
-        }).pipe(finalize(() => decRefcount())) as any as GroupedObservable<K, R>
+          const subscription = shared$.subscribe(observer)
+          subscription.add(decRefcount)
+          emitFirstValue()
+          return subscription
+        }) as any as GroupedObservable<K, R>
         ;(res as any).key = key
 
         const innerGroup: InnerGroup<T, K, R> = {
@@ -85,19 +116,12 @@ export function partitionByKey<T, K, R>(
         }
         groups.set(key, innerGroup)
 
-        subscriber.next({
-          groups,
-          changes: {
-            type: "add",
-            keys: [key],
-          },
-        })
-
         innerGroup.subscription = shared$.subscribe(
           noop,
           (e) => subscriber.error(e),
           () => {
             groups.delete(key)
+            emitFirstAdd()
             subscriber.next({
               groups,
               changes: {
@@ -111,24 +135,11 @@ export function partitionByKey<T, K, R>(
             }
           },
         )
-        subject.next(x)
+        emitFirstAdd()
+        emitFirstValue()
       },
-      (e) => {
-        sourceCompleted = true
-        if (groups.size) {
-          groups.forEach((g) => g.source.error(e))
-        } else {
-          subscriber.error(e)
-        }
-      },
-      () => {
-        sourceCompleted = true
-        if (groups.size) {
-          groups.forEach((g) => g.source.complete())
-        } else {
-          subscriber.complete()
-        }
-      },
+      finalize("error"),
+      finalize("complete"),
     )
 
     return () => {
