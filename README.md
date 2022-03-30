@@ -20,7 +20,7 @@ Please visit the website: https://react-rxjs.org
 - :zap: Highly performant and free of memory-leaks
 - :twisted_rightwards_arrows: First class support for React Suspense and [ready for Concurrent Mode](https://github.com/dai-shi/will-this-react-global-state-work-in-concurrent-mode#results)
 - :scissors: Decentralized and composable, thus enabling optimal code-splitting
-- :microscope: [Tiny and tree-shakeable](https://bundlephobia.com/result?p=react-rxjs)
+- :microscope: [Tiny and tree-shakeable](https://bundlephobia.com/result?p=@react-rxjs/core)
 - :muscle: Supports TypeScript
 
 ## Installation
