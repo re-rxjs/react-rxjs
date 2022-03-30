@@ -1,7 +1,15 @@
 import { render } from "@testing-library/react"
-import React, { useState } from "react"
+import React, { StrictMode, useState } from "react"
 import { defer, Observable, of } from "rxjs"
-import { bind, Subscribe } from "./"
+import { bind, Subscribe as OriginalSubscribe } from "./"
+
+const Subscribe = (props: any) => {
+  return (
+    <StrictMode>
+      <OriginalSubscribe {...props} />
+    </StrictMode>
+  )
+}
 
 describe("Subscribe", () => {
   describe("Subscribe with source$", () => {
