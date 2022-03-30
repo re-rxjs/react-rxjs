@@ -1,7 +1,7 @@
 import { concat, EMPTY, from, NEVER, Observable, of, Subject } from "rxjs"
 import { catchError, map, switchMap, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { KeyChanges, partitionByKey } from "./"
+import { combineKeys, KeyChanges, partitionByKey } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -609,6 +609,29 @@ describe("partitionByKey", () => {
         expectObservable(getInstance$("a")).toBe(expectA)
         expectObservable(getInstance$("b")).toBe(expectB)
       })
+    })
+  })
+
+  describe("performance", () => {
+    it("has an acceptable performance when it synchronously receives a gust of new keys", () => {
+      const array = new Array(15_000).fill(0).map((_, i) => i)
+
+      const [, keys$] = partitionByKey(from(array), (v) => v)
+
+      const start = performance.now()
+      keys$.subscribe()
+      expect(performance.now() - start).toBeLessThan(500)
+    })
+
+    it("has an acceptable performance when it synchronously receives a gust of new keys and subscriptions are created on every inner observable", () => {
+      const array = new Array(8_000).fill(0).map((_, i) => i)
+
+      const [getInner$, keys$] = partitionByKey(from(array), (v) => v)
+      const result$ = combineKeys(keys$, getInner$)
+
+      const start = performance.now()
+      result$.subscribe()
+      expect(performance.now() - start).toBeLessThan(500)
     })
   })
 })

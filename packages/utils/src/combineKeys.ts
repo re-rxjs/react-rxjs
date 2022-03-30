@@ -25,7 +25,7 @@ export const combineKeys = <K, T>(
 
     const next = () => {
       if (!updatingSource) {
-        const result = Object.assign(new Map(currentValue), {
+        const result = Object.assign(currentValue, {
           changes,
         })
         changes = new Set<K>()
