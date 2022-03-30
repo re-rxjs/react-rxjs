@@ -102,7 +102,8 @@ export function partitionByKey<T, K, R>(
         )
         const res = new Observable((observer) => {
           incRefcount()
-          const subscription = shared$.subscribe(observer).add(decRefcount)
+          const subscription = shared$.subscribe(observer)
+          subscription.add(decRefcount)
           emitFirstValue()
           return subscription
         }) as any as GroupedObservable<K, R>
