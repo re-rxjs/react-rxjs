@@ -77,6 +77,7 @@ export const Subscribe: React.FC<{
   useEffect(() => {
     return () => {
       subscriptionRef.current!.unsubscribe()
+      subscriptionRef.current = undefined
     }
   }, [])
 
