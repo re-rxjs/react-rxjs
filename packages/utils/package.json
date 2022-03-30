@@ -30,7 +30,7 @@
     "build:cjs:dev": "esbuild src/index.tsx --bundle --outfile=./dist/utils.cjs.development.js --target=es2015 --external:react --external:rxjs --external:@react-rxjs/core --format=cjs --sourcemap",
     "build:cjs:prod": "esbuild src/index.tsx --bundle --outfile=./dist/utils.cjs.production.min.js --target=es2015 --external:react --external:rxjs --external:@react-rxjs/core --format=cjs --minify --sourcemap",
     "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
-    "test": "jest --coverage",
+    "test": "node --expose-gc ../../node_modules/.bin/jest --coverage --runInBand",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "yarn build"
