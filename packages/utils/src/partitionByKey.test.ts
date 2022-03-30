@@ -624,8 +624,7 @@ describe("partitionByKey", () => {
       const start = performance.now()
       keys$.subscribe()
       const result = performance.now() - start
-      console.log("result 1", result)
-      expect(result).toBeLessThan(500)
+      expect(result).toBeLessThan(800)
     })
 
     it("has an acceptable performance when it synchronously receives a gust of new keys and subscriptions are created on every inner observable", () => {
@@ -637,8 +636,7 @@ describe("partitionByKey", () => {
       const start = performance.now()
       result$.subscribe()
       const result = performance.now() - start
-      console.log("result 2", result)
-      expect(result).toBeLessThan(500)
+      expect(result).toBeLessThan(800)
     })
   })
 })
