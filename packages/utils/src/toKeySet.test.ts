@@ -1,7 +1,6 @@
-import { KeyChanges } from "./partitionByKey"
-import { TestScheduler } from "rxjs/testing"
-import { toKeySet } from "./toKeySet"
 import { asapScheduler, map, observeOn, of, Subject } from "rxjs"
+import { TestScheduler } from "rxjs/testing"
+import { KeyChanges, toKeySet } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
