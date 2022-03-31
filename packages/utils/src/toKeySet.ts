@@ -4,23 +4,26 @@ import { KeyChanges } from "./partitionByKey"
 
 export function toKeySet<K>(): OperatorFunction<KeyChanges<K>, Set<K>> {
   return (source$) =>
-    defer(() => {
-      const result = new Set<K>()
-      return source$.pipe(
-        scan((acc, changes) => {
-          if (changes.type === "add") {
-            for (let k of changes.keys) {
-              acc.add(k)
-            }
-          } else {
-            for (let k of changes.keys) {
-              acc.delete(k)
-            }
-          }
-
-          return acc
-        }, result),
-        defaultStart(result),
-      )
-    })
+     new Observable<Set<K>>((observer) => {               
+       const result = new Set<K>()                        
+       let pristine = true                                
+       const subscription = source$.subscribe({           
+         next({ type, keys }) {                           
+           const action = type === "add" ? type : "delete"
+           for (let k of keys) {                          
+             result[action](k)                            
+           }                                              
+           observer.next(result)                          
+           pristine = false                               
+         },                                               
+         error(e) {                                       
+           observer.error(e)                              
+         },                                               
+         complete() {                                     
+           observer.complete()                            
+         },                                               
+       })                                                 
+       if (pristine) observer.next(result)                
+       return subscription                                
+     })                                        
 }
