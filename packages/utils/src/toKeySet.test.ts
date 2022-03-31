@@ -11,8 +11,8 @@ const scheduler = () =>
 describe("toKeySet", () => {
   it("transforms key changes to a Set", () => {
     scheduler().run(({ expectObservable, cold }) => {
-      const expectedStr = "                     xe--f-g--h"
-      const source$ = cold<KeyChanges<string>>("-a--b-c--d", {
+      const expectedStr = "                     xe--f-g--h#"
+      const source$ = cold<KeyChanges<string>>("-a--b-c--d#", {
         a: {
           type: "add",
           keys: ["a", "b"],
