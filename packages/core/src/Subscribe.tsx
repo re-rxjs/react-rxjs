@@ -9,7 +9,7 @@ import React, {
 } from "react"
 import { Observable, Subscription } from "rxjs"
 
-const SubscriptionContext = createContext<Subscription>(null as any)
+const SubscriptionContext = createContext<Subscription | null>(null)
 const { Provider } = SubscriptionContext
 export const useSubscription = () => useContext(SubscriptionContext)
 

@@ -1,9 +1,8 @@
-import { noop, Observable } from "rxjs"
-import { useObservable } from "../internal/useObservable"
+import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { useSubscription } from "../Subscribe"
 import { state, StateObservable } from "@josepot/rxjs-state"
+import { useStateObservable } from "../useStateObservable"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -39,9 +38,5 @@ export default function connectFactoryObservable<A extends [], O>(
       : [getObservable, defaultValue]
 
   const obs = state(...(args as [(...args: A) => Observable<O>]))
-  const useSub = defaultValue === EMPTY_VALUE ? useSubscription : noop
-  return [
-    (...input: A) => useObservable(obs(...input) as any, useSub() as any),
-    obs,
-  ]
+  return [(...input: A) => useStateObservable(obs(...input)), obs]
 }
