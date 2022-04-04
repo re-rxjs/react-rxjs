@@ -1,7 +1,6 @@
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { noop, Observable } from "rxjs"
-import { useSubscription } from "../Subscribe"
-import { useObservable } from "../internal/useObservable"
+import { Observable } from "rxjs"
+import { useStateObservable } from "../useStateObservable"
 import { state } from "@josepot/rxjs-state"
 
 /**
@@ -23,13 +22,11 @@ export default function connectObservable<T>(
   observable: Observable<T>,
   defaultValue: T,
 ) {
-  const useSub = defaultValue === EMPTY_VALUE ? useSubscription : noop
   const sharedObservable$ =
     defaultValue === EMPTY_VALUE
       ? state(observable)
       : state(observable, defaultValue)
 
-  const useStaticObservable = () =>
-    useObservable(sharedObservable$ as any, useSub() as any)
+  const useStaticObservable = () => useStateObservable(sharedObservable$ as any)
   return [useStaticObservable, sharedObservable$] as const
 }

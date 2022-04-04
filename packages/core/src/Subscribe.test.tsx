@@ -1,6 +1,8 @@
-import { render } from "@testing-library/react"
+import { state } from "@josepot/rxjs-state"
+import { render, screen } from "@testing-library/react"
 import React, { StrictMode, useState } from "react"
-import { defer, Observable, of } from "rxjs"
+import { defer, EMPTY, Observable, of, startWith } from "rxjs"
+import { useStateObservable } from "./useStateObservable"
 import { bind, Subscribe as OriginalSubscribe } from "./"
 
 const Subscribe = (props: any) => {
@@ -13,6 +15,24 @@ const Subscribe = (props: any) => {
 
 describe("Subscribe", () => {
   describe("Subscribe with source$", () => {
+    it("renders the sync emitted value on a StateObservable without default value", () => {
+      const test$ = state(EMPTY.pipe(startWith("there!")))
+      const useTest = () => useStateObservable(test$)
+
+      const Test: React.FC = () => <>Hello {useTest()}</>
+
+      const TestSubscribe: React.FC = () => (
+        <Subscribe>
+          <Test />
+        </Subscribe>
+      )
+
+      const { unmount } = render(<TestSubscribe />)
+
+      expect(screen.queryByText("Hello there!")).not.toBeNull()
+
+      unmount()
+    })
     it("subscribes to the provided observable and remains subscribed until it's unmounted", () => {
       let nSubscriptions = 0
       const [useNumber, number$] = bind(
