@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "yarn build:ts && yarn build:esm2017 && yarn build:esm2019 && yarn build:cjs:dev && yarn build:cjs:prod",
+    "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019 && npm run build:cjs:dev && npm run build:cjs:prod",
     "build:esm2019": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2019.mjs --target=es2019 --external:react --external:rxjs --external:@rxstate/core --external:use-sync-external-store --format=esm --sourcemap",
     "build:esm2017": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2017.js --target=es2017 --external:react --external:rxjs --external:@rxstate/core --external:use-sync-external-store --format=esm --sourcemap",
     "build:cjs:dev": "node cjsBuild.js",
@@ -33,7 +33,7 @@
     "test": "jest --coverage",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
-    "prepare": "yarn build"
+    "prepack": "npm run build"
   },
   "peerDependencies": {
     "react": ">=16.8.0",

@@ -29,10 +29,10 @@
     ]
   },
   "scripts": {
-    "build": "wsrun -t build",
-    "lint": "wsrun lint",
-    "format": "wsrun format",
-    "test": "wsrun test",
+    "build": "npm run build --workspace=@react-rxjs/core && npm run build --workspace=@react-rxjs/utils --workspace=@react-rxjs/dom",
+    "lint": "npm run lint --workspaces",
+    "format": "npm ru format --workspaces",
+    "test": "npm run test --workspaces",
     "prepare": "husky install"
   },
   "prettier": {
@@ -62,8 +62,7 @@
     "rxjs": "^7.5.5",
     "ts-jest": "^27.1.4",
     "tslib": "^2.3.1",
-    "typescript": "^4.6.3",
-    "wsrun": "^5.2.4"
+    "typescript": "^4.6.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md}": "prettier --write"
