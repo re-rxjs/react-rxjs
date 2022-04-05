@@ -51,7 +51,7 @@
   ],
   "dependencies": {
     "@josepot/rxjs-state": "^0.1.0",
-    "use-sync-external-store": "^1.0.0-rc.0"
+    "use-sync-external-store": "^1.0.0"
   },
   "devDependencies": {
     "@types/use-sync-external-store": "^0.0.3"
