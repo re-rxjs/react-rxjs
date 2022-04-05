@@ -1133,11 +1133,6 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@josepot/rxjs-state@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@josepot/rxjs-state/-/rxjs-state-0.1.0.tgz#a7ab4e8954d03cd381db12d1227cdbfc3139a1a8"
-  integrity sha512-GwzRTntu+zS36qJXNz5awkTKWaSdAnnSljVe3iAkPcdAOdUb2U7WC6F6FgNWsQNLuNy5UWWZgCsPxOpYeubQoA==
-
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/@jridgewell/resolve-uri/-/resolve-uri-3.0.5.tgz#68eb521368db76d040a6315cdb24bf2483037b9c"
@@ -1155,6 +1150,11 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
+
+"@rxstate/core@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@rxstate/core/-/core-0.0.1.tgz#899c8c863b1c251368cde9b23bcc79a10da87a70"
+  integrity sha512-be8446G5eapl6X8IAuYvvYY78CnyuXX7pASAYG2Ww95hCbqfNLSYXqknvWeUJ4ovO63l5xdM29ct0uUysKDyog==
 
 "@sinonjs/commons@^1.7.0":
   version "1.8.3"

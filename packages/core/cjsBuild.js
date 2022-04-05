@@ -22,12 +22,7 @@ require("esbuild")
       : "./dist/core.cjs.development.js",
     target: "es2015",
     minify: isProd,
-    external: [
-      "react",
-      "rxjs",
-      "@josepot/rxjs-state",
-      "use-sync-external-store",
-    ],
+    external: ["react", "rxjs", "@rxstate/core", "use-sync-external-store"],
     format: "cjs",
     sourcemap: true,
     plugins: [fixCjsPlugin],

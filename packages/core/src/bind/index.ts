@@ -3,7 +3,7 @@ import { SUSPENSE } from "../SUSPENSE"
 import connectFactoryObservable from "./connectFactoryObservable"
 import connectObservable from "./connectObservable"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { StateObservable, DefaultedStateObservable } from "@josepot/rxjs-state"
+import { StateObservable, DefaultedStateObservable } from "@rxstate/core"
 
 /**
  * Binds an observable to React

@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { state, StateObservable } from "@josepot/rxjs-state"
+import { state, StateObservable } from "@rxstate/core"
 import { useStateObservable } from "../useStateObservable"
 
 /**

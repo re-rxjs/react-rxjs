@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { SUSPENSE, filterOutSuspense } from "./SUSPENSE"
-import { DefaultedStateObservable, StateObservable } from "@josepot/rxjs-state"
+import { DefaultedStateObservable, StateObservable } from "@rxstate/core"
 import { EMPTY_VALUE } from "./internal/empty-value"
 import useSyncExternalStore from "./internal/useSyncExternalStore"
 import { useSubscription } from "./Subscribe"
