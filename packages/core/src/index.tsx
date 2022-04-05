@@ -1,4 +1,4 @@
-export * from "@josepot/rxjs-state"
+export * from "@rxstate/core"
 export { shareLatest } from "./shareLatest"
 export { useStateObservable } from "./useStateObservable"
 export { bind } from "./bind"

@@ -1,7 +1,7 @@
 import { EMPTY_VALUE } from "../internal/empty-value"
 import { Observable } from "rxjs"
 import { useStateObservable } from "../useStateObservable"
-import { state } from "@josepot/rxjs-state"
+import { state } from "@rxstate/core"
 
 /**
  * Accepts: An Observable.
