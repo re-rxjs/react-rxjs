@@ -16,19 +16,19 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '14'
-    - run: yarn install --frozen-lockfile
-    - run: yarn lint
+    - run: npm ci
+    - run: npm run lint
 
     - name: Build & Bundlewatch
       uses: jackyef/bundlewatch-gh-action@master
       env:
         CI_BRANCH_BASE: main
       with:
-        build-script: yarn build
+        build-script: npm run build
         bundlewatch-github-token: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
 
     - name: Tests
-      run: yarn test
+      run: npm test
 
     - name: Code Coverage
       uses: codecov/codecov-action@v1
