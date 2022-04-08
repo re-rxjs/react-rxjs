@@ -23,7 +23,7 @@ export interface KeyChanges<K> {
  * @param streamSelector Function to apply to each resulting group
  * @returns [1, 2]
  * 1. A function that accepts a key and returns the stream for the group of that key.
- * 2. A stream with the list of active keys
+ * 2. A stream of KeyChanges, an object that describes what keys have been added or deleted.
  */
 export function partitionByKey<T, K, R>(
   stream: Observable<T>,
@@ -39,7 +39,7 @@ export function partitionByKey<T, K, R>(
  * @param keySelector Function that specifies the key for each element in `stream`
  * @returns [1, 2]
  * 1. A function that accepts a key and returns the stream for the group of that key.
- * 2. A stream with the list of active keys
+ * 2. A stream of KeyChanges, an object that describes what keys have been added or deleted.
  */
 export function partitionByKey<T, K>(
   stream: Observable<T>,
