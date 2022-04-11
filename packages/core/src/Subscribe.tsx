@@ -37,6 +37,7 @@ const Throw = () => {
  * @remarks This Component doesn't trigger any updates from the source$.
  */
 export const Subscribe: React.FC<{
+  children?: React.ReactNode | undefined
   source$?: Observable<any>
   fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {

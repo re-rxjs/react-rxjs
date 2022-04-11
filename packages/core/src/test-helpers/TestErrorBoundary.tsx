@@ -2,6 +2,7 @@ import { Component, ErrorInfo } from "react"
 
 export class TestErrorBoundary extends Component<
   {
+    children?: React.ReactNode | undefined
     onError: (error: Error, errorInfo: ErrorInfo) => void
   },
   {
