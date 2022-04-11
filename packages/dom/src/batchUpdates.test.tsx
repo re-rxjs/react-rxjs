@@ -24,6 +24,7 @@ const [useLatestNumber, latestNumber$] = bind(
 
 class TestErrorBoundary extends Component<
   {
+    children?: React.ReactNode | undefined
     onError: (error: Error, errorInfo: ErrorInfo) => void
   },
   {
