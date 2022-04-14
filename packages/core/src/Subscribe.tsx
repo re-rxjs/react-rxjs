@@ -95,3 +95,11 @@ export const Subscribe: React.FC<{
     <Suspense fallback={fallback}>{actualChildren}</Suspense>
   )
 }
+
+/**
+ * Component that prevents its children from using the parent `Subscribe` boundary
+ * to manage their subscriptions.
+ */
+export const RemoveSubscribe: React.FC<{
+  children?: React.ReactNode | undefined
+}> = ({ children }) => <Provider value={null}>{children}</Provider>
