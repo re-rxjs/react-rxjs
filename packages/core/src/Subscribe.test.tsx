@@ -1,9 +1,10 @@
 import { state } from "@rxstate/core"
 import { render, screen } from "@testing-library/react"
 import React, { StrictMode, useState } from "react"
-import { defer, EMPTY, Observable, of, startWith } from "rxjs"
+import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
+import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
+import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
-import { bind, Subscribe as OriginalSubscribe } from "./"
 
 const Subscribe = (props: any) => {
   return (
@@ -265,5 +266,29 @@ describe("Subscribe", () => {
       expect(getByTestId("id").textContent).toBe("1")
       expect(getByTestId("value").textContent).toBe("1")
     })
+  })
+})
+
+describe("RemoveSubscribe", () => {
+  it("prevents its children from using the parent Subscribe boundary", () => {
+    const [useValue] = bind(NEVER)
+
+    const ChildrenComponent = () => {
+      const value = useValue()
+      return <>{value}</>
+    }
+
+    const errorCallback = jest.fn()
+    render(
+      <TestErrorBoundary onError={(e) => errorCallback(e.message)}>
+        <Subscribe>
+          <RemoveSubscribe>
+            <ChildrenComponent />
+          </RemoveSubscribe>
+        </Subscribe>
+      </TestErrorBoundary>,
+    )
+
+    expect(errorCallback).toHaveBeenCalledWith("Missing Subscribe!")
   })
 })
