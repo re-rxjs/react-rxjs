@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { SUSPENSE, filterOutSuspense } from "./SUSPENSE"
+import { SUSPENSE } from "./SUSPENSE"
 import { DefaultedStateObservable, StateObservable } from "@rxstate/core"
 import { EMPTY_VALUE } from "./internal/empty-value"
 import useSyncExternalStore from "./internal/useSyncExternalStore"
@@ -11,6 +11,9 @@ interface Ref<T> {
   source$: StateObservable<T>
   args: [(cb: VoidCb) => VoidCb, () => Exclude<T, typeof SUSPENSE>]
 }
+
+const filterOutSuspense = <T>(value: T): value is Exclude<T, SUSPENSE> =>
+  value !== (SUSPENSE as any)
 
 export const useStateObservable = <O>(
   source$: StateObservable<O>,
