@@ -1,6 +1,6 @@
 import { state } from "@rxstate/core"
 import { render, screen } from "@testing-library/react"
-import React, { StrictMode, useState } from "react"
+import React, { StrictMode, useState, useEffect } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
@@ -265,6 +265,43 @@ describe("Subscribe", () => {
       )
       expect(getByTestId("id").textContent).toBe("1")
       expect(getByTestId("value").textContent).toBe("1")
+    })
+
+    it("on StrictMode: it doesn't crash if the component immediately unmounts", () => {
+      function App() {
+        const [switched, setSwitched] = useState(false)
+
+        useEffect(() => {
+          setSwitched(true)
+        }, [])
+
+        return (
+          <div className="App">
+            {switched ? <SwitchToComponent /> : <ProblematicComponent />}
+          </div>
+        )
+      }
+
+      const ProblematicComponent = () => {
+        return <Subscribe></Subscribe>
+      }
+      const SwitchToComponent = () => {
+        return <div>All good</div>
+      }
+
+      let hasError = false
+
+      render(
+        <TestErrorBoundary
+          onError={() => {
+            hasError = true
+          }}
+        >
+          <App />
+        </TestErrorBoundary>,
+      )
+
+      expect(hasError).toBe(false)
     })
   })
 })
