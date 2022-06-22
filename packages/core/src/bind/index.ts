@@ -1,9 +1,12 @@
 import { Observable } from "rxjs"
-import { SUSPENSE } from "../SUSPENSE"
 import connectFactoryObservable from "./connectFactoryObservable"
 import connectObservable from "./connectObservable"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { StateObservable, DefaultedStateObservable } from "@rxstate/core"
+import {
+  StateObservable,
+  DefaultedStateObservable,
+  SUSPENSE,
+} from "@rx-state/core"
 
 /**
  * Binds an observable to React
@@ -21,7 +24,7 @@ import { StateObservable, DefaultedStateObservable } from "@rxstate/core"
  */
 export function bind<T>(
   observable: Observable<T>,
-): [() => Exclude<T, typeof SUSPENSE>, StateObservable<T>]
+): [() => Exclude<T, typeof SUSPENSE>, StateObservable<T, never>]
 
 /**
  * Binds an observable to React
@@ -38,7 +41,7 @@ export function bind<T>(
 export function bind<T>(
   observable: Observable<T>,
   defaultValue: T,
-): [() => Exclude<T, typeof SUSPENSE>, DefaultedStateObservable<T>]
+): [() => Exclude<T, typeof SUSPENSE>, DefaultedStateObservable<T, never>]
 
 /**
  * Binds a factory observable to React
@@ -62,7 +65,7 @@ export function bind<A extends unknown[], O>(
   getObservable: (...args: A) => Observable<O>,
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => StateObservable<O>,
+  (...args: A) => StateObservable<O, never>,
 ]
 
 /**
@@ -86,7 +89,7 @@ export function bind<A extends unknown[], O>(
   defaultValue: O | ((...args: A) => O),
 ): [
   (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => DefaultedStateObservable<O>,
+  (...args: A) => DefaultedStateObservable<O, never>,
 ]
 
 export function bind(observable: any, defaultValue?: any) {

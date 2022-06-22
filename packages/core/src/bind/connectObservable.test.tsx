@@ -477,7 +477,7 @@ describe("connectObservable", () => {
   it("allows async errors to be caught in error boundaries with suspense", async () => {
     const errStream = new Subject()
     const [useError, errStream$] = bind(errStream)
-    const errStream$WithoutErrors = errStream$.pipe(catchError(() => EMPTY))
+    const errStream$WithoutErrors = errStream$.pipe(catchError(() => NEVER))
 
     const ErrorComponent = () => {
       const value = useError()
