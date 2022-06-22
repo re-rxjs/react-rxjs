@@ -1,5 +1,5 @@
 {
-  "version": "0.9.8",
+  "version": "0.10.0-rc.3",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -25,8 +25,8 @@
   ],
   "scripts": {
     "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019 && npm run build:cjs:dev && npm run build:cjs:prod",
-    "build:esm2019": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2019.mjs --target=es2019 --external:react --external:rxjs --external:@rxstate/core --external:use-sync-external-store --format=esm --sourcemap",
-    "build:esm2017": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2017.js --target=es2017 --external:react --external:rxjs --external:@rxstate/core --external:use-sync-external-store --format=esm --sourcemap",
+    "build:esm2019": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2019.mjs --target=es2019 --external:react --external:rxjs --external:@rx-state/core --external:use-sync-external-store --format=esm --sourcemap",
+    "build:esm2017": "esbuild src/index.tsx --bundle --outfile=./dist/core.es2017.js --target=es2017 --external:react --external:rxjs --external:@rx-state/core --external:use-sync-external-store --format=esm --sourcemap",
     "build:cjs:dev": "node cjsBuild.js",
     "build:cjs:prod": "node cjsBuild.js --prod",
     "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
@@ -50,7 +50,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
-    "@rxstate/core": "^0.0.1",
+    "@rx-state/core": "0.1.0-rc.3",
     "use-sync-external-store": "^1.0.0"
   },
   "devDependencies": {
