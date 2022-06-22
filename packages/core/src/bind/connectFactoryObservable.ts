@@ -1,7 +1,11 @@
 import { Observable } from "rxjs"
-import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { state, StateObservable } from "@rxstate/core"
+import {
+  EffectObservable,
+  state,
+  StateObservable,
+  SUSPENSE,
+} from "@rx-state/core"
 import { useStateObservable } from "../useStateObservable"
 
 /**
@@ -23,12 +27,12 @@ import { useStateObservable } from "../useStateObservable"
  * subscription, then the hook will leverage React Suspense while it's waiting
  * for the first value.
  */
-export default function connectFactoryObservable<A extends [], O>(
-  getObservable: (...args: A) => Observable<O>,
+export default function connectFactoryObservable<A extends [], O, E>(
+  getObservable: (...args: A) => EffectObservable<O, E>,
   defaultValue: O | ((...args: A) => O),
 ): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => StateObservable<O>,
+  (...args: A) => Exclude<O | E, SUSPENSE>,
+  (...args: A) => StateObservable<O, E>,
 ] {
   const args:
     | [(...args: A) => Observable<O>]
@@ -37,6 +41,6 @@ export default function connectFactoryObservable<A extends [], O>(
       ? [getObservable]
       : [getObservable, defaultValue]
 
-  const obs = state(...(args as [(...args: A) => Observable<O>]))
+  const obs = state(...(args as [(...args: A) => EffectObservable<O, E>]))
   return [(...input: A) => useStateObservable(obs(...input)), obs]
 }

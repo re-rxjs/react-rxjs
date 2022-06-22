@@ -1,6 +1,5 @@
-export * from "@rxstate/core"
+export * from "@rx-state/core"
 export { shareLatest } from "./shareLatest"
 export { useStateObservable } from "./useStateObservable"
 export { bind } from "./bind"
-export { SUSPENSE } from "./SUSPENSE"
 export { Subscribe, RemoveSubscribe } from "./Subscribe"

@@ -1,4 +1,4 @@
-import { state } from "@rxstate/core"
+import { state } from "@rx-state/core"
 import { render, screen, act } from "@testing-library/react"
 import React, { StrictMode, useState, useEffect } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
