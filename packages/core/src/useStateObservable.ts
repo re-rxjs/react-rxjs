@@ -1,7 +1,6 @@
 import { useRef, useState } from "react"
 import { SUSPENSE } from "./SUSPENSE"
 import { DefaultedStateObservable, StateObservable } from "@rxstate/core"
-import { EMPTY_VALUE } from "./internal/empty-value"
 import useSyncExternalStore from "./internal/useSyncExternalStore"
 import { useSubscription } from "./Subscribe"
 
@@ -31,20 +30,10 @@ export const useStateObservable = <O>(
 
     const gv: <T>() => Exclude<T, typeof SUSPENSE> = () => {
       const src = callbackRef.current!.source$ as DefaultedStateObservable<O>
-
-      if (src.getRefCount() > 0 || src.getDefaultValue) return getValue(src)
-
-      if (!subscription) throw new Error("Missing Subscribe!")
-
-      let error = EMPTY_VALUE
-      subscription.add(
-        src.subscribe({
-          error: (e) => {
-            error = e
-          },
-        }),
-      )
-      if (error !== EMPTY_VALUE) throw error
+      if (!src.getRefCount() && !src.getDefaultValue) {
+        if (!subscription) throw new Error("Missing Subscribe!")
+        subscription(src)
+      }
       return getValue(src)
     }
 
