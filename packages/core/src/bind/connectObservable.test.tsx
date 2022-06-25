@@ -5,27 +5,27 @@ import {
   screen,
 } from "@testing-library/react"
 import { act, renderHook } from "@testing-library/react-hooks"
-import React, { Suspense, useEffect, FC, StrictMode, useState } from "react"
+import React, { FC, StrictMode, Suspense, useEffect, useState } from "react"
 import {
   defer,
+  EMPTY,
   from,
+  merge,
+  NEVER,
+  Observable,
   of,
   Subject,
   throwError,
-  Observable,
-  merge,
-  EMPTY,
-  NEVER,
 } from "rxjs"
 import {
+  catchError,
   delay,
+  map,
   scan,
   startWith,
-  map,
-  catchError,
   switchMapTo,
 } from "rxjs/operators"
-import { bind, SUSPENSE, Subscribe, useStateObservable } from "../"
+import { bind, sinkEffects, Subscribe, SUSPENSE, useStateObservable } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -759,5 +759,138 @@ describe("connectObservable", () => {
       value += v
     })
     expect(value).toBe(5)
+  })
+
+  it("enters suspense when the observable emits an effect", async () => {
+    const subject$ = new Subject<number | null>()
+    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const Result: React.FC = () => <div>Result {useValue()}</div>
+
+    const TestSuspense: React.FC = () => {
+      return (
+        <Subscribe fallback={<span>Waiting</span>}>
+          <Result />
+        </Subscribe>
+      )
+    }
+
+    const { queryByText } = render(<TestSuspense />)
+
+    await act(async () => {
+      subject$.next(0)
+    })
+
+    expect(queryByText("Result 0")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
+
+    act(() => {
+      subject$.next(null)
+    })
+
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    act(() => {
+      subject$.next(1)
+    })
+
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
+  })
+
+  it("ignores effects while waiting for the first value", async () => {
+    const subject$ = new Subject<number | null>()
+    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const Result: React.FC = () => <div>Result {useValue()}</div>
+
+    const TestSuspense: React.FC = () => {
+      return (
+        <Subscribe fallback={<span>Waiting</span>}>
+          <Result />
+        </Subscribe>
+      )
+    }
+
+    const { queryByText } = render(<TestSuspense />)
+
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    await act(async () => {
+      subject$.next(null)
+    })
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    await act(async () => {
+      subject$.next(null)
+      await wait(10)
+      subject$.next(null)
+    })
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    await act(async () => {
+      subject$.next(1)
+    })
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
+  })
+
+  it("ignores effects after entering suspense", async () => {
+    const subject$ = new Subject<number | null>()
+    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const Result: React.FC = () => <div>Result {useValue()}</div>
+
+    const TestSuspense: React.FC = () => {
+      return (
+        <Subscribe fallback={<span>Waiting</span>}>
+          <Result />
+        </Subscribe>
+      )
+    }
+
+    const { queryByText } = render(<TestSuspense />)
+
+    await act(async () => {
+      subject$.next(0)
+    })
+
+    expect(queryByText("Result 0")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
+
+    await act(async () => {
+      subject$.next(null)
+    })
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    await act(async () => {
+      subject$.next(null)
+      await wait(10)
+      subject$.next(null)
+    })
+    expect(queryByText("Waiting")).not.toBeNull()
+
+    await act(async () => {
+      subject$.next(1)
+    })
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
+  })
+
+  it("emits the default value when an effect is received", () => {
+    const subject$ = new Subject<number | null>()
+    const [useValue] = bind(subject$.pipe(sinkEffects(null)), 10)
+    const Result: React.FC = () => <div>Result {useValue()}</div>
+
+    const { queryByText } = render(<Result />)
+
+    expect(queryByText("Result 10")).not.toBeNull()
+
+    act(() => {
+      subject$.next(5)
+    })
+    expect(queryByText("Result 5")).not.toBeNull()
+
+    act(() => {
+      subject$.next(null)
+    })
+    expect(queryByText("Result 10")).not.toBeNull()
   })
 })
