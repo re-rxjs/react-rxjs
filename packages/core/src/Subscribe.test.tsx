@@ -1,6 +1,6 @@
 import { state } from "@rx-state/core"
-import { render, screen, act } from "@testing-library/react"
-import React, { StrictMode, useState, useEffect } from "react"
+import { act, render, screen } from "@testing-library/react"
+import React, { StrictMode, useEffect, useState } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"

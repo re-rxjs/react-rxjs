@@ -8,7 +8,7 @@ import React, {
   useContext,
 } from "react"
 import { Observable, Subscription } from "rxjs"
-import type { StateObservable } from "@rxstate/core"
+import type { StateObservable } from "@rx-state/core"
 
 const SubscriptionContext = createContext<
   ((src: StateObservable<any>) => void) | null
