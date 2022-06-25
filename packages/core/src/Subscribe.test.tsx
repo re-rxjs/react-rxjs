@@ -1,7 +1,7 @@
-import { state } from "@rx-state/core"
+import { sinkEffects, state } from "@rx-state/core"
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
-import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
+import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
@@ -159,6 +159,23 @@ describe("Subscribe", () => {
       expect(getByTestId("id").textContent).toBe("2")
       expect(getByTestId("value").textContent).toBe("2")
       instanceTwoSubs.unsubscribe()
+    })
+
+    it("lifts the effects of the source$ prop", () => {
+      const subject$ = new Subject<number | null>()
+      const test$ = state(subject$.pipe(sinkEffects(null)))
+
+      const { unmount } = render(<Subscribe source$={test$} />)
+
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(null))
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(1))
+      expect(test$.getRefCount()).toBe(1)
+
+      unmount()
     })
   })
   describe("Subscribe without source$", () => {
@@ -335,6 +352,37 @@ describe("Subscribe", () => {
         "controlled error",
         expect.any(Object),
       )
+      unmount()
+    })
+
+    it("lifts the effects of observables passed through context", () => {
+      const subject$ = new Subject<number | null>()
+      let innerSubs = 0
+      const test$ = state(
+        defer(() => {
+          innerSubs++
+          return subject$
+        }).pipe(sinkEffects(null)),
+      )
+
+      const Child = () => <>{useStateObservable(test$)}</>
+
+      const { unmount } = render(
+        <Subscribe>
+          <Child />
+        </Subscribe>,
+      )
+
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(null))
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(1))
+      expect(test$.getRefCount()).toBe(1)
+
+      expect(innerSubs).toBe(1)
+
       unmount()
     })
   })

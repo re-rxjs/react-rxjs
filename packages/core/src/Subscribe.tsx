@@ -8,7 +8,7 @@ import React, {
   useContext,
 } from "react"
 import { Observable, Subscription } from "rxjs"
-import type { StateObservable } from "@rx-state/core"
+import { liftEffects, StateObservable } from "@rx-state/core"
 
 const SubscriptionContext = createContext<
   ((src: StateObservable<any>) => void) | null
@@ -55,7 +55,7 @@ export const Subscribe: React.FC<{
       s,
       u: (src) => {
         s.add(
-          src.subscribe({
+          liftEffects()(src).subscribe({
             error: (e) =>
               setSubscribedSource(() => {
                 throw e
@@ -85,7 +85,7 @@ export const Subscribe: React.FC<{
     setSubscribedSource(source$)
     if (!source$) return
 
-    const subscription = source$.subscribe({
+    const subscription = liftEffects()(source$).subscribe({
       error: (e) =>
         setSubscribedSource(() => {
           throw e
