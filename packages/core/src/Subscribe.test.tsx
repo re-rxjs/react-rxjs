@@ -1,10 +1,12 @@
 import { state } from "@rx-state/core"
-import { render, screen } from "@testing-library/react"
-import React, { StrictMode, useState, useEffect } from "react"
+import { act, render, screen } from "@testing-library/react"
+import React, { StrictMode, useEffect, useState } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
+
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 const Subscribe = (props: any) => {
   return (
@@ -302,6 +304,38 @@ describe("Subscribe", () => {
       )
 
       expect(hasError).toBe(false)
+    })
+
+    it("allows async errors to be caught in error boundaries with suspense, without using source$", async () => {
+      const [useError] = bind(
+        new Observable((obs) => {
+          setTimeout(() => obs.error("controlled error"), 10)
+        }),
+      )
+
+      const ErrorComponent = () => {
+        const value = useError()
+        return <>{value}</>
+      }
+
+      const errorCallback = jest.fn()
+      const { unmount } = render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Subscribe fallback={<div>Loading...</div>}>
+            <ErrorComponent />
+          </Subscribe>
+        </TestErrorBoundary>,
+      )
+
+      await act(async () => {
+        await wait(100)
+      })
+
+      expect(errorCallback).toHaveBeenCalledWith(
+        "controlled error",
+        expect.any(Object),
+      )
+      unmount()
     })
   })
 })
