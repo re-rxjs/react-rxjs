@@ -42,5 +42,8 @@ export default function connectFactoryObservable<A extends [], O, E>(
       : [getObservable, defaultValue]
 
   const obs = state(...(args as [(...args: A) => EffectObservable<O, E>]))
-  return [(...input: A) => useStateObservable(obs(...input)), obs]
+  return [
+    (...input: A) => useStateObservable(obs(...(input as any))),
+    obs as any,
+  ]
 }
