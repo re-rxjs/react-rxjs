@@ -852,7 +852,7 @@ describe("connectFactoryObservable", () => {
         const [, me$] = bind(
           (key: number): Observable<number> => {
             nSubscriptions++
-            return me$(key).pipe(
+            return defer(() => me$(key)).pipe(
               take(1),
               map((x) => x * 2),
             )

@@ -50,7 +50,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
-    "@rx-state/core": "0.1.0-rc.3",
+    "@rx-state/core": "0.1.0-rc.5",
     "use-sync-external-store": "^1.0.0"
   },
   "devDependencies": {
