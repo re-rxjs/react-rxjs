@@ -25,7 +25,13 @@ import {
   startWith,
   switchMapTo,
 } from "rxjs/operators"
-import { bind, sinkEffects, Subscribe, SUSPENSE, useStateObservable } from "../"
+import {
+  bind,
+  sinkSuspense,
+  Subscribe,
+  SUSPENSE,
+  useStateObservable,
+} from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
@@ -762,8 +768,8 @@ describe("connectObservable", () => {
   })
 
   it("enters suspense when the observable emits an effect", async () => {
-    const subject$ = new Subject<number | null>()
-    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const subject$ = new Subject<number | SUSPENSE>()
+    const [useValue] = bind(subject$.pipe(sinkSuspense()))
     const Result: React.FC = () => <div>Result {useValue()}</div>
 
     const TestSuspense: React.FC = () => {
@@ -784,7 +790,7 @@ describe("connectObservable", () => {
     expect(queryByText("Waiting")).toBeNull()
 
     act(() => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
 
     expect(queryByText("Waiting")).not.toBeNull()
@@ -798,8 +804,8 @@ describe("connectObservable", () => {
   })
 
   it("ignores effects while waiting for the first value", async () => {
-    const subject$ = new Subject<number | null>()
-    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const subject$ = new Subject<number | SUSPENSE>()
+    const [useValue] = bind(subject$.pipe(sinkSuspense()))
     const Result: React.FC = () => <div>Result {useValue()}</div>
 
     const TestSuspense: React.FC = () => {
@@ -815,14 +821,14 @@ describe("connectObservable", () => {
     expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
     expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
       await wait(10)
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
     expect(queryByText("Waiting")).not.toBeNull()
 
@@ -834,8 +840,8 @@ describe("connectObservable", () => {
   })
 
   it("ignores effects after entering suspense", async () => {
-    const subject$ = new Subject<number | null>()
-    const [useValue] = bind(subject$.pipe(sinkEffects(null)))
+    const subject$ = new Subject<number | SUSPENSE>()
+    const [useValue] = bind(subject$.pipe(sinkSuspense()))
     const Result: React.FC = () => <div>Result {useValue()}</div>
 
     const TestSuspense: React.FC = () => {
@@ -856,14 +862,14 @@ describe("connectObservable", () => {
     expect(queryByText("Waiting")).toBeNull()
 
     await act(async () => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
     expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
       await wait(10)
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
     expect(queryByText("Waiting")).not.toBeNull()
 
@@ -875,8 +881,8 @@ describe("connectObservable", () => {
   })
 
   it("emits the default value when an effect is received", () => {
-    const subject$ = new Subject<number | null>()
-    const [useValue] = bind(subject$.pipe(sinkEffects(null)), 10)
+    const subject$ = new Subject<number | SUSPENSE>()
+    const [useValue] = bind(subject$.pipe(sinkSuspense()), 10)
     const Result: React.FC = () => <div>Result {useValue()}</div>
 
     const { queryByText } = render(<Result />)
@@ -889,7 +895,7 @@ describe("connectObservable", () => {
     expect(queryByText("Result 5")).not.toBeNull()
 
     act(() => {
-      subject$.next(null)
+      subject$.next(SUSPENSE)
     })
     expect(queryByText("Result 10")).not.toBeNull()
   })

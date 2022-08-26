@@ -1,4 +1,4 @@
-import { sinkEffects, state } from "@rx-state/core"
+import { sinkSuspense, state, SUSPENSE } from "@rx-state/core"
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
@@ -162,14 +162,14 @@ describe("Subscribe", () => {
     })
 
     it("lifts the effects of the source$ prop", () => {
-      const subject$ = new Subject<number | null>()
-      const test$ = state(subject$.pipe(sinkEffects(null)))
+      const subject$ = new Subject<number | SUSPENSE>()
+      const test$ = state(subject$.pipe(sinkSuspense()))
 
       const { unmount } = render(<Subscribe source$={test$} />)
 
       expect(test$.getRefCount()).toBe(1)
 
-      act(() => subject$.next(null))
+      act(() => subject$.next(SUSPENSE))
       expect(test$.getRefCount()).toBe(1)
 
       act(() => subject$.next(1))
@@ -356,13 +356,13 @@ describe("Subscribe", () => {
     })
 
     it("lifts the effects of observables passed through context", () => {
-      const subject$ = new Subject<number | null>()
+      const subject$ = new Subject<number | SUSPENSE>()
       let innerSubs = 0
       const test$ = state(
         defer(() => {
           innerSubs++
           return subject$
-        }).pipe(sinkEffects(null)),
+        }).pipe(sinkSuspense()),
       )
 
       const Child = () => <>{useStateObservable(test$)}</>
@@ -375,7 +375,7 @@ describe("Subscribe", () => {
 
       expect(test$.getRefCount()).toBe(1)
 
-      act(() => subject$.next(null))
+      act(() => subject$.next(SUSPENSE))
       expect(test$.getRefCount()).toBe(1)
 
       act(() => subject$.next(1))

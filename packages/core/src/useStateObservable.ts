@@ -1,6 +1,6 @@
 import {
   DefaultedStateObservable,
-  liftEffects,
+  liftSuspense,
   StateObservable,
   SUSPENSE,
 } from "@rx-state/core"
@@ -10,20 +10,20 @@ import { useSubscription } from "./Subscribe"
 
 type VoidCb = () => void
 
-interface Ref<T, E> {
-  source$: StateObservable<T, E>
+interface Ref<T> {
+  source$: StateObservable<T>
   args: [(cb: VoidCb) => VoidCb, () => Exclude<T, SUSPENSE>]
 }
 
-export const useStateObservable = <O, E>(
-  source$: StateObservable<O, E>,
+export const useStateObservable = <O>(
+  source$: StateObservable<O>,
 ): Exclude<O, typeof SUSPENSE> => {
   const subscription = useSubscription()
   const [, setError] = useState()
-  const callbackRef = useRef<Ref<O, E>>()
+  const callbackRef = useRef<Ref<O>>()
 
   if (!callbackRef.current) {
-    const getValue = (src: StateObservable<O, E>) => {
+    const getValue = (src: StateObservable<O>) => {
       const result = src.getValue()
       if (result instanceof Promise) throw result
       return result as any
@@ -48,7 +48,7 @@ export const useStateObservable = <O, E>(
   if (ref.source$ !== source$) {
     ref.source$ = source$
     ref.args[0] = (next: () => void) => {
-      const subscription = liftEffects()(source$).subscribe({
+      const subscription = liftSuspense()(source$).subscribe({
         next,
         error: (e) => {
           setError(() => {
