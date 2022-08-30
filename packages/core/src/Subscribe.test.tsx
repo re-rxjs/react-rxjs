@@ -1,5 +1,6 @@
 import {
   EmptyObservableError,
+  NoSubscribersError,
   sinkSuspense,
   state,
   SUSPENSE,
@@ -361,6 +362,9 @@ describe("Subscribe", () => {
     })
 
     it("propagates the EmptyObservable error if a stream completes synchronously", async () => {
+      const globalErrors = jest.spyOn(console, "error")
+      globalErrors.mockImplementation()
+
       const [useEmpty] = bind(() => EMPTY)
 
       const ErrorComponent = () => {
@@ -377,6 +381,18 @@ describe("Subscribe", () => {
         </TestErrorBoundary>,
       )
 
+      // Can't have NoSubscribersError
+      // Can't have "Cannot update component (`%s`) while rendering a different component"
+      globalErrors.mock.calls.forEach(([errorMessage]) => {
+        console.log(errorMessage)
+        expect(errorMessage).not.toContain(NoSubscribersError.name)
+        expect(errorMessage).not.toContain(
+          "Cannot update a component (`%s`) while rendering a different component",
+        )
+      })
+      globalErrors.mockRestore()
+
+      // Must have EmptyObservableError
       expect(errorCallback.mock.calls.length).toBe(1)
       expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(
         EmptyObservableError,

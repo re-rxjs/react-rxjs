@@ -56,16 +56,22 @@ export const Subscribe: React.FC<{
       s,
       u: (src) => {
         let error = EMPTY_VALUE
+        let synchronous = true
         s.add(
           liftSuspense()(src).subscribe({
             error: (e) => {
-              error = e
+              if (synchronous) {
+                // Can't setState of this component when another one is rendering.
+                error = e
+                return
+              }
               setSubscribedSource(() => {
                 throw e
               })
             },
           }),
         )
+        synchronous = false
         if (error !== EMPTY_VALUE) {
           throw error
         }
