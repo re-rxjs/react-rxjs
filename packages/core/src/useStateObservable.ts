@@ -2,6 +2,7 @@ import {
   DefaultedStateObservable,
   liftSuspense,
   StateObservable,
+  StatePromise,
   SUSPENSE,
 } from "@rx-state/core"
 import { useRef, useState } from "react"
@@ -25,7 +26,7 @@ export const useStateObservable = <O>(
   if (!callbackRef.current) {
     const getValue = (src: StateObservable<O>) => {
       const result = src.getValue()
-      if (result instanceof Promise) throw result
+      if (result instanceof StatePromise) throw result
       return result as any
     }
 

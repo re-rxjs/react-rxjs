@@ -315,6 +315,43 @@ describe("connectObservable", () => {
     expect(screen.queryByText("Waiting")).toBeNull()
   })
 
+  it("doesn't enter suspense if the observable emits a promise", async () => {
+    const subject$ = new Subject<Promise<any>>()
+    const [usePromise, promise$] = bind(subject$, null)
+    const Result: React.FC = () => {
+      const value = usePromise()
+      return (
+        <div>
+          {value === null
+            ? "default"
+            : value instanceof Promise
+            ? "promise"
+            : "wtf?"}
+        </div>
+      )
+    }
+
+    const TestSuspense: React.FC = () => {
+      return (
+        <div>
+          <Subscribe source$={promise$} fallback={<span>Waiting</span>}>
+            <Result />
+          </Subscribe>
+        </div>
+      )
+    }
+
+    render(<TestSuspense />)
+
+    expect(screen.queryByText("Waiting")).toBeNull()
+    expect(screen.queryByText("default")).not.toBeNull()
+
+    act(() => subject$.next(new Promise(() => {})))
+
+    expect(screen.queryByText("Waiting")).toBeNull()
+    expect(screen.queryByText("promise")).not.toBeNull()
+  })
+
   it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
     const subject$ = new Subject<void>()
     const [useNumber, number$] = bind(subject$.pipe(scan((a) => a + 1, 0)))
