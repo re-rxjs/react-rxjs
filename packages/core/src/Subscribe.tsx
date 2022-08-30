@@ -9,6 +9,7 @@ import React, {
 } from "react"
 import { Observable, Subscription } from "rxjs"
 import { liftSuspense, StateObservable } from "@rx-state/core"
+import { EMPTY_VALUE } from "./internal/empty-value"
 
 const SubscriptionContext = createContext<
   ((src: StateObservable<any>) => void) | null
@@ -54,14 +55,20 @@ export const Subscribe: React.FC<{
     subscriptionRef.current = {
       s,
       u: (src) => {
+        let error = EMPTY_VALUE
         s.add(
           liftSuspense()(src).subscribe({
-            error: (e) =>
+            error: (e) => {
+              error = e
               setSubscribedSource(() => {
                 throw e
-              }),
+              })
+            },
           }),
         )
+        if (error !== EMPTY_VALUE) {
+          throw error
+        }
       },
     }
   }
