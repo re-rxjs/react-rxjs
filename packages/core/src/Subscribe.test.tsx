@@ -384,7 +384,6 @@ describe("Subscribe", () => {
       // Can't have NoSubscribersError
       // Can't have "Cannot update component (`%s`) while rendering a different component"
       globalErrors.mock.calls.forEach(([errorMessage]) => {
-        console.log(errorMessage)
         expect(errorMessage).not.toContain(NoSubscribersError.name)
         expect(errorMessage).not.toContain(
           "Cannot update a component (`%s`) while rendering a different component",
