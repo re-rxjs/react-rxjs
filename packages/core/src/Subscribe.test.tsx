@@ -1,4 +1,10 @@
-import { sinkSuspense, state, SUSPENSE } from "@rx-state/core"
+import {
+  EmptyObservableError,
+  NoSubscribersError,
+  sinkSuspense,
+  state,
+  SUSPENSE,
+} from "@rx-state/core"
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
@@ -352,6 +358,45 @@ describe("Subscribe", () => {
         "controlled error",
         expect.any(Object),
       )
+      unmount()
+    })
+
+    it("propagates the EmptyObservable error if a stream completes synchronously", async () => {
+      const globalErrors = jest.spyOn(console, "error")
+      globalErrors.mockImplementation()
+
+      const [useEmpty] = bind(() => EMPTY)
+
+      const ErrorComponent = () => {
+        useEmpty()
+        return null
+      }
+
+      const errorCallback = jest.fn()
+      const { unmount } = render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Subscribe fallback={<div>Loading...</div>}>
+            <ErrorComponent />
+          </Subscribe>
+        </TestErrorBoundary>,
+      )
+
+      // Can't have NoSubscribersError
+      // Can't have "Cannot update component (`%s`) while rendering a different component"
+      globalErrors.mock.calls.forEach(([errorMessage]) => {
+        expect(errorMessage).not.toContain(NoSubscribersError.name)
+        expect(errorMessage).not.toContain(
+          "Cannot update a component (`%s`) while rendering a different component",
+        )
+      })
+      globalErrors.mockRestore()
+
+      // Must have EmptyObservableError
+      expect(errorCallback.mock.calls.length).toBe(1)
+      expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(
+        EmptyObservableError,
+      )
+
       unmount()
     })
 
