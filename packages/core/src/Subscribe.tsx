@@ -8,7 +8,8 @@ import React, {
   useContext,
 } from "react"
 import { Observable, Subscription } from "rxjs"
-import type { StateObservable } from "@rx-state/core"
+import { liftSuspense, StateObservable } from "@rx-state/core"
+import { EMPTY_VALUE } from "./internal/empty-value"
 
 const SubscriptionContext = createContext<
   ((src: StateObservable<any>) => void) | null
@@ -54,14 +55,26 @@ export const Subscribe: React.FC<{
     subscriptionRef.current = {
       s,
       u: (src) => {
+        let error = EMPTY_VALUE
+        let synchronous = true
         s.add(
-          src.subscribe({
-            error: (e) =>
+          liftSuspense()(src).subscribe({
+            error: (e) => {
+              if (synchronous) {
+                // Can't setState of this component when another one is rendering.
+                error = e
+                return
+              }
               setSubscribedSource(() => {
                 throw e
-              }),
+              })
+            },
           }),
         )
+        synchronous = false
+        if (error !== EMPTY_VALUE) {
+          throw error
+        }
       },
     }
   }
@@ -85,7 +98,7 @@ export const Subscribe: React.FC<{
     setSubscribedSource(source$)
     if (!source$) return
 
-    const subscription = source$.subscribe({
+    const subscription = liftSuspense()(source$).subscribe({
       error: (e) =>
         setSubscribedSource(() => {
           throw e

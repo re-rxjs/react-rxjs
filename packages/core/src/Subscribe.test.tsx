@@ -1,7 +1,13 @@
-import { state } from "@rx-state/core"
+import {
+  EmptyObservableError,
+  NoSubscribersError,
+  sinkSuspense,
+  state,
+  SUSPENSE,
+} from "@rx-state/core"
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
-import { defer, EMPTY, NEVER, Observable, of, startWith } from "rxjs"
+import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
@@ -159,6 +165,23 @@ describe("Subscribe", () => {
       expect(getByTestId("id").textContent).toBe("2")
       expect(getByTestId("value").textContent).toBe("2")
       instanceTwoSubs.unsubscribe()
+    })
+
+    it("lifts the effects of the source$ prop", () => {
+      const subject$ = new Subject<number | SUSPENSE>()
+      const test$ = state(subject$.pipe(sinkSuspense()))
+
+      const { unmount } = render(<Subscribe source$={test$} />)
+
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(SUSPENSE))
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(1))
+      expect(test$.getRefCount()).toBe(1)
+
+      unmount()
     })
   })
   describe("Subscribe without source$", () => {
@@ -335,6 +358,76 @@ describe("Subscribe", () => {
         "controlled error",
         expect.any(Object),
       )
+      unmount()
+    })
+
+    it("propagates the EmptyObservable error if a stream completes synchronously", async () => {
+      const globalErrors = jest.spyOn(console, "error")
+      globalErrors.mockImplementation()
+
+      const [useEmpty] = bind(() => EMPTY)
+
+      const ErrorComponent = () => {
+        useEmpty()
+        return null
+      }
+
+      const errorCallback = jest.fn()
+      const { unmount } = render(
+        <TestErrorBoundary onError={errorCallback}>
+          <Subscribe fallback={<div>Loading...</div>}>
+            <ErrorComponent />
+          </Subscribe>
+        </TestErrorBoundary>,
+      )
+
+      // Can't have NoSubscribersError
+      // Can't have "Cannot update component (`%s`) while rendering a different component"
+      globalErrors.mock.calls.forEach(([errorMessage]) => {
+        expect(errorMessage).not.toContain(NoSubscribersError.name)
+        expect(errorMessage).not.toContain(
+          "Cannot update a component (`%s`) while rendering a different component",
+        )
+      })
+      globalErrors.mockRestore()
+
+      // Must have EmptyObservableError
+      expect(errorCallback.mock.calls.length).toBe(1)
+      expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(
+        EmptyObservableError,
+      )
+
+      unmount()
+    })
+
+    it("lifts the effects of observables passed through context", () => {
+      const subject$ = new Subject<number | SUSPENSE>()
+      let innerSubs = 0
+      const test$ = state(
+        defer(() => {
+          innerSubs++
+          return subject$
+        }).pipe(sinkSuspense()),
+      )
+
+      const Child = () => <>{useStateObservable(test$)}</>
+
+      const { unmount } = render(
+        <Subscribe>
+          <Child />
+        </Subscribe>,
+      )
+
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(SUSPENSE))
+      expect(test$.getRefCount()).toBe(1)
+
+      act(() => subject$.next(1))
+      expect(test$.getRefCount()).toBe(1)
+
+      expect(innerSubs).toBe(1)
+
       unmount()
     })
   })
