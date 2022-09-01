@@ -8,6 +8,12 @@ import {
   SUSPENSE,
 } from "@rx-state/core"
 
+// Adds an additional "stop" argument to prevent using factory functions
+// inside high-order-functions directly (e.g. switchMap(factory$))
+type AddStopArg<A extends Array<any>> = number extends A["length"]
+  ? A
+  : [...args: A, _stop?: undefined]
+
 /**
  * Binds an observable to React
  *
@@ -24,7 +30,7 @@ import {
  */
 export function bind<T>(
   observable: Observable<T>,
-): [() => Exclude<T, typeof SUSPENSE>, StateObservable<T, never>]
+): [() => Exclude<T, typeof SUSPENSE>, StateObservable<T>]
 
 /**
  * Binds an observable to React
@@ -41,7 +47,7 @@ export function bind<T>(
 export function bind<T>(
   observable: Observable<T>,
   defaultValue: T,
-): [() => Exclude<T, typeof SUSPENSE>, DefaultedStateObservable<T, never>]
+): [() => Exclude<T, typeof SUSPENSE>, DefaultedStateObservable<T>]
 
 /**
  * Binds a factory observable to React
@@ -64,8 +70,8 @@ export function bind<T>(
 export function bind<A extends unknown[], O>(
   getObservable: (...args: A) => Observable<O>,
 ): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => StateObservable<O, never>,
+  (...args: AddStopArg<A>) => Exclude<O, typeof SUSPENSE>,
+  (...args: AddStopArg<A>) => StateObservable<O>,
 ]
 
 /**
@@ -88,8 +94,8 @@ export function bind<A extends unknown[], O>(
   getObservable: (...args: A) => Observable<O>,
   defaultValue: O | ((...args: A) => O),
 ): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => DefaultedStateObservable<O, never>,
+  (...args: AddStopArg<A>) => Exclude<O, typeof SUSPENSE>,
+  (...args: AddStopArg<A>) => DefaultedStateObservable<O>,
 ]
 
 export function bind(observable: any, defaultValue?: any) {
