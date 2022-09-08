@@ -2,18 +2,18 @@ export {
   AddStopArg,
   DefaultedStateObservable,
   EmptyObservableError,
+  liftSuspense,
   NoSubscribersError,
   PipeState,
-  SUSPENSE,
+  sinkSuspense,
   StateObservable,
   StatePromise,
-  WithDefaultOperator,
-  liftSuspense,
-  sinkSuspense,
+  SUSPENSE,
   withDefault,
+  WithDefaultOperator,
 } from "@rx-state/core"
-export { shareLatest } from "./shareLatest"
-export { useStateObservable } from "./useStateObservable"
 export { bind } from "./bind"
-export { Subscribe, RemoveSubscribe } from "./Subscribe"
+export { shareLatest } from "./shareLatest"
 export { state } from "./stateJsx"
+export { RemoveSubscribe, Subscribe } from "./Subscribe"
+export { useStateObservable } from "./useStateObservable"
