@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { EMPTY_VALUE } from "../internal/empty-value"
 import { state, StateObservable, SUSPENSE } from "@rx-state/core"
-import { useStateObservable } from "../useStateObservable"
+import { useStateObservable } from "../"
 
 /**
  * Accepts: A factory function that returns an Observable.
