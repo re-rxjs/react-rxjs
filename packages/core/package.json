@@ -1,5 +1,5 @@
 {
-  "version": "0.10.0-rc.7",
+  "version": "0.10.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
