@@ -44,4 +44,32 @@ describe("stateJsx", () => {
     expect(screen.queryByText("Waiting")).toBeNull()
     subscription.unsubscribe()
   })
+
+  it("enhances the result of a pipeState to be used as a JSX element", async () => {
+    const subject = new Subject<string>()
+    const state$ = state(subject)
+
+    const derivedState$ = state$.pipeState(map((v) => `derived ${v}`))
+    const derivedTwiceState$ = derivedState$.pipeState(map((v) => `${v} again`))
+    const subscription = derivedTwiceState$.subscribe()
+
+    render(
+      <Suspense fallback="Waiting">
+        {derivedState$}, {derivedTwiceState$}
+      </Suspense>,
+    )
+
+    expect(screen.queryByText("Waiting")).not.toBeNull()
+
+    await act(() => {
+      subject.next("Result")
+      return Promise.resolve()
+    })
+
+    expect(
+      screen.queryByText("derived Result, derived Result again"),
+    ).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
+    subscription.unsubscribe()
+  })
 })
