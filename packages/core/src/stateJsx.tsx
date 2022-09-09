@@ -1,5 +1,5 @@
 import { state as coreState, StateObservable } from "@rx-state/core"
-import React, { ReactElement } from "react"
+import React, { createElement, ReactElement } from "react"
 import { useStateObservable } from "./useStateObservable"
 
 declare module "@rx-state/core" {
@@ -15,11 +15,13 @@ export const state: typeof coreState = (...args: any[]): any => {
   return enhanceState(result)
 }
 
-function StateValue(props: { state$: StateObservable<any> }) {
-  return useStateObservable(props.state$)
-}
-
+const cache = new WeakMap<StateObservable<any>, React.ReactNode>()
 function enhanceState<T>(state$: StateObservable<T>) {
-  const element = <StateValue state$={state$} />
-  return Object.assign(state$, element)
+  if (!cache.has(state$))
+    cache.set(
+      state$,
+      createElement(() => useStateObservable(state$) as any, {}),
+    )
+
+  return Object.assign(state$, cache.get(state$)!)
 }
