@@ -23,5 +23,9 @@ function enhanceState<T>(state$: StateObservable<T>) {
       createElement(() => useStateObservable(state$) as any, {}),
     )
 
-  return Object.assign(state$, cache.get(state$)!)
+  const originalPipeState = state$.pipeState.bind(state$)
+  return Object.assign(state$, cache.get(state$)!, {
+    pipeState: (...operators: any[]) =>
+      enhanceState((originalPipeState as any)(...operators)),
+  })
 }
