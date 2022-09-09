@@ -1,6 +1,7 @@
 import {
   DefaultedStateObservable,
   liftSuspense,
+  NoSubscribersError,
   StateObservable,
   StatePromise,
   SUSPENSE,
@@ -26,7 +27,11 @@ export const useStateObservable = <O>(
   if (!callbackRef.current) {
     const getValue = (src: StateObservable<O>) => {
       const result = src.getValue()
-      if (result instanceof StatePromise) throw result
+      if (result instanceof StatePromise)
+        throw result.catch((e) => {
+          if (e instanceof NoSubscribersError) return e
+          throw e
+        })
       return result as any
     }
 
