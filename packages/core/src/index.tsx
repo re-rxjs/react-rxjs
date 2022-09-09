@@ -1,16 +1,18 @@
-export {
+export type {
   AddStopArg,
   DefaultedStateObservable,
   EmptyObservableError,
-  liftSuspense,
   NoSubscribersError,
   PipeState,
-  sinkSuspense,
   StateObservable,
   StatePromise,
+  WithDefaultOperator,
+} from "@rx-state/core"
+export {
+  liftSuspense,
+  sinkSuspense,
   SUSPENSE,
   withDefault,
-  WithDefaultOperator,
 } from "@rx-state/core"
 export { bind } from "./bind"
 export { shareLatest } from "./shareLatest"
