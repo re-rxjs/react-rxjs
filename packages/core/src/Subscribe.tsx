@@ -8,8 +8,12 @@ import React, {
   useContext,
 } from "react"
 import { Observable, Subscription } from "rxjs"
+import { liftSuspense, StateObservable } from "@rx-state/core"
+import { EMPTY_VALUE } from "./internal/empty-value"
 
-const SubscriptionContext = createContext<Subscription | null>(null)
+const SubscriptionContext = createContext<
+  ((src: StateObservable<any>) => void) | null
+>(null)
 const { Provider } = SubscriptionContext
 export const useSubscription = () => useContext(SubscriptionContext)
 
@@ -41,9 +45,39 @@ export const Subscribe: React.FC<{
   source$?: Observable<any>
   fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {
-  const subscriptionRef = useRef<Subscription>()
+  const subscriptionRef = useRef<{
+    s: Subscription
+    u: (source: StateObservable<any>) => void
+  }>()
 
-  if (!subscriptionRef.current) subscriptionRef.current = new Subscription()
+  if (!subscriptionRef.current) {
+    const s = new Subscription()
+    subscriptionRef.current = {
+      s,
+      u: (src) => {
+        let error = EMPTY_VALUE
+        let synchronous = true
+        s.add(
+          liftSuspense()(src).subscribe({
+            error: (e) => {
+              if (synchronous) {
+                // Can't setState of this component when another one is rendering.
+                error = e
+                return
+              }
+              setSubscribedSource(() => {
+                throw e
+              })
+            },
+          }),
+        )
+        synchronous = false
+        if (error !== EMPTY_VALUE) {
+          throw error
+        }
+      },
+    }
+  }
 
   const [subscribedSource, setSubscribedSource] = useState<
     Observable<any> | null | undefined
@@ -64,7 +98,7 @@ export const Subscribe: React.FC<{
     setSubscribedSource(source$)
     if (!source$) return
 
-    const subscription = source$.subscribe({
+    const subscription = liftSuspense()(source$).subscribe({
       error: (e) =>
         setSubscribedSource(() => {
           throw e
@@ -77,14 +111,14 @@ export const Subscribe: React.FC<{
 
   useEffect(() => {
     return () => {
-      subscriptionRef.current?.unsubscribe()
+      subscriptionRef.current?.s.unsubscribe()
       subscriptionRef.current = undefined
     }
   }, [])
 
   const actualChildren =
     subscribedSource === source$ ? (
-      <Provider value={subscriptionRef.current!}>{children}</Provider>
+      <Provider value={subscriptionRef.current!.u}>{children}</Provider>
     ) : fallback === undefined ? null : (
       <Throw />
     )

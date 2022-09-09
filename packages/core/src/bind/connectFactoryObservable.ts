@@ -1,8 +1,7 @@
 import { Observable } from "rxjs"
-import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "../internal/empty-value"
-import { state, StateObservable } from "@rxstate/core"
-import { useStateObservable } from "../useStateObservable"
+import { state, StateObservable, SUSPENSE } from "@rx-state/core"
+import { useStateObservable } from "../"
 
 /**
  * Accepts: A factory function that returns an Observable.
@@ -26,10 +25,7 @@ import { useStateObservable } from "../useStateObservable"
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
   defaultValue: O | ((...args: A) => O),
-): [
-  (...args: A) => Exclude<O, typeof SUSPENSE>,
-  (...args: A) => StateObservable<O>,
-] {
+): [(...args: A) => Exclude<O, SUSPENSE>, (...args: A) => StateObservable<O>] {
   const args:
     | [(...args: A) => Observable<O>]
     | [(...args: A) => Observable<O>, O | ((...args: A) => O)] =
@@ -38,5 +34,8 @@ export default function connectFactoryObservable<A extends [], O>(
       : [getObservable, defaultValue]
 
   const obs = state(...(args as [(...args: A) => Observable<O>]))
-  return [(...input: A) => useStateObservable(obs(...input)), obs]
+  return [
+    (...input: A) => useStateObservable(obs(...(input as any))),
+    obs as any,
+  ]
 }
