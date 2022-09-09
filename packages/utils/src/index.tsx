@@ -7,7 +7,6 @@ export { toKeySet } from "./toKeySet"
 export { suspend } from "./suspend"
 export { suspended } from "./suspended"
 export { switchMapSuspended } from "./switchMapSuspended"
-export { selfDependant } from "./selfDependant"
+export { selfDependent, selfDependant } from "./selfDependent"
 export { contextBinder } from "./contextBinder"
-
 export { createListener } from "./createListener"

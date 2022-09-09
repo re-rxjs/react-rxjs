@@ -9,7 +9,7 @@ import { tap } from "rxjs/operators"
  * 1. The inner subject as an Observable
  * 2. A pipable operator that taps into the inner Subject
  */
-export const selfDependant = <T>(): [
+export const selfDependent = <T>(): [
   Observable<T>,
   () => MonoTypeOperatorFunction<T>,
 ] => {
@@ -19,3 +19,8 @@ export const selfDependant = <T>(): [
     () => tap(mirrored$) as MonoTypeOperatorFunction<T>,
   ]
 }
+
+/**
+ * @deprecated renamed to `selfDependent`
+ */
+export const selfDependant = selfDependent

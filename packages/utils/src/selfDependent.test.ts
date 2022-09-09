@@ -8,7 +8,7 @@ import {
   delay,
 } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { selfDependant } from "./"
+import { selfDependent } from "."
 import { merge, Observable, defer, of } from "rxjs"
 
 const scheduler = () =>
@@ -17,13 +17,13 @@ const scheduler = () =>
   })
 
 const inc = (x: number) => x + 1
-describe("selfDependant", () => {
+describe("selfDependent", () => {
   it("emits the key of the stream that emitted the value", () => {
     scheduler().run(({ expectObservable, expectSubscriptions, cold }) => {
       let source: Observable<any>
 
       const clicks$ = defer(() => source)
-      const [_resetableCounter$, connect] = selfDependant<number>()
+      const [_resetableCounter$, connect] = selfDependent<number>()
       const inc$ = clicks$.pipe(
         withLatestFrom(_resetableCounter$),
         pluck("1"),
