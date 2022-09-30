@@ -1,5 +1,10 @@
-import { Observable, Subject, MonoTypeOperatorFunction } from "rxjs"
-import { tap } from "rxjs/operators"
+import {
+  Observable,
+  Subject,
+  MonoTypeOperatorFunction,
+  BehaviorSubject,
+} from "rxjs"
+import { switchAll, tap } from "rxjs/operators"
 
 /**
  * A creation operator that helps at creating observables that have circular
@@ -13,10 +18,23 @@ export const selfDependent = <T>(): [
   Observable<T>,
   () => MonoTypeOperatorFunction<T>,
 ] => {
-  const mirrored$ = new Subject<T>()
+  const activeSubject: BehaviorSubject<Subject<T>> = new BehaviorSubject(
+    new Subject<T>(),
+  )
   return [
-    mirrored$.asObservable(),
-    () => tap(mirrored$) as MonoTypeOperatorFunction<T>,
+    activeSubject.pipe(switchAll()),
+    () =>
+      tap({
+        next: (v) => activeSubject.value.next(v),
+        error: (e) => {
+          activeSubject.value.error(e)
+          activeSubject.next(new Subject<T>())
+        },
+        complete: () => {
+          activeSubject.value.complete()
+          activeSubject.next(new Subject<T>())
+        },
+      }) as MonoTypeOperatorFunction<T>,
   ]
 }
 
