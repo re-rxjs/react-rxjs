@@ -7,12 +7,8 @@ import {
   StatePromise,
   DeferredPromise,
   createDeferredPromise,
+  children,
 } from "./internal"
-
-const children = new WeakMap<
-  StateNode<any>,
-  Set<(isActive: boolean, value: any) => void>
->()
 
 export const ctx = <V>(node: StateNode<V>): V => {
   const value = node.getValue()
@@ -24,7 +20,7 @@ export type Ctx = typeof ctx
 export const substate = <T, P>(
   parent: StateNode<P>,
   getState$: (ctx: Ctx) => Observable<T>,
-  equalityFn: (a: T, b: T) => boolean,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
 ): StateNode<T> => {
   let subject: ReplaySubject<T> | null = null
   let subscription: Subscription | null = null
