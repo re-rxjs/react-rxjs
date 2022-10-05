@@ -71,6 +71,8 @@ describe("subState", () => {
       contextSource$.next((lastContextValue = 2))
       contextSource$.next((lastContextValue = 3))
     })
+
+    // TODO invalid ctx
   })
 
   describe("getValue", () => {
@@ -220,5 +222,78 @@ describe("subState", () => {
     })
   })
 
-  describe("state$", () => {})
+  describe("state$", () => {
+    it("emits the values that the inner observable emits", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      const subNode = substate(root, () => source$)
+      root.run()
+
+      const emissions: number[] = []
+      subNode.state$().subscribe({
+        next: (v) => emissions.push(v),
+      })
+      expect(emissions).toEqual([])
+
+      source$.next(1)
+      expect(emissions).toEqual([1])
+
+      source$.next(2)
+      expect(emissions).toEqual([1, 2])
+    })
+
+    it("replays the latest value on late subscription", () => {})
+
+    it("emits an error if the node is not active", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      const subNode = substate(root, () => source$)
+
+      expect.assertions(1)
+      subNode.state$().subscribe({
+        error: (e) => {
+          expect(e.message).toEqual("Inactive Context")
+        },
+      })
+    })
+
+    it("emits the error emitted by the inner observable", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      const subNode = substate(root, () => source$)
+      root.run()
+
+      const error = new Error("haha")
+      subNode.state$().subscribe({
+        error: (e) => expect(e).toBe(error),
+      })
+
+      expect.assertions(1)
+      source$.next(1)
+      source$.error(error)
+    })
+
+    it("doesn't propagate the complete of the inner observable", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      const subNode = substate(root, () => source$)
+      root.run()
+
+      let completed = false
+      subNode.state$().subscribe({
+        complete: () => (completed = true),
+      })
+
+      source$.complete()
+      expect(completed).toBe(false)
+    })
+
+    it("emits a complete when a context changes", () => {})
+
+    it("doesn't emit the last value on resubscription after a complete", () => {})
+
+    it("doesn't emit a complete if a context emits without change", () => {})
+
+    it("emits the values from the new context change even if the observable was created earlier", () => {})
+  })
 })

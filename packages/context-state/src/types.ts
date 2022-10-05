@@ -9,7 +9,7 @@ export declare type StringRecord<T> = {
 
 export interface StateNode<T> {
   getValue: () => T | StatePromise<T>
-  state$: (ctx: <V>(node: StateNode<V>) => V) => Observable<T>
+  state$: () => Observable<T>
 }
 
 /*
