@@ -14,12 +14,12 @@ const children = new WeakMap<
   Set<(isActive: boolean, value: any) => void>
 >()
 
-const ctx = <V>(node: StateNode<V>): V => {
+export const ctx = <V>(node: StateNode<V>): V => {
   const value = node.getValue()
   if (value instanceof StatePromise) throw invalidContext()
   return value
 }
-type Ctx = typeof ctx
+export type Ctx = typeof ctx
 
 export const substate = <T, P>(
   parent: StateNode<P>,
@@ -82,6 +82,7 @@ export const substate = <T, P>(
       subscription?.unsubscribe()
       currentValue = EMPTY_VALUE
       currentParentValue = parentValue
+      subject = subject || new ReplaySubject<T>(1)
 
       subscription = getState$(ctx).subscribe({
         next(value) {
@@ -118,11 +119,11 @@ export const substate = <T, P>(
 
       if (subscription.closed) subscription = null
 
-      if (currentValue === EMPTY_VALUE) {
+      if (currentValue === EMPTY_VALUE && subject) {
         const prevSubect = subject
         subject = new ReplaySubject<T>(1)
         runChildren(true, EMPTY_VALUE)
-        prevSubect?.complete()
+        prevSubect.complete()
       }
       return
     }
