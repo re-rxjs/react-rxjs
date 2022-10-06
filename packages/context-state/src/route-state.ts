@@ -51,6 +51,6 @@ export const routeState = <
 
   children.get(keyState)!.add(run)
 
-  const result = mapRecord(routeState, (x: any) => x[0]) as OT
+  const result = mapRecord(routedState, (x: any) => x[0]) as OT
   return [keyState, result]
 }

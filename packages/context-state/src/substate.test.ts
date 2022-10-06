@@ -1,3 +1,4 @@
+import { routeState } from "./route-state"
 import { EMPTY, NEVER, Observable, of, Subject, throwError } from "rxjs"
 import { createRoot } from "./create-root"
 import { substate } from "./substate"
@@ -72,7 +73,43 @@ describe("subState", () => {
       contextSource$.next((lastContextValue = 3))
     })
 
-    // TODO invalid ctx
+    it("throws an error when accessing a context that's invalid", () => {
+      const root = createRoot()
+      const [, { branchB }] = routeState(
+        substate(root, () => of("")),
+        {
+          branchA: null,
+          branchB: () => "b",
+        },
+        () => "branchA",
+      )
+
+      substate(root, (ctx) => of(ctx(branchB)))
+      // TODO Should the error happen on run? I think it should happen somewhere else where it can get captured consistently (see next test too, it's being swallowed)
+      expect(() => root.run()).toThrowError("Invalid Context")
+    })
+
+    it("becomes unactive after throws an error for an invalid accessed context", () => {
+      const root = createRoot()
+      const contextSource = new Subject<number>()
+      const contextNode = substate(root, () => contextSource)
+      const [, { branchB }] = routeState(
+        contextNode,
+        {
+          branchA: null,
+          branchB: () => "b",
+        },
+        () => "branchA",
+      )
+
+      const subNode = substate(contextNode, (ctx) => of(ctx(branchB)))
+
+      root.run()
+
+      contextSource.next(1)
+      expect(() => contextNode.getValue()).not.toThrow()
+      expect(() => subNode.getValue()).toThrowError("Inactive Context")
+    })
   })
 
   describe("getValue", () => {
@@ -242,7 +279,20 @@ describe("subState", () => {
       expect(emissions).toEqual([1, 2])
     })
 
-    it("replays the latest value on late subscription", () => {})
+    it("replays the latest value on late subscription", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      const subNode = substate(root, () => source$)
+      root.run()
+
+      source$.next(1)
+      expect.assertions(1)
+      subNode.state$().subscribe({
+        next: (v) => {
+          expect(v).toBe(1)
+        },
+      })
+    })
 
     it("emits an error if the node is not active", () => {
       const root = createRoot()
@@ -288,12 +338,97 @@ describe("subState", () => {
       expect(completed).toBe(false)
     })
 
-    it("emits a complete when a context changes", () => {})
+    it("emits a complete when a context changes", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const source$ = new Subject<number>()
+      const subNode = substate(contextNode, () => source$)
+      root.run()
 
-    it("doesn't emit the last value on resubscription after a complete", () => {})
+      const complete = jest.fn()
+      subNode.state$().subscribe({ complete })
 
-    it("doesn't emit a complete if a context emits without change", () => {})
+      contextSource$.next(1)
+      expect(complete).not.toHaveBeenCalled()
 
-    it("emits the values from the new context change even if the observable was created earlier", () => {})
+      contextSource$.next(2)
+      expect(complete).not.toHaveBeenCalled()
+
+      source$.next(1)
+      expect(complete).not.toHaveBeenCalled()
+      contextSource$.next(3)
+      expect(complete).toHaveBeenCalled()
+    })
+
+    it("doesn't emit the last value on resubscription after a complete", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const source$ = new Subject<number>()
+      const subNode = substate(contextNode, () => source$)
+      root.run()
+
+      contextSource$.next(1)
+      source$.next(1)
+
+      contextSource$.next(2)
+      const next = jest.fn()
+      subNode.state$().subscribe({ next })
+
+      expect(next).not.toHaveBeenCalled()
+    })
+
+    it("doesn't emit a complete if a context emits without change", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const source$ = new Subject<number>()
+      const subNode = substate(contextNode, () => source$)
+      root.run()
+
+      contextSource$.next(1)
+      source$.next(1)
+
+      const complete = jest.fn()
+      subNode.state$().subscribe({ complete })
+
+      contextSource$.next(1)
+
+      expect(complete).not.toHaveBeenCalled()
+    })
+
+    it("doesn't emit a complete if after a context change the observable synchronously emits the same value", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const subNode = substate(contextNode, () => of(3))
+      root.run()
+
+      contextSource$.next(1)
+
+      const complete = jest.fn()
+      subNode.state$().subscribe({ complete })
+
+      contextSource$.next(2)
+
+      expect(complete).not.toHaveBeenCalled()
+    })
+
+    it("emits the values from the new context change even if the observable was created earlier", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const subNode = substate(contextNode, (ctx) => of(ctx(contextNode)))
+      root.run()
+
+      contextSource$.next(1)
+      const observable = subNode.state$()
+
+      contextSource$.next(2)
+
+      expect.assertions(1)
+      observable.subscribe((v) => expect(v).toBe(2))
+    })
   })
 })
