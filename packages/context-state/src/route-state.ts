@@ -6,8 +6,8 @@ import {
   recordEntries,
 } from "./internal"
 import { of } from "rxjs"
-import { Ctx, substate } from "./substate"
-import { StateNode } from "./types"
+import { substate } from "./substate"
+import { StateNode, Ctx } from "./types"
 
 export const routeState = <
   T,
@@ -37,15 +37,19 @@ export const routeState = <
     recordEntries(routedState).map(([key, value]) => [key, value[1]]),
   )
 
-  const run = (isActive: boolean, value: keyof O | EMPTY_VALUE) => {
+  const run = (
+    ctxKey: any[],
+    isActive: boolean,
+    value: keyof O | EMPTY_VALUE,
+  ) => {
     if (!isActive || value === EMPTY_VALUE)
       runners.forEach((runner) => {
-        runner(false)
+        runner(ctxKey, false)
       })
 
     runners.forEach((runner, key) => {
-      if (key === value) runner(true, value)
-      else runner(false)
+      if (key === value) runner(ctxKey, true, value)
+      else runner(ctxKey, false)
     })
   }
 

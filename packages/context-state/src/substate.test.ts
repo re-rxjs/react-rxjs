@@ -85,8 +85,7 @@ describe("subState", () => {
       )
 
       substate(root, (ctx) => of(ctx(branchB)))
-      // TODO Should the error happen on run? I think it should happen somewhere else where it can get captured consistently (see next test too, it's being swallowed)
-      expect(() => root.run()).toThrowError("Invalid Context")
+      expect(() => root.run()).not.toThrow()
     })
 
     it("becomes unactive after throws an error for an invalid accessed context", () => {

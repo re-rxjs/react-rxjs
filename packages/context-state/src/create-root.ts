@@ -2,14 +2,16 @@ import { children } from "./internal"
 import { StateNode } from "./types"
 
 export interface RootNode extends StateNode<never> {
-  run(): () => void
+  run(rootKey?: any): () => void
 }
 
 export function createRoot(): RootNode {
-  const childRunners = new Set<(isActive: boolean, value: null) => void>()
-  const runChildren = (isActive: boolean) => {
+  const childRunners = new Set<
+    (key: any, isActive: boolean, value: null) => void
+  >()
+  const runChildren = (key: any, isActive: boolean) => {
     childRunners.forEach((cb) => {
-      cb(isActive, null)
+      cb(key, isActive, null)
     })
   }
 
@@ -20,11 +22,11 @@ export function createRoot(): RootNode {
     state$: () => {
       throw new Error("RootNode doesn't have value")
     },
-    run: () => {
+    run: (...rootKey) => {
       // Maybe more fancy with refcount, etc?
-      runChildren(true)
+      runChildren(rootKey, true)
       return () => {
-        runChildren(false)
+        runChildren(rootKey, false)
       }
     },
   }

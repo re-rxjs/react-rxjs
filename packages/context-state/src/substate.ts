@@ -1,18 +1,6 @@
 import { Observable } from "rxjs"
-import type { StateNode } from "./types"
-import {
-  invalidContext,
-  StatePromise,
-  children,
-  detachedNode,
-} from "./internal"
-
-export const ctx = <V>(node: StateNode<V>): V => {
-  const value = node.getValue()
-  if (value instanceof StatePromise) throw invalidContext()
-  return value
-}
-export type Ctx = typeof ctx
+import type { Ctx, StateNode } from "./types"
+import { children, detachedNode } from "./internal"
 
 export const substate = <T, P>(
   parent: StateNode<P>,

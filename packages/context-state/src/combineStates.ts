@@ -1,3 +1,4 @@
+import { NestedMap } from "./internal/nested-map"
 import { of } from "rxjs"
 import {
   mapRecord,
@@ -17,29 +18,45 @@ type StringRecordNodeToNodeStringRecord<
 export const combineStates = <States extends StringRecord<StateNode<any>>>(
   states: States,
 ): StringRecordNodeToNodeStringRecord<States> => {
-  let inactiveStates = Object.keys(states).length
-  let emptyStates = 0
-  const activeStates = mapRecord(states, () => false)
-  const latestStates = mapRecord(states, () => null)
+  const instances = new NestedMap()
+  const nKeys = Object.keys(states).length
+  const _activeStates = mapRecord(states, () => false)
+  const _latestStates = mapRecord(states, () => null)
 
-  const [result, run] = detachedNode(() => of({ ...latestStates }))
+  const [result, run] = detachedNode((ctx) =>
+    of(mapRecord(states, (node) => ctx(node))),
+  )
 
   let latestValue: boolean | EMPTY_VALUE = false
   recordEntries(states).forEach(([key, node]) => {
-    children.get(node)!.add((isActive, value) => {
-      if (isActive !== activeStates[key]) {
-        inactiveStates += isActive ? -1 : +1
-        activeStates[key] = isActive
+    children.get(node)!.add((ctxKey, isActive, value) => {
+      let instance: any = instances.get(ctxKey)
+      if (!instance) {
+        instance = {
+          inactiveStates: nKeys,
+          activeStates: { ..._activeStates },
+          latestStates: { ..._latestStates },
+        }
+        instances.set(ctxKey, instance)
       }
 
-      if (value !== latestStates[key]) {
-        emptyStates +=
-          latestStates[key] === EMPTY_VALUE ? -1 : value === EMPTY_VALUE ? 1 : 0
-        latestStates[key] = value
+      if (isActive !== instance.activeStates[key]) {
+        instance.inactiveStates += isActive ? -1 : +1
+        instance.activeStates[key] = isActive
       }
 
-      latestValue = emptyStates === 0 ? !latestValue : EMPTY_VALUE
-      run(inactiveStates === 0, latestValue)
+      if (value !== instance.latestStates[key]) {
+        instance.emptyStates +=
+          instance.latestStates[key] === EMPTY_VALUE
+            ? -1
+            : value === EMPTY_VALUE
+            ? 1
+            : 0
+        instance.latestStates[key] = value
+      }
+
+      latestValue = instance.emptyStates === 0 ? !latestValue : EMPTY_VALUE
+      run(ctxKey, instance.inactiveStates === 0, instance.latestValue)
     })
   })
 

@@ -8,9 +8,11 @@ export declare type StringRecord<T> = {
 }
 
 export interface StateNode<T> {
-  getValue: () => T | StatePromise<T>
-  state$: () => Observable<T>
+  getValue: (...other: any[]) => T | StatePromise<T>
+  state$: (...other: any[]) => Observable<T>
 }
+
+export type Ctx = <V>(node: StateNode<V>) => V
 
 /*
 export type StateNodeFn<
