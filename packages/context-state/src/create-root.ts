@@ -7,11 +7,11 @@ export interface RootNode extends StateNode<never> {
 
 export function createRoot(): RootNode {
   const childRunners = new Set<
-    (key: any, isActive: boolean, value: null) => void
+    (key: any, isActive: boolean, value?: boolean) => void
   >()
   const runChildren = (key: any, isActive: boolean) => {
     childRunners.forEach((cb) => {
-      cb(key, isActive, null)
+      cb(key, isActive, true)
     })
   }
 

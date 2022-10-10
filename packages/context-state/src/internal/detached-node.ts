@@ -12,17 +12,17 @@ import {
 } from "./"
 import { NestedMap } from "./nested-map"
 
-export const detachedNode = <T, P>(
+export const detachedNode = <T>(
   getState$: (ctx: Ctx) => Observable<T>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-): [StateNode<T>, RunFn<P>] => {
+): [StateNode<T>, RunFn] => {
   const instances = new NestedMap<
     any,
     {
       subject: ReplaySubject<T>
       subscription: Subscription | null
       currentValue: EMPTY_VALUE | T
-      currentParentValue: EMPTY_VALUE
+      isParentLoaded: boolean
       promise: DeferredPromise<T> | null
     }
   >()
@@ -45,16 +45,16 @@ export const detachedNode = <T, P>(
       }),
   }
 
-  const childRunners = new Set<RunFn<T>>()
+  const childRunners = new Set<RunFn>()
   children.set(result, childRunners)
 
-  const runChildren: RunFn<T> = (...args) => {
+  const runChildren: RunFn = (...args) => {
     childRunners.forEach((cb) => {
       cb(...args)
     })
   }
 
-  const run = (key: any[], isActive: boolean, parentValue: any) => {
+  const run = (key: any[], isActive: boolean, isParentLoaded?: boolean) => {
     let instance = instances.get(key)
     if (!isActive) {
       if (!instance) return
@@ -68,7 +68,7 @@ export const detachedNode = <T, P>(
       return
     }
 
-    if (parentValue !== EMPTY_VALUE) {
+    if (isParentLoaded) {
       // an actual change of context
       const hasPreviousValue = instance && instance.currentValue !== EMPTY_VALUE
       if (!instance) {
@@ -76,14 +76,14 @@ export const detachedNode = <T, P>(
           subject: new ReplaySubject<T>(1),
           subscription: null,
           currentValue: EMPTY_VALUE,
-          currentParentValue: EMPTY_VALUE,
+          isParentLoaded,
           promise: null,
         }
         instances.set(key, instance)
       } else {
         instance.subscription?.unsubscribe()
         instance.currentValue = EMPTY_VALUE
-        instance.currentParentValue = parentValue
+        instance.isParentLoaded = true
       }
       const actualInstance = instance
 
@@ -103,7 +103,6 @@ export const detachedNode = <T, P>(
         delete (actualInstance as any).subject
 
         actualInstance.currentValue = EMPTY_VALUE
-        actualInstance.currentParentValue = EMPTY_VALUE
 
         runChildren(key, false)
         prevPromise?.rej(err)
@@ -126,7 +125,7 @@ export const detachedNode = <T, P>(
             actualInstance.promise = null
             if (prevValue === EMPTY_VALUE || !equalityFn(prevValue, value)) {
               prevPromise?.res(value)
-              runChildren(key, true, value)
+              runChildren(key, true, true)
               actualInstance.subject!.next(value)
             }
           },
@@ -148,32 +147,32 @@ export const detachedNode = <T, P>(
           prevSubect = actualInstance.subject
           actualInstance.subject = new ReplaySubject<T>(1)
         }
-        runChildren(key, true, EMPTY_VALUE)
+        runChildren(key, true, false)
         prevSubect?.complete()
       }
       return
     }
 
-    // at this point parentValue is EMPTY_VALUE
-    if (instance?.currentParentValue === EMPTY_VALUE) return
+    if (instance?.isParentLoaded === false) return
+
     const prevSubect = instance?.subject
     if (instance) {
       instance.subject = new ReplaySubject<T>(1)
       instance.subscription?.unsubscribe()
       instance.subscription = null
       instance.currentValue = EMPTY_VALUE
-      instance.currentParentValue = EMPTY_VALUE
+      instance.isParentLoaded = false
     } else {
       instance = {
         subject: new ReplaySubject<T>(1),
         subscription: null,
         currentValue: EMPTY_VALUE,
-        currentParentValue: EMPTY_VALUE,
+        isParentLoaded: false,
         promise: null,
       }
       instances.set(key, instance)
     }
-    runChildren(key, true, EMPTY_VALUE)
+    runChildren(key, true, false)
     prevSubect?.complete()
   }
 

@@ -7,7 +7,7 @@ export const substate = <T, P>(
   getState$: (ctx: Ctx) => Observable<T>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
 ): StateNode<T> => {
-  const [result, run] = detachedNode<T, P>(getState$, equalityFn)
+  const [result, run] = detachedNode<T>(getState$, equalityFn)
   children.get(parent)!.add(run)
   return result
 }

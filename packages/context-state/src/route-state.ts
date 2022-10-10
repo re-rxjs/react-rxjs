@@ -1,10 +1,4 @@
-import {
-  EMPTY_VALUE,
-  children,
-  mapRecord,
-  detachedNode,
-  recordEntries,
-} from "./internal"
+import { children, mapRecord, detachedNode, recordEntries } from "./internal"
 import { of } from "rxjs"
 import { substate } from "./substate"
 import { StateNode, Ctx } from "./types"
@@ -27,7 +21,7 @@ export const routeState = <
   const keyState = substate(parent, (ctx) => of(selector(ctx(parent), ctx)))
 
   const routedState = mapRecord(routes, (mapper) =>
-    detachedNode<any, any>((ctx) => {
+    detachedNode<any>((ctx) => {
       const parentValue = ctx(parent)
       return of(mapper ? mapper(parentValue) : parentValue)
     }),
@@ -37,18 +31,11 @@ export const routeState = <
     recordEntries(routedState).map(([key, value]) => [key, value[1]]),
   )
 
-  const run = (
-    ctxKey: any[],
-    isActive: boolean,
-    value: keyof O | EMPTY_VALUE,
-  ) => {
-    if (!isActive || value === EMPTY_VALUE)
-      runners.forEach((runner) => {
-        runner(ctxKey, false)
-      })
-
+  const run = (ctxKey: any[], isActive: boolean, isParentLoaded?: boolean) => {
+    const activeKey =
+      isActive && isParentLoaded ? keyState.getValue(ctxKey) : null
     runners.forEach((runner, key) => {
-      if (key === value) runner(ctxKey, true, value)
+      if (key === activeKey) runner(ctxKey, true, true)
       else runner(ctxKey, false)
     })
   }

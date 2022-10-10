@@ -1,12 +1,6 @@
 import { NestedMap } from "./internal/nested-map"
 import { of } from "rxjs"
-import {
-  mapRecord,
-  detachedNode,
-  EMPTY_VALUE,
-  recordEntries,
-  children,
-} from "./internal"
+import { mapRecord, detachedNode, recordEntries, children } from "./internal"
 import { StateNode, StringRecord } from "./types"
 
 type StringRecordNodeToNodeStringRecord<
@@ -20,43 +14,47 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
 ): StringRecordNodeToNodeStringRecord<States> => {
   const instances = new NestedMap()
   const nKeys = Object.keys(states).length
-  const _activeStates = mapRecord(states, () => false)
-  const _latestStates = mapRecord(states, () => null)
+  const _allFalse = mapRecord(states, () => false)
 
   const [result, run] = detachedNode((ctx) =>
     of(mapRecord(states, (node) => ctx(node))),
   )
 
-  let latestValue: boolean | EMPTY_VALUE = false
   recordEntries(states).forEach(([key, node]) => {
-    children.get(node)!.add((ctxKey, isActive, value) => {
+    children.get(node)!.add((ctxKey, isActive, isParentLoaded) => {
       let instance: any = instances.get(ctxKey)
       if (!instance) {
         instance = {
           inactiveStates: nKeys,
-          activeStates: { ..._activeStates },
-          latestStates: { ..._latestStates },
+          emptyStates: nKeys,
+          activeStates: { ..._allFalse },
+          loadedStates: { ..._allFalse },
+          latestIsActive: null,
+          latestIsLoaded: null,
         }
         instances.set(ctxKey, instance)
       }
 
       if (isActive !== instance.activeStates[key]) {
-        instance.inactiveStates += isActive ? -1 : +1
+        instance.inactiveStates += isActive ? -1 : 1
         instance.activeStates[key] = isActive
       }
 
-      if (value !== instance.latestStates[key]) {
-        instance.emptyStates +=
-          instance.latestStates[key] === EMPTY_VALUE
-            ? -1
-            : value === EMPTY_VALUE
-            ? 1
-            : 0
-        instance.latestStates[key] = value
+      if (isParentLoaded !== instance.loadedStates[key]) {
+        instance.emptyStates += isParentLoaded ? -1 : 1
+        instance.loadedStates[key] = isParentLoaded
       }
 
-      latestValue = instance.emptyStates === 0 ? !latestValue : EMPTY_VALUE
-      run(ctxKey, instance.inactiveStates === 0, instance.latestValue)
+      const isCurrentlyActive = instance.inactiveStates === 0
+      const isLoaded = instance.activeStates === nKeys
+      if (
+        isCurrentlyActive !== instance.latestIsActive ||
+        isLoaded !== instance.latestIsLoaded
+      ) {
+        instance.latestIsActive = isCurrentlyActive
+        instance.latestIsLoaded = isLoaded
+        run(ctxKey, isCurrentlyActive, isLoaded)
+      }
     })
   })
 
