@@ -119,15 +119,27 @@ describe("subState", () => {
       expect(() => subNode.getValue()).toThrowError("Inactive Context")
     })
 
-    it("after an error it throws an InactiveContextError", () => {
+    it("after an error it throws the error", () => {
       const root = createRoot()
-      const error = new Error()
+      const error = new Error("boom!")
       const subNode = substate(root, () => throwError(() => error))
       root.run()
 
       expect(() => {
         console.log(subNode.getValue())
-      }).toThrowError("Inactive Context")
+      }).toThrowError("boom!")
+    })
+
+    it("throws the parent error", () => {
+      const root = createRoot()
+      const error = new Error("boom!")
+      const subNode = substate(root, () => throwError(() => error))
+      const subSubNode = substate(subNode, () => of(null))
+      root.run()
+
+      expect(() => {
+        console.log(subSubNode.getValue())
+      }).toThrowError("boom!")
     })
 
     it("returns the latest value if the observable has already emitted", () => {

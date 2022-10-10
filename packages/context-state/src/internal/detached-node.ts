@@ -7,15 +7,39 @@ import {
   StatePromise,
   DeferredPromise,
   createDeferredPromise,
-  children,
+  globalChildRunners,
+  globalIsActive,
+  globalRunners,
+  globalParents,
   RunFn,
 } from "./"
 import { NestedMap } from "./nested-map"
 
+const recursiveError = (
+  key: any[],
+  start: StateNode<any>,
+  searched: Set<StateNode<any>>,
+): Error | undefined => {
+  if (searched.has(start)) return undefined
+  searched.add(start)
+  const result = globalIsActive.get(start)!(key)
+  if (result instanceof Error) return result
+  if (result) return undefined
+
+  const parents = globalParents.get(start)!
+  if (!Array.isArray(parents)) return recursiveError(key, parents, searched)
+
+  for (let i = 0; i < parents.length; i++) {
+    const result = recursiveError(key, parents[i], searched)
+    if (result) return result
+  }
+  return undefined
+}
+
 export const detachedNode = <T>(
   getState$: (ctx: Ctx) => Observable<T>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-): [StateNode<T>, RunFn] => {
+): StateNode<T> => {
   const instances = new NestedMap<
     any,
     {
@@ -24,13 +48,17 @@ export const detachedNode = <T>(
       currentValue: EMPTY_VALUE | T
       isParentLoaded: boolean
       promise: DeferredPromise<T> | null
+      error: null | { e: any }
     }
   >()
 
   const result: StateNode<T> = {
     getValue: (...key: any[]) => {
       const instance = instances.get(key)
-      if (!instance) throw inactiveContext()
+      if (!instance)
+        throw recursiveError(key, result, new Set()) || inactiveContext()
+
+      if (instance.error) throw instance.error.e
       const { currentValue, promise } = instance
       if (currentValue !== EMPTY_VALUE) return currentValue
       if (promise) return promise.promise
@@ -40,16 +68,24 @@ export const detachedNode = <T>(
     state$: (...key: any[]) =>
       new Observable<T>((observer) => {
         const instance = instances.get(key)
-        if (!instance) return observer.error(inactiveContext())
-        return instance.subject.subscribe(observer)
+        return instance
+          ? instance.subject.subscribe(observer)
+          : observer.error(
+              recursiveError(key, result, new Set()) || inactiveContext(),
+            )
       }),
   }
 
-  const childRunners = new Set<RunFn>()
-  children.set(result, childRunners)
+  const runners: Array<RunFn> = []
+  globalChildRunners.set(result, runners)
+  globalIsActive.set(result, (key: any[]) => {
+    const instance = instances.get(key)
+    if (!instance) return false
+    return instance.error?.e ?? true
+  })
 
   const runChildren: RunFn = (...args) => {
-    childRunners.forEach((cb) => {
+    runners.forEach((cb) => {
       cb(...args)
     })
   }
@@ -78,6 +114,7 @@ export const detachedNode = <T>(
           currentValue: EMPTY_VALUE,
           isParentLoaded,
           promise: null,
+          error: null,
         }
         instances.set(key, instance)
       } else {
@@ -94,19 +131,17 @@ export const detachedNode = <T>(
       }
 
       const onError = (err: any) => {
-        instances.delete(key)
         const prevPromise = actualInstance.promise
-        const prevSubect = actualInstance.subject
 
+        actualInstance.error = { e: err }
         actualInstance.subscription = null
         actualInstance.promise = null
-        delete (actualInstance as any).subject
 
         actualInstance.currentValue = EMPTY_VALUE
 
         runChildren(key, false)
         prevPromise?.rej(err)
-        prevSubect?.error(err)
+        actualInstance.subject.error(err)
       }
 
       let observable: Observable<any> | null = null
@@ -139,6 +174,7 @@ export const detachedNode = <T>(
         actualInstance.subscription = null
 
       if (
+        !actualInstance.error &&
         actualInstance.currentValue === EMPTY_VALUE &&
         actualInstance.subject
       ) {
@@ -168,6 +204,7 @@ export const detachedNode = <T>(
         subscription: null,
         currentValue: EMPTY_VALUE,
         isParentLoaded: false,
+        error: null,
         promise: null,
       }
       instances.set(key, instance)
@@ -176,5 +213,7 @@ export const detachedNode = <T>(
     prevSubect?.complete()
   }
 
-  return [result, run]
+  globalRunners.set(result, run)
+
+  return result
 }

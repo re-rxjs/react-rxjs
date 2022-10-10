@@ -1,4 +1,11 @@
-import { children, mapRecord, detachedNode, recordEntries } from "./internal"
+import {
+  globalRunners,
+  globalParents,
+  mapRecord,
+  detachedNode,
+  recordEntries,
+  globalChildRunners,
+} from "./internal"
 import { of } from "rxjs"
 import { substate } from "./substate"
 import { StateNode, Ctx } from "./types"
@@ -20,15 +27,20 @@ export const routeState = <
 ): [StateNode<keyof O>, OT] => {
   const keyState = substate(parent, (ctx) => of(selector(ctx(parent), ctx)))
 
-  const routedState = mapRecord(routes, (mapper) =>
-    detachedNode<any>((ctx) => {
+  const routedState = mapRecord(routes, (mapper) => {
+    const result = detachedNode<any>((ctx) => {
       const parentValue = ctx(parent)
       return of(mapper ? mapper(parentValue) : parentValue)
-    }),
-  )
+    })
+    globalParents.set(result, keyState)
+    return result
+  })
 
   const runners = new Map(
-    recordEntries(routedState).map(([key, value]) => [key, value[1]]),
+    recordEntries(routedState).map(([key, value]) => [
+      key,
+      globalRunners.get(value)!,
+    ]),
   )
 
   const run = (ctxKey: any[], isActive: boolean, isParentLoaded?: boolean) => {
@@ -40,8 +52,7 @@ export const routeState = <
     })
   }
 
-  children.get(keyState)!.add(run)
+  globalChildRunners.get(keyState)!.push(run)
 
-  const result = mapRecord(routedState, (x: any) => x[0]) as OT
-  return [keyState, result]
+  return [keyState, routedState as OT]
 }

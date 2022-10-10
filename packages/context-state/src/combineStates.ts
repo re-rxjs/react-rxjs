@@ -1,6 +1,13 @@
 import { NestedMap } from "./internal/nested-map"
 import { of } from "rxjs"
-import { mapRecord, detachedNode, recordEntries, children } from "./internal"
+import {
+  mapRecord,
+  detachedNode,
+  recordEntries,
+  globalChildRunners,
+  globalParents,
+  globalRunners,
+} from "./internal"
 import { StateNode, StringRecord } from "./types"
 
 type StringRecordNodeToNodeStringRecord<
@@ -16,12 +23,16 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
   const nKeys = Object.keys(states).length
   const _allFalse = mapRecord(states, () => false)
 
-  const [result, run] = detachedNode((ctx) =>
+  const result = detachedNode((ctx) =>
     of(mapRecord(states, (node) => ctx(node))),
   )
+  const run = globalRunners.get(result)!
+  const parents: Array<StateNode<any>> = []
+  globalParents.set(result, parents)
 
   recordEntries(states).forEach(([key, node]) => {
-    children.get(node)!.add((ctxKey, isActive, isParentLoaded) => {
+    parents.push(node)
+    globalChildRunners.get(node)!.push((ctxKey, isActive, isParentLoaded) => {
       let instance: any = instances.get(ctxKey)
       if (!instance) {
         instance = {

@@ -1,4 +1,4 @@
-import { children } from "./internal"
+import { globalChildRunners, globalIsActive, globalRunners } from "./internal"
 import { StateNode } from "./types"
 
 export interface RootNode extends StateNode<never> {
@@ -6,7 +6,7 @@ export interface RootNode extends StateNode<never> {
 }
 
 export function createRoot(): RootNode {
-  const childRunners = new Set<
+  const childRunners = new Array<
     (key: any, isActive: boolean, value?: boolean) => void
   >()
   const runChildren = (key: any, isActive: boolean) => {
@@ -31,7 +31,9 @@ export function createRoot(): RootNode {
     },
   }
 
-  children.set(result, childRunners)
+  globalIsActive.set(result, () => true)
+  globalChildRunners.set(result, childRunners)
+  globalRunners.set(result, runChildren)
 
   return result
 }
