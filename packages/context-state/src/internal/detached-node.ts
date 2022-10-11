@@ -119,7 +119,7 @@ export const detachedNode = <T>(
         instances.set(key, instance)
       } else {
         instance.subscription?.unsubscribe()
-        instance.currentValue = EMPTY_VALUE
+        instance.currentValue = EMPTY_VALUE // Causes "doesn't re-emit if the selector returns the same key after the parent changes" to fail
         instance.isParentLoaded = true
       }
       const actualInstance = instance

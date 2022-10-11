@@ -45,7 +45,7 @@ export const routeState = <
 
   const run = (ctxKey: any[], isActive: boolean, isParentLoaded?: boolean) => {
     const activeKey =
-      isActive && isParentLoaded ? keyState.getValue(ctxKey) : null
+      isActive && isParentLoaded ? keyState.getValue(...ctxKey) : null
     runners.forEach((runner, key) => {
       if (key === activeKey) runner(ctxKey, true, true)
       else runner(ctxKey, false)
