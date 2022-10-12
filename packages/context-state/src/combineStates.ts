@@ -66,9 +66,10 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
       }
 
       const isCurrentlyActive = instance.inactiveStates === 0
-      const isLoaded = Object.values(instance.activeStates).every((v) => v)
+      const isLoaded = instance.emptyStates === 0
       if (
         isCurrentlyActive !== instance.latestIsActive ||
+        isLoaded ||
         isLoaded !== instance.latestIsLoaded
       ) {
         instance.latestIsActive = isCurrentlyActive
