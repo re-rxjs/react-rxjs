@@ -16,10 +16,19 @@ type StringRecordNodeToNodeStringRecord<
   [K in keyof States]: States[K] extends StateNode<infer V> ? V : never
 }>
 
+interface CombinedStateInstance {
+  inactiveStates: number
+  emptyStates: number
+  activeStates: Record<string, boolean>
+  loadedStates: Record<string, boolean>
+  latestIsActive: boolean | null
+  latestIsLoaded: boolean | null
+}
+
 export const combineStates = <States extends StringRecord<StateNode<any>>>(
   states: States,
 ): StringRecordNodeToNodeStringRecord<States> => {
-  const instances = new NestedMap()
+  const instances = new NestedMap<any[], CombinedStateInstance>()
   const nKeys = Object.keys(states).length
   const _allFalse = mapRecord(states, () => false)
 
@@ -33,7 +42,7 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
   recordEntries(states).forEach(([key, node]) => {
     parents.push(node)
     globalChildRunners.get(node)!.push((ctxKey, isActive, isParentLoaded) => {
-      let instance: any = instances.get(ctxKey)
+      let instance = instances.get(ctxKey)
       if (!instance) {
         instance = {
           inactiveStates: nKeys,
@@ -53,11 +62,11 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
 
       if (isParentLoaded !== instance.loadedStates[key]) {
         instance.emptyStates += isParentLoaded ? -1 : 1
-        instance.loadedStates[key] = isParentLoaded
+        instance.loadedStates[key] = !!isParentLoaded
       }
 
       const isCurrentlyActive = instance.inactiveStates === 0
-      const isLoaded = instance.activeStates === nKeys
+      const isLoaded = Object.values(instance.activeStates).every((v) => v)
       if (
         isCurrentlyActive !== instance.latestIsActive ||
         isLoaded !== instance.latestIsLoaded

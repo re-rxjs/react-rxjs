@@ -1,4 +1,4 @@
-export class NestedMap<K extends [], V extends Object> {
+export class NestedMap<K extends any[], V extends Object> {
   private root: Map<K, V>
   private rootValue?: V
   constructor() {
