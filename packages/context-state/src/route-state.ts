@@ -10,6 +10,17 @@ import { of } from "rxjs"
 import { substate } from "./substate"
 import { StateNode, Ctx } from "./types"
 
+export class InvalidRouteError extends Error {
+  constructor(key: string, keys: string[]) {
+    super(
+      `Invalid Route. Received "${key}" while valid keys are: "${keys.join(
+        ", ",
+      )}"`,
+    )
+    this.name = "InvalidRouteError"
+  }
+}
+
 export const routeState = <
   T,
   O extends { [P in keyof any]: ((value: T) => any) | null },
@@ -25,7 +36,12 @@ export const routeState = <
   routes: O,
   selector: (value: T, ctx: Ctx) => keyof O,
 ): [StateNode<keyof O>, OT] => {
-  const keyState = substate(parent, (ctx) => of(selector(ctx(parent), ctx)))
+  const keys = new Set(Object.keys(routes))
+  const keyState = substate(parent, (ctx) => {
+    const key = selector(ctx(parent), ctx) as string
+    if (!keys.has(key)) throw new InvalidRouteError(key, [...keys])
+    return of(key)
+  })
 
   const routedState = mapRecord(routes, (mapper) => {
     const result = detachedNode<any>((ctx) => {

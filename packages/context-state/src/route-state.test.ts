@@ -40,7 +40,9 @@ describe("routeState", () => {
       )
       root.run()
 
-      expect(() => key.getValue()).toThrow() // TODO which error?
+      expect(() => key.getValue()).toThrow(
+        'Invalid Route. Received "c" while valid keys are: "a, b"',
+      )
     })
 
     it("errors if the selector throws an error", () => {

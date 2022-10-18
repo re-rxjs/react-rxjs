@@ -106,7 +106,9 @@ export const detachedNode = <T>(
 
     if (isParentLoaded) {
       // an actual change of context
-      const hasPreviousValue = instance && instance.currentValue !== EMPTY_VALUE
+      let previousValue = instance ? instance.currentValue : EMPTY_VALUE
+      const hasPreviousValue = previousValue !== EMPTY_VALUE
+
       if (!instance) {
         instance = {
           subject: new ReplaySubject<T>(1),
@@ -154,7 +156,10 @@ export const detachedNode = <T>(
       actualInstance.subscription =
         observable?.subscribe({
           next(value) {
-            let prevValue = actualInstance.currentValue
+            let prevValue =
+              previousValue !== EMPTY_VALUE
+                ? previousValue
+                : actualInstance.currentValue
             actualInstance.currentValue = value
             const prevPromise = actualInstance.promise
             actualInstance.promise = null
@@ -186,6 +191,8 @@ export const detachedNode = <T>(
         runChildren(key, true, false)
         prevSubect?.complete()
       }
+
+      previousValue = EMPTY_VALUE
       return
     }
 
