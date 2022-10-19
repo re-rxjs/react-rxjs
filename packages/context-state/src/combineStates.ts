@@ -4,17 +4,19 @@ import {
   mapRecord,
   detachedNode,
   recordEntries,
-  globalChildRunners,
-  globalParents,
-  globalRunners,
+  getInternals,
+  InternalStateNode,
 } from "./internal"
 import { StateNode, StringRecord } from "./types"
 
 type StringRecordNodeToNodeStringRecord<
-  States extends StringRecord<StateNode<any>>,
-> = StateNode<{
-  [K in keyof States]: States[K] extends StateNode<infer V> ? V : never
-}>
+  States extends StringRecord<StateNode<any, any>>,
+> = StateNode<
+  {
+    [K in keyof States]: States[K] extends StateNode<infer V, any> ? V : never
+  },
+  any
+>
 
 interface CombinedStateInstance {
   inactiveStates: number
@@ -25,23 +27,26 @@ interface CombinedStateInstance {
   latestIsLoaded: boolean | null
 }
 
-export const combineStates = <States extends StringRecord<StateNode<any>>>(
+export const combineStates = <States extends StringRecord<StateNode<any, any>>>(
   states: States,
 ): StringRecordNodeToNodeStringRecord<States> => {
   const instances = new NestedMap<any[], CombinedStateInstance>()
   const nKeys = Object.keys(states).length
   const _allFalse = mapRecord(states, () => false)
 
-  const result = detachedNode((ctx) =>
+  const internalStates = mapRecord(states, getInternals)
+  const keysOrder = Object.values(internalStates).reduce((a, b) =>
+    b.keysOrder.length > a.keysOrder.length ? b : a,
+  ).keysOrder
+
+  const result = detachedNode<any, any>(keysOrder, (ctx) =>
     of(mapRecord(states, (node) => ctx(node))),
   )
-  const run = globalRunners.get(result)!
-  const parents: Array<StateNode<any>> = []
-  globalParents.set(result, parents)
 
-  recordEntries(states).forEach(([key, node]) => {
+  const parents: Array<InternalStateNode<any, any>> = []
+  recordEntries(internalStates).forEach(([key, node]) => {
     parents.push(node)
-    globalChildRunners.get(node)!.push((ctxKey, isActive, isParentLoaded) => {
+    node.childRunners.push((ctxKey, isActive, isParentLoaded) => {
       let instance = instances.get(ctxKey)
       if (!instance) {
         instance = {
@@ -74,10 +79,10 @@ export const combineStates = <States extends StringRecord<StateNode<any>>>(
       ) {
         instance.latestIsActive = isCurrentlyActive
         instance.latestIsLoaded = isLoaded
-        run(ctxKey, isCurrentlyActive, isLoaded)
+        result.run(ctxKey, isCurrentlyActive, isLoaded)
       }
     })
   })
 
-  return result as StringRecordNodeToNodeStringRecord<States>
+  return result.public as StringRecordNodeToNodeStringRecord<States>
 }

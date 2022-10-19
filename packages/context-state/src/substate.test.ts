@@ -106,8 +106,10 @@ describe("subState", () => {
       root.run()
 
       contextSource.next(1)
-      expect(() => contextNode.getValue()).not.toThrow()
-      expect(() => subNode.getValue()).toThrowError("Inactive Context")
+      expect(() => contextNode.getValue({ root: "" })).not.toThrow()
+      expect(() => subNode.getValue({ root: "" })).toThrowError(
+        "Inactive Context",
+      )
     })
   })
 
@@ -116,7 +118,9 @@ describe("subState", () => {
       const root = createRoot()
       const subNode = substate(root, () => of(1))
 
-      expect(() => subNode.getValue()).toThrowError("Inactive Context")
+      expect(() => subNode.getValue({ root: "" })).toThrowError(
+        "Inactive Context",
+      )
     })
 
     it("after an error it throws the error", () => {
@@ -126,7 +130,7 @@ describe("subState", () => {
       root.run()
 
       expect(() => {
-        console.log(subNode.getValue())
+        console.log(subNode.getValue({ root: "" }))
       }).toThrowError("boom!")
     })
 
@@ -138,7 +142,7 @@ describe("subState", () => {
       root.run()
 
       expect(() => {
-        console.log(subSubNode.getValue())
+        console.log(subSubNode.getValue({ root: "" }))
       }).toThrowError("boom!")
     })
 
@@ -152,7 +156,7 @@ describe("subState", () => {
       source$.next(2)
       source$.next(3)
 
-      expect(subNode.getValue()).toBe(3)
+      expect(subNode.getValue({ root: "" })).toBe(3)
     })
 
     it("returns a promise that resolves when the first value is emitted", async () => {
@@ -162,7 +166,7 @@ describe("subState", () => {
       source$.next(1)
       root.run()
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       source$.next(2)
       source$.next(3)
@@ -175,7 +179,7 @@ describe("subState", () => {
       const subNode = substate(root, () => NEVER)
       const stop = root.run()
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       stop()
 
@@ -188,7 +192,7 @@ describe("subState", () => {
       const subNode = substate(root, () => source$)
       root.run()
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       const error = new Error()
       source$.error(error)
@@ -206,7 +210,7 @@ describe("subState", () => {
 
       source$.next(1)
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
       expect(promise).toBeInstanceOf(Promise)
 
       source$.next(2)
@@ -229,10 +233,10 @@ describe("subState", () => {
 
       contextSource$.next(1)
       source$.next(2)
-      expect(subNode.getValue()).toBe(2)
+      expect(subNode.getValue({ root: "" })).toBe(2)
 
       contextSource$.next(3)
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       source$.next(4)
       await expect(promise).resolves.toBe(4)
@@ -247,7 +251,7 @@ describe("subState", () => {
       )
       root.run()
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       contextSource$.next(1)
       contextSource$.next(2)
@@ -261,7 +265,7 @@ describe("subState", () => {
       const subNode = substate(root, () => source$)
       root.run()
 
-      const promise = subNode.getValue()
+      const promise = subNode.getValue({ root: "" })
 
       const error = new Error()
       source$.error(error)
@@ -278,7 +282,7 @@ describe("subState", () => {
       root.run()
 
       const emissions: number[] = []
-      subNode.state$().subscribe({
+      subNode.getState$({ root: "" }).subscribe({
         next: (v) => emissions.push(v),
       })
       expect(emissions).toEqual([])
@@ -298,7 +302,7 @@ describe("subState", () => {
 
       source$.next(1)
       expect.assertions(1)
-      subNode.state$().subscribe({
+      subNode.getState$({ root: "" }).subscribe({
         next: (v) => {
           expect(v).toBe(1)
         },
@@ -311,7 +315,7 @@ describe("subState", () => {
       const subNode = substate(root, () => source$)
 
       expect.assertions(1)
-      subNode.state$().subscribe({
+      subNode.getState$({ root: "" }).subscribe({
         error: (e) => {
           expect(e.message).toEqual("Inactive Context")
         },
@@ -325,7 +329,7 @@ describe("subState", () => {
       root.run()
 
       const error = new Error("haha")
-      subNode.state$().subscribe({
+      subNode.getState$({ root: "" }).subscribe({
         error: (e) => expect(e).toBe(error),
       })
 
@@ -341,7 +345,7 @@ describe("subState", () => {
       root.run()
 
       let completed = false
-      subNode.state$().subscribe({
+      subNode.getState$({ root: "" }).subscribe({
         complete: () => (completed = true),
       })
 
@@ -358,7 +362,7 @@ describe("subState", () => {
       root.run()
 
       const complete = jest.fn()
-      subNode.state$().subscribe({ complete })
+      subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(1)
       expect(complete).not.toHaveBeenCalled()
@@ -385,7 +389,7 @@ describe("subState", () => {
 
       contextSource$.next(2)
       const next = jest.fn()
-      subNode.state$().subscribe({ next })
+      subNode.getState$({ root: "" }).subscribe({ next })
 
       expect(next).not.toHaveBeenCalled()
     })
@@ -402,7 +406,7 @@ describe("subState", () => {
       source$.next(1)
 
       const complete = jest.fn()
-      subNode.state$().subscribe({ complete })
+      subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(1)
 
@@ -419,7 +423,7 @@ describe("subState", () => {
       contextSource$.next(1)
 
       const complete = jest.fn()
-      subNode.state$().subscribe({ complete })
+      subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(2)
 
@@ -434,7 +438,7 @@ describe("subState", () => {
       root.run()
 
       contextSource$.next(1)
-      const observable = subNode.state$()
+      const observable = subNode.getState$({ root: "" })
 
       contextSource$.next(2)
 

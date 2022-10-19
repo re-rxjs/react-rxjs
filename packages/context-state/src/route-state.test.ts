@@ -66,7 +66,7 @@ describe("routeState", () => {
       root.run()
 
       const next = jest.fn()
-      key.state$().subscribe({
+      key.getState$().subscribe({
         next,
       })
 
@@ -89,7 +89,7 @@ describe("routeState", () => {
       root.run()
 
       const next = jest.fn()
-      key.state$().subscribe({ next })
+      key.getState$().subscribe({ next })
 
       parentSource.next(1)
       parentSource.next(2)

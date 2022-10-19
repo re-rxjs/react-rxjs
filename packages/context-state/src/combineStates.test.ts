@@ -15,7 +15,11 @@ describe("combineStates", () => {
     const combined = combineStates({ nodeA, nodeB, nodeC })
     root.run()
 
-    expect(combined.getValue()).toEqual({ nodeA: "a", nodeB: "b", nodeC: "c" })
+    expect(combined.getValue({ root: "" })).toEqual({
+      nodeA: "a",
+      nodeB: "b",
+      nodeC: "c",
+    })
   })
 
   it("substates can access the context of either branch", () => {
@@ -39,7 +43,7 @@ describe("combineStates", () => {
   })
 
   it("only activates if all branches are active", () => {
-    function createActivableNode(root: StateNode<any>) {
+    function createActivableNode(root: StateNode<any, any>) {
       const ctxSource = new BehaviorSubject(false)
       const ctxNode = substate(root, () => ctxSource)
       const [, { node }] = routeState(
@@ -59,22 +63,28 @@ describe("combineStates", () => {
     const combined = combineStates({ nodeA, nodeB })
     root.run()
 
-    expect(() => combined.getValue()).toThrowError("Inactive Context")
+    expect(() => combined.getValue({ root: "" })).toThrowError(
+      "Inactive Context",
+    )
     activateA(true)
-    expect(() => combined.getValue()).toThrowError("Inactive Context")
+    expect(() => combined.getValue({ root: "" })).toThrowError(
+      "Inactive Context",
+    )
     activateA(false)
     activateB(true)
-    expect(() => combined.getValue()).toThrowError("Inactive Context")
+    expect(() => combined.getValue({ root: "" })).toThrowError(
+      "Inactive Context",
+    )
     activateA(true)
 
-    expect(combined.getValue()).toEqual({
+    expect(combined.getValue({ root: "" })).toEqual({
       nodeA: true,
       nodeB: true,
     })
   })
 
   it("doesn't emit a value until all branches have one", async () => {
-    function createSettableNode(root: StateNode<any>) {
+    function createSettableNode(root: StateNode<any, any>) {
       const source = new Subject()
       const node = substate(root, () => source)
       return [node, (value: any) => source.next(value)] as const
@@ -86,12 +96,12 @@ describe("combineStates", () => {
     const combined = combineStates({ nodeA, nodeB })
     root.run()
 
-    const promise = combined.getValue()
+    const promise = combined.getValue({ root: "" })
     expect(promise).toBeInstanceOf(Promise)
 
     const next = jest.fn()
     const complete = jest.fn()
-    combined.state$().subscribe({ next, complete })
+    combined.getState$({ root: "" }).subscribe({ next, complete })
     expect(next).not.toHaveBeenCalled()
     expect(complete).not.toHaveBeenCalled()
 
@@ -109,6 +119,6 @@ describe("combineStates", () => {
     expect(next).toHaveBeenCalledWith({ nodeA: "a2", nodeB: "b" })
     expect(complete).not.toHaveBeenCalled()
 
-    expect(combined.getValue()).toEqual({ nodeA: "a2", nodeB: "b" })
+    expect(combined.getValue({ root: "" })).toEqual({ nodeA: "a2", nodeB: "b" })
   })
 })

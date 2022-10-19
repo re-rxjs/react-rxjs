@@ -1,32 +1,30 @@
 import { Observable, ReplaySubject, Subscription } from "rxjs"
-import type { StateNode, Ctx } from "../types"
+import type { CtxFn, StateNode, StringRecord } from "../types"
 import {
+  InternalStateNode,
   EMPTY_VALUE,
   inactiveContext,
   invalidContext,
   StatePromise,
   DeferredPromise,
   createDeferredPromise,
-  globalChildRunners,
-  globalIsActive,
-  globalRunners,
-  globalParents,
   RunFn,
+  addInternals,
 } from "./"
 import { NestedMap } from "./nested-map"
 
 const recursiveError = (
   key: any[],
-  start: StateNode<any>,
-  searched: Set<StateNode<any>>,
+  start: InternalStateNode<any, any>,
+  searched: Set<InternalStateNode<any, any>>,
 ): Error | undefined => {
   if (searched.has(start)) return undefined
   searched.add(start)
-  const result = globalIsActive.get(start)!(key)
+  const result = start.isActive(key)
   if (result instanceof Error) return result
   if (result) return undefined
 
-  const parents = globalParents.get(start)!
+  const parents = start.parents
   if (!Array.isArray(parents)) return recursiveError(key, parents, searched)
 
   for (let i = 0; i < parents.length; i++) {
@@ -36,10 +34,11 @@ const recursiveError = (
   return undefined
 }
 
-export const detachedNode = <T>(
-  getState$: (ctx: Ctx) => Observable<T>,
+export const detachedNode = <T, K extends StringRecord<any>>(
+  keysOrder: string[],
+  getState$: CtxFn<T, K>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-): StateNode<T> => {
+): InternalStateNode<T, K> => {
   const instances = new NestedMap<
     any,
     {
@@ -52,11 +51,19 @@ export const detachedNode = <T>(
     }
   >()
 
-  const result: StateNode<T> = {
-    getValue: (...key: any[]) => {
-      const instance = instances.get(key)
+  const privateNode = {
+    keysOrder,
+    parents: [],
+  } as unknown as InternalStateNode<T, K>
+
+  const publicNode: StateNode<T, K> = {
+    getValue: (keyObj = {} as K) => {
+      const sortedKey = keysOrder.map((key) => keyObj[key])
+      const instance = instances.get(sortedKey)
       if (!instance)
-        throw recursiveError(key, result, new Set()) || inactiveContext()
+        throw (
+          recursiveError(sortedKey, privateNode, new Set()) || inactiveContext()
+        )
 
       if (instance.error) throw instance.error.e
       const { currentValue, promise } = instance
@@ -65,32 +72,40 @@ export const detachedNode = <T>(
       instance.promise = createDeferredPromise()
       return instance.promise.promise
     },
-    state$: (...key: any[]) =>
-      new Observable<T>((observer) => {
-        const instance = instances.get(key)
+    getState$: (keyObj = {} as K) => {
+      const sortedKey = keysOrder.map((key) => keyObj[key])
+
+      return new Observable<T>((observer) => {
+        const instance = instances.get(sortedKey)
         return instance
           ? instance.subject.subscribe(observer)
           : observer.error(
-              recursiveError(key, result, new Set()) || inactiveContext(),
+              recursiveError(sortedKey, privateNode, new Set()) ||
+                inactiveContext(),
             )
-      }),
+      })
+    },
   }
+  privateNode.public = publicNode
+  privateNode.childRunners = []
 
-  const runners: Array<RunFn> = []
-  globalChildRunners.set(result, runners)
-  globalIsActive.set(result, (key: any[]) => {
+  privateNode.isActive = (key: any[]) => {
     const instance = instances.get(key)
     if (!instance) return false
     return instance.error?.e ?? true
-  })
+  }
 
   const runChildren: RunFn = (...args) => {
-    runners.forEach((cb) => {
+    privateNode.childRunners.forEach((cb) => {
       cb(...args)
     })
   }
 
-  const run = (key: any[], isActive: boolean, isParentLoaded?: boolean) => {
+  privateNode.run = (
+    key: any[],
+    isActive: boolean,
+    isParentLoaded?: boolean,
+  ) => {
     let instance = instances.get(key)
     if (!isActive) {
       if (!instance) return
@@ -121,16 +136,26 @@ export const detachedNode = <T>(
         instances.set(key, instance)
       } else {
         instance.subscription?.unsubscribe()
-        instance.currentValue = EMPTY_VALUE // Causes "doesn't re-emit if the selector returns the same key after the parent changes" to fail
+        instance.currentValue = EMPTY_VALUE
         instance.isParentLoaded = true
       }
       const actualInstance = instance
 
-      const ctx = <V>(node: StateNode<V>): V => {
-        const value = (node as any).getValue(...key)
+      const objKey = {} as K
+      keysOrder.forEach((keyName, idx) => {
+        ;(objKey as any)[keyName] = key[idx]
+      })
+
+      const ctxValue = <V>(node: StateNode<V, any>): V => {
+        const value = node.getValue(objKey)
         if (value instanceof StatePromise) throw invalidContext()
         return value
       }
+
+      const ctxObservable = <V, CK extends StringRecord<any>>(
+        node: StateNode<V, any>,
+        partialKey: Omit<CK, keyof K>,
+      ): Observable<V> => node.getState$({ ...objKey, ...partialKey })
 
       const onError = (err: any) => {
         const prevPromise = actualInstance.promise
@@ -148,7 +173,7 @@ export const detachedNode = <T>(
 
       let observable: Observable<any> | null = null
       try {
-        observable = getState$(ctx)
+        observable = getState$(ctxValue, ctxObservable, objKey)
       } catch (e) {
         onError(e)
       }
@@ -220,7 +245,7 @@ export const detachedNode = <T>(
     prevSubect?.complete()
   }
 
-  globalRunners.set(result, run)
+  addInternals(publicNode, privateNode)
 
-  return result
+  return privateNode
 }
