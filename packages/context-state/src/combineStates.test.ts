@@ -2,7 +2,7 @@ import { createRoot } from "./create-root"
 import { BehaviorSubject, of, Subject } from "rxjs"
 import { substate } from "./substate"
 import { combineStates } from "./combineStates"
-import { StateNode } from "./types"
+import { StateNode, StringRecord } from "./types"
 import { routeState } from "./route-state"
 
 describe("combineStates", () => {
@@ -43,7 +43,9 @@ describe("combineStates", () => {
   })
 
   it("only activates if all branches are active", () => {
-    function createActivableNode(root: StateNode<any, any>) {
+    function createActivableNode<K extends StringRecord<any>>(
+      root: StateNode<any, K>,
+    ) {
       const ctxSource = new BehaviorSubject(false)
       const ctxNode = substate(root, () => ctxSource)
       const [, { node }] = routeState(
@@ -84,7 +86,9 @@ describe("combineStates", () => {
   })
 
   it("doesn't emit a value until all branches have one", async () => {
-    function createSettableNode(root: StateNode<any, any>) {
+    function createSettableNode<K extends StringRecord<any>>(
+      root: StateNode<never, K>,
+    ) {
       const source = new Subject()
       const node = substate(root, () => source)
       return [node, (value: any) => source.next(value)] as const

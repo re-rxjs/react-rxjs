@@ -28,7 +28,7 @@ interface CombinedStateInstance {
 }
 
 export const combineStates = <States extends StringRecord<StateNode<any, any>>>(
-  states: States,
+  states: KeysAreCompatible<MapKeys<States>> extends true ? States : never,
 ): StringRecordNodeToNodeStringRecord<States> => {
   const instances = new NestedMap<any[], CombinedStateInstance>()
   const nKeys = Object.keys(states).length
@@ -86,3 +86,41 @@ export const combineStates = <States extends StringRecord<StateNode<any, any>>>(
 
   return result.public as StringRecordNodeToNodeStringRecord<States>
 }
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+  k: infer I,
+) => void
+  ? I
+  : never
+
+/**
+ * Converts Record<string, State<any, K>> to Record<string, K>
+ */
+type MapKeys<States> = {
+  [K in keyof States]: States[K] extends StateNode<any, infer K> ? K : never
+}
+
+/**
+ * For each of the keys, check if they are compatible with the intersection
+ */
+type IndividualIsCompatible<KeysRecord, KeysIntersection> = {
+  [K in keyof KeysRecord]: KeysRecord[K] extends KeysIntersection ? true : false
+}
+
+/**
+ * It will be compatible if one of the individual ones returns true.
+ * If all of them are false, true extends false => false
+ * if one of them is true, true extends boolean => true
+ */
+type IsCompatible<KeysRecord, KeysIntersection> =
+  true extends IndividualIsCompatible<
+    KeysRecord,
+    KeysIntersection
+  >[keyof KeysRecord]
+    ? true
+    : false
+
+type KeysAreCompatible<KeysRecord> = IsCompatible<
+  KeysRecord,
+  UnionToIntersection<KeysRecord[keyof KeysRecord]>
+>

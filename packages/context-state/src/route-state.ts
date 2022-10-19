@@ -24,10 +24,10 @@ export const routeState = <
   K extends StringRecord<any>,
   O extends StringRecord<((value: T) => any) | null>,
   OT extends {
-    [K in keyof O]: null extends O[K]
-      ? StateNode<T, any>
-      : O[K] extends (value: T) => infer V
-      ? StateNode<V, any>
+    [KOT in keyof O]: null extends O[KOT]
+      ? StateNode<T, K>
+      : O[KOT] extends (value: T) => infer V
+      ? StateNode<V, K>
       : unknown
   },
 >(
