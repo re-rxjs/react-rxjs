@@ -1,5 +1,5 @@
 import { Observable, ReplaySubject, Subscription } from "rxjs"
-import type { CtxFn, StateNode, StringRecord } from "../types"
+import type { CtxFn, Signal, StateNode, StringRecord } from "../types"
 import {
   InternalStateNode,
   EMPTY_VALUE,
@@ -13,7 +13,7 @@ import {
 } from "./"
 import { NestedMap } from "./nested-map"
 
-const recursiveError = (
+export const recursiveError = (
   key: any[],
   start: InternalStateNode<any, any>,
   searched: Set<InternalStateNode<any, any>>,
@@ -153,9 +153,13 @@ export const detachedNode = <T, K extends StringRecord<any>>(
       }
 
       const ctxObservable = <V, CK extends StringRecord<any>>(
-        node: StateNode<V, any>,
+        node: StateNode<V, CK> | Signal<V, CK>,
         partialKey: Omit<CK, keyof K>,
-      ): Observable<V> => node.getState$({ ...objKey, ...partialKey })
+      ): Observable<V> =>
+        ("getSignal$" in node ? node.getSignal$ : node.getState$)({
+          ...objKey,
+          ...partialKey,
+        } as CK)
 
       const onError = (err: any) => {
         const prevPromise = actualInstance.promise
