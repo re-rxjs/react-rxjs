@@ -117,13 +117,10 @@ export const detachedNode = <T, K extends StringRecord<any>>(
   ) => void = (instance, ...args) => {
     const waiters: Array<() => void> = []
     instance.onFlushQueue = waiters
-    privateNode.childRunners.forEach((cb) => {
-      cb(...args)
-    })
+    for (let i = 0; i < privateNode.childRunners.length; i++)
+      privateNode.childRunners[i](...args)
     delete instance.onFlushQueue
-    waiters.forEach((cb) => {
-      cb()
-    })
+    for (let i = 0; i < waiters.length; i++) waiters[i]()
   }
 
   privateNode.run = (

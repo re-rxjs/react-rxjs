@@ -20,13 +20,10 @@ export function createRoot<KeyValue = never, KeyName extends string = "">(
     const [rootKey] = key
     const waiters: Array<() => void> = []
     flushQueue.set(rootKey, waiters)
-    childRunners.forEach((cb) => {
-      cb(key, isActive, true)
-    })
+    for (let i = 0; i < childRunners.length; i++)
+      childRunners[i](key, isActive, true)
     flushQueue.delete(rootKey)
-    waiters.forEach((cb) => {
-      cb()
-    })
+    for (let i = 0; i < waiters.length; i++) waiters[i]()
   }
 
   const result: RootNode<KeyValue, KeyName> = {
