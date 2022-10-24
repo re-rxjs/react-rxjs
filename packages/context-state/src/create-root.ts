@@ -13,11 +13,19 @@ export function createRoot<KeyValue, KeyName extends string>(
 export function createRoot<KeyValue = never, KeyName extends string = "">(
   keyName?: KeyName,
 ): RootNode<KeyValue, KeyName> {
+  const flushQueue = new Map<any, Array<() => void>>()
   const childRunners = new Array<RunFn>()
 
   const runChildren: RunFn = (key, isActive) => {
+    const [rootKey] = key
+    const waiters: Array<() => void> = []
+    flushQueue.set(rootKey, waiters)
     childRunners.forEach((cb) => {
       cb(key, isActive, true)
+    })
+    flushQueue.delete(rootKey)
+    waiters.forEach((cb) => {
+      cb()
     })
   }
 
@@ -40,6 +48,7 @@ export function createRoot<KeyValue = never, KeyName extends string = "">(
     run: runChildren,
     parents: [],
     childRunners,
+    isRunning: ([key]) => flushQueue.get(key) ?? false,
     isActive: () => true,
     keysOrder: keyName ? [keyName] : [],
     public: result as any,

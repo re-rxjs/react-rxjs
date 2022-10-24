@@ -25,6 +25,7 @@ export const createSignal = <T, K extends StringRecord<any>>(
   })
 
   return {
+    parent,
     getSignal$(keyObj: K = {} as K) {
       const sortedKey = parentInternals.keysOrder.map((key) => keyObj[key])
       const instance = instances.get(sortedKey)

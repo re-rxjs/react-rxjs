@@ -12,6 +12,8 @@ export class NestedMap<K extends any[], V extends Object> {
     for (let i = 0; i < keys.length; i++) {
       current = current.get(keys[i])
       if (!current) return undefined
+      // a child instance could be checking for a parent instance with its (longer) key
+      if (!(current instanceof Map)) return current
     }
     return current
   }

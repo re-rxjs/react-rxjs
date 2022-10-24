@@ -14,6 +14,7 @@ export interface StateNode<T, K extends StringRecord<any>> {
 
 export interface Signal<T, K extends StringRecord<any>> {
   push: {} extends K ? (value: T) => void : (key: K, value: T) => void
+  parent: StateNode<any, K>
   getSignal$: {} extends K ? () => Observable<T> : (key: K) => Observable<T>
 }
 
