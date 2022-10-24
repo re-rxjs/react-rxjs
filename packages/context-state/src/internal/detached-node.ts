@@ -217,8 +217,10 @@ export const detachedNode = <T, K extends StringRecord<any>>(
             }
           }
 
+          let isActive = true
           let subscription: Subscription | null = null
           onFlushQueue.push(() => {
+            if (!isActive) return
             if (observable instanceof Observable) {
               subscription = observable.subscribe(observer)
             } else {
@@ -227,6 +229,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
           })
 
           return () => {
+            isActive = false
             subscription?.unsubscribe()
           }
         })
