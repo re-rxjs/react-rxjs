@@ -1,6 +1,8 @@
 import {
+  concat,
   defer,
   EMPTY,
+  from,
   map,
   NEVER,
   Observable,
@@ -12,6 +14,7 @@ import {
 } from "rxjs"
 import { createRoot } from "./create-root"
 import { createSignal } from "./create-signal"
+import { testFinalizationRegistry } from "./finalizationRegistry"
 import { routeState } from "./route-state"
 import { substate } from "./substate"
 
@@ -503,6 +506,64 @@ describe("subState", () => {
       expect(teardown).not.toBeCalled()
       stop()
       expect(teardown).toBeCalled()
+    })
+
+    it("doesn't hold references to the observables that were created", async () => {
+      const fr = testFinalizationRegistry()
+      const root = createRoot()
+
+      const nodeA = substate(root, () =>
+        fr.tag("nodeA", concat(from([1, 2, 3]), NEVER)),
+      )
+      fr.gc()
+
+      const stop = root.run()
+
+      expect(nodeA.getValue()).toEqual(3)
+      stop()
+      fr.gc()
+
+      await expect(fr.getPromise("nodeA")).resolves.toEqual("nodeA")
+    })
+
+    it("doesn't hold references to dead instances, even on circular references", async () => {
+      const fr = testFinalizationRegistry()
+      const root = createRoot<string, "gameId">("gameId")
+      const signal = createSignal(root)
+
+      const nodeA = substate(
+        root,
+        (_, getState$, { gameId }): Observable<string> =>
+          fr.tag(
+            "nodeA-" + gameId,
+            getState$(signal).pipe(
+              withLatestFrom(getState$(nodeB).pipe(startWith(""))),
+              map(([, prev]) => prev + "/a/"),
+            ),
+          ),
+      )
+      const nodeB = substate(
+        root,
+        (_, getState$, { gameId }): Observable<string> =>
+          fr.tag(
+            "nodeB-" + gameId,
+            getState$(nodeA).pipe(map((v) => v + "$b$")),
+          ),
+      )
+      fr.gc()
+
+      root.run("b")
+      const stopA = root.run("a")
+
+      signal.push({ gameId: "a" }, null)
+      signal.push({ gameId: "a" }, null)
+      signal.push({ gameId: "a" }, null)
+      expect(nodeA.getValue({ gameId: "a" })).toEqual("/a/$b$/a/$b$/a/")
+      stopA()
+      fr.gc()
+
+      await expect(fr.getPromise("nodeA-a")).resolves.toBe("nodeA-a")
+      await expect(fr.getPromise("nodeB-a")).resolves.toBe("nodeB-a")
     })
   })
 })

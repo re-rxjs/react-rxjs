@@ -51,6 +51,7 @@
     "@types/react-dom": "^18.0.0",
     "babel-jest": "^27.5.1",
     "esbuild": "^0.14.34",
+    "expose-gc": "^1.0.0",
     "husky": ">=7.0.4",
     "jest": "^27.5.1",
     "jest-marbles": "^3.0.2",
