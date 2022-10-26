@@ -18,11 +18,18 @@ export interface Signal<T, K extends StringRecord<any>> {
   getSignal$: {} extends K ? () => Observable<T> : (key: K) => Observable<T>
 }
 
+interface GetObservableFn<K> {
+  <T, CK extends StringRecord<any>>(
+    other: K extends CK ? StateNode<T, CK> | Signal<T, CK> : never,
+  ): Observable<T>
+  <T, CK extends StringRecord<any>>(
+    other: StateNode<T, CK> | Signal<T, CK>,
+    keys: Omit<CK, keyof K>,
+  ): Observable<T>
+}
+
 export type CtxFn<T, K extends StringRecord<any>> = (
   ctxValue: <CT>(node: StateNode<CT, any>) => CT,
-  ctxObservable: <CT, CK extends StringRecord<any>>(
-    node: StateNode<CT, CK> | Signal<CT, CK>,
-    key: Omit<CK, keyof K>,
-  ) => Observable<CT>,
+  ctxObservable: GetObservableFn<K>,
   key: K,
 ) => Observable<T>

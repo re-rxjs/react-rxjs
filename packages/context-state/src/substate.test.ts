@@ -1,6 +1,18 @@
-import { routeState } from "./route-state"
-import { EMPTY, map, NEVER, Observable, of, Subject, throwError } from "rxjs"
+import {
+  defer,
+  EMPTY,
+  map,
+  NEVER,
+  Observable,
+  of,
+  startWith,
+  Subject,
+  throwError,
+  withLatestFrom,
+} from "rxjs"
 import { createRoot } from "./create-root"
+import { createSignal } from "./create-signal"
+import { routeState } from "./route-state"
 import { substate } from "./substate"
 
 describe("subState", () => {
@@ -457,6 +469,40 @@ describe("subState", () => {
 
       expect.assertions(1)
       observable.subscribe((v) => expect(v).toBe(2))
+    })
+
+    it("cleans up after self-referencing observables", () => {
+      const root = createRoot()
+      const signal = createSignal<string, {}>(root)
+      const teardown = jest.fn()
+      const nodeA = substate(
+        root,
+        (_, getState$) =>
+          new Observable<string>((obs) => {
+            const sub = getState$(signal)
+              .pipe(
+                withLatestFrom(
+                  defer(() => getState$(nodeA)).pipe(startWith("")),
+                ),
+                map(([val, prev]) => prev + val),
+              )
+              .subscribe(obs)
+
+            return () => {
+              sub.unsubscribe()
+              teardown()
+            }
+          }),
+      )
+      const stop = root.run()
+
+      signal.push("a")
+      signal.push("b")
+      signal.push("c")
+      expect(nodeA.getValue()).toEqual("abc")
+      expect(teardown).not.toBeCalled()
+      stop()
+      expect(teardown).toBeCalled()
     })
   })
 })

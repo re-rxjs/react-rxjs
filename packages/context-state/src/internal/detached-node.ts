@@ -176,7 +176,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
 
       const ctxObservable = <V, CK extends StringRecord<any>>(
         node: StateNode<V, CK> | Signal<V, CK>,
-        partialKey: Omit<CK, keyof K>,
+        partialKey?: Omit<CK, keyof K>,
       ): Observable<V> => {
         const internalNode = getInternals(
           "getSignal$" in node ? node.parent : node,
