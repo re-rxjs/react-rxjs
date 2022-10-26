@@ -1,5 +1,5 @@
 import { routeState } from "./route-state"
-import { EMPTY, NEVER, Observable, of, Subject, throwError } from "rxjs"
+import { EMPTY, map, NEVER, Observable, of, Subject, throwError } from "rxjs"
 import { createRoot } from "./create-root"
 import { substate } from "./substate"
 
@@ -271,6 +271,19 @@ describe("subState", () => {
       source$.error(error)
 
       await expect(promise).rejects.toBe(error)
+    })
+
+    it("can reference its siblings", () => {
+      const root = createRoot()
+      const nodeA = substate(root, (_, getState$) =>
+        getState$(nodeB, {}).pipe(map((v) => v + "-a")),
+      )
+      const nodeB = substate(root, () => of("b"))
+
+      root.run()
+
+      expect(nodeB.getValue()).toBe("b")
+      expect(nodeA.getValue()).toBe("b-a")
     })
   })
 

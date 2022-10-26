@@ -7,6 +7,7 @@ export interface RunFn {
 export interface InternalStateNode<T, K extends StringRecord<any>> {
   run: RunFn
   parents: InternalStateNode<any, any> | Array<InternalStateNode<any, any>>
+  isRunning: (key: any[]) => false | Array<() => void>
   childRunners: Array<RunFn>
   isActive: (key: any[]) => boolean | Error
   keysOrder: Array<string>

@@ -8,7 +8,7 @@ import {
   StatePromise,
   DeferredPromise,
   createDeferredPromise,
-  RunFn,
+  getInternals,
   addInternals,
 } from "./"
 import { NestedMap } from "./nested-map"
@@ -34,22 +34,22 @@ export const recursiveError = (
   return undefined
 }
 
+interface Instance<T> {
+  subject: ReplaySubject<T>
+  onFlushQueue?: Array<() => void>
+  subscription: Subscription | null
+  currentValue: EMPTY_VALUE | T
+  isParentLoaded: boolean
+  promise: DeferredPromise<T> | null
+  error: null | { e: any }
+}
+
 export const detachedNode = <T, K extends StringRecord<any>>(
   keysOrder: string[],
   getState$: CtxFn<T, K>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
 ): InternalStateNode<T, K> => {
-  const instances = new NestedMap<
-    any,
-    {
-      subject: ReplaySubject<T>
-      subscription: Subscription | null
-      currentValue: EMPTY_VALUE | T
-      isParentLoaded: boolean
-      promise: DeferredPromise<T> | null
-      error: null | { e: any }
-    }
-  >()
+  const instances = new NestedMap<any, Instance<T>>()
 
   const privateNode = {
     keysOrder,
@@ -95,10 +95,32 @@ export const detachedNode = <T, K extends StringRecord<any>>(
     return instance.error?.e ?? true
   }
 
-  const runChildren: RunFn = (...args) => {
-    privateNode.childRunners.forEach((cb) => {
-      cb(...args)
-    })
+  privateNode.isRunning = (key: any[]) => {
+    const instance = instances.get(key)
+    if (instance?.onFlushQueue) return instance.onFlushQueue!
+    if (Array.isArray(privateNode.parents)) {
+      for (let i = 0; i < privateNode.parents.length; i++) {
+        const result = privateNode.parents[i].isRunning(key)
+        if (result) return result
+      }
+      return false
+    } else {
+      return privateNode.parents.isRunning(key)
+    }
+  }
+
+  const runChildren: (
+    instance: Instance<T>,
+    key: any[],
+    isActive: boolean,
+    isParentLoaded?: boolean,
+  ) => void = (instance, ...args) => {
+    const waiters: Array<() => void> = []
+    instance.onFlushQueue = waiters
+    for (let i = 0; i < privateNode.childRunners.length; i++)
+      privateNode.childRunners[i](...args)
+    delete instance.onFlushQueue
+    for (let i = 0; i < waiters.length; i++) waiters[i]()
   }
 
   privateNode.run = (
@@ -113,7 +135,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
 
       instance.subscription?.unsubscribe()
 
-      runChildren(key, false)
+      runChildren(instance, key, false)
       instance.promise?.rej(inactiveContext())
       instance.subject.complete()
       return
@@ -155,11 +177,63 @@ export const detachedNode = <T, K extends StringRecord<any>>(
       const ctxObservable = <V, CK extends StringRecord<any>>(
         node: StateNode<V, CK> | Signal<V, CK>,
         partialKey: Omit<CK, keyof K>,
-      ): Observable<V> =>
-        ("getSignal$" in node ? node.getSignal$ : node.getState$)({
+      ): Observable<V> => {
+        const internalNode = getInternals(
+          "getSignal$" in node ? node.parent : node,
+        )
+
+        const keyObj = {
           ...objKey,
           ...partialKey,
-        } as CK)
+        } as CK
+        const onFlushQueue = internalNode.isRunning(
+          keysOrder.map((key) => keyObj[key]),
+        )
+
+        if (!onFlushQueue) {
+          return ("getSignal$" in node ? node.getSignal$ : node.getState$)(
+            keyObj,
+          )
+        }
+
+        let observable: any = EMPTY_VALUE
+        onFlushQueue.push(() => {
+          try {
+            observable = (
+              "getSignal$" in node ? node.getSignal$ : node.getState$
+            )(keyObj)
+          } catch (e) {
+            observable = e
+          }
+        })
+
+        return new Observable((observer) => {
+          if (observable !== EMPTY_VALUE) {
+            if (observable instanceof Observable) {
+              return observable.subscribe(observer)
+            } else {
+              observer.error(observable)
+              return
+            }
+          }
+
+          let isActive = true
+          let subscription: Subscription | null = null
+          onFlushQueue.push(() => {
+            if (!isActive) return
+            if (observable instanceof Observable) {
+              subscription = observable.subscribe(observer)
+            } else {
+              observer.error(observable)
+            }
+          })
+
+          return () => {
+            isActive = false
+            subscription?.unsubscribe()
+          }
+        })
+      }
 
       const onError = (err: any) => {
         const prevPromise = actualInstance.promise
@@ -170,7 +244,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
 
         actualInstance.currentValue = EMPTY_VALUE
 
-        runChildren(key, false)
+        runChildren(actualInstance, key, false)
         prevPromise?.rej(err)
         actualInstance.subject.error(err)
       }
@@ -194,7 +268,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
             actualInstance.promise = null
             if (prevValue === EMPTY_VALUE || !equalityFn(prevValue, value)) {
               prevPromise?.res(value)
-              runChildren(key, true, true)
+              runChildren(actualInstance, key, true, true)
               actualInstance.subject!.next(value)
             }
           },
@@ -217,7 +291,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
           prevSubect = actualInstance.subject
           actualInstance.subject = new ReplaySubject<T>(1)
         }
-        runChildren(key, true, false)
+        runChildren(actualInstance, key, true, false)
         prevSubect?.complete()
       }
 
@@ -245,7 +319,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
       }
       instances.set(key, instance)
     }
-    runChildren(key, true, false)
+    runChildren(instance, key, true, false)
     prevSubect?.complete()
   }
 
