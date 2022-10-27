@@ -14,7 +14,7 @@ import {
 } from "rxjs"
 import { createRoot } from "./create-root"
 import { createSignal } from "./create-signal"
-import { testFinalizationRegistry } from "./finalizationRegistry"
+import { testFinalizationRegistry } from "./test-utils/finalizationRegistry"
 import { routeState } from "./route-state"
 import { substate } from "./substate"
 
@@ -515,15 +515,12 @@ describe("subState", () => {
       const nodeA = substate(root, () =>
         fr.tag("nodeA", concat(from([1, 2, 3]), NEVER)),
       )
-      fr.gc()
-
       const stop = root.run()
 
       expect(nodeA.getValue()).toEqual(3)
       stop()
-      fr.gc()
 
-      await expect(fr.getPromise("nodeA")).resolves.toEqual("nodeA")
+      await fr.assertFinalized("nodeA")
     })
 
     it("doesn't hold references to dead instances, even on circular references", async () => {
@@ -550,7 +547,6 @@ describe("subState", () => {
             getState$(nodeA).pipe(map((v) => v + "$b$")),
           ),
       )
-      fr.gc()
 
       root.run("b")
       const stopA = root.run("a")
@@ -560,10 +556,9 @@ describe("subState", () => {
       signal.push({ gameId: "a" }, null)
       expect(nodeA.getValue({ gameId: "a" })).toEqual("/a/$b$/a/$b$/a/")
       stopA()
-      fr.gc()
 
-      await expect(fr.getPromise("nodeA-a")).resolves.toBe("nodeA-a")
-      await expect(fr.getPromise("nodeB-a")).resolves.toBe("nodeB-a")
+      await fr.assertFinalized("nodeA-a")
+      await fr.assertFinalized("nodeB-a")
     })
   })
 })
