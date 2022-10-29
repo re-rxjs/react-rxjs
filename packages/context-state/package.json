@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019 && npm run build:cjs:dev && npm run build:cjs:prod",
+    "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019",
     "build:esm2019": "esbuild src/index.tsx --bundle --outfile=./dist/context-state.es2019.mjs --target=es2019 --external:react --external:rxjs --external:use-sync-external-store --format=esm --sourcemap",
     "build:esm2017": "esbuild src/index.tsx --bundle --outfile=./dist/context-state.es2017.js --target=es2017 --external:react --external:rxjs --external:use-sync-external-store --format=esm --sourcemap",
     "build:cjs:dev": "node cjsBuild.js",

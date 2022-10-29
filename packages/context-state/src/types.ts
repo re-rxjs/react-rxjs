@@ -28,8 +28,10 @@ interface GetObservableFn<K> {
   ): Observable<T>
 }
 
+export type GetValueFn = <CT>(node: StateNode<CT, any>) => CT
+
 export type CtxFn<T, K extends StringRecord<any>> = (
-  ctxValue: <CT>(node: StateNode<CT, any>) => CT,
+  ctxValue: GetValueFn,
   ctxObservable: GetObservableFn<K>,
   key: K,
 ) => Observable<T>
