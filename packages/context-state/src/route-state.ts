@@ -37,11 +37,15 @@ export const routeState = <
 ): [StateNode<keyof O, K>, OT] => {
   const internalParent = getInternals(parent)
   const keys = new Set(Object.keys(routes))
-  const keyState = substate(parent, (ctx) => {
-    const key = selector(ctx(parent), ctx)
-    if (!keys.has(key)) throw new InvalidRouteError(key, [...keys])
-    return of(key)
-  })
+  const keyState = substate(
+    parent,
+    (ctx) => {
+      const key = selector(ctx(parent), ctx)
+      if (!keys.has(key)) throw new InvalidRouteError(key, [...keys])
+      return of(key)
+    },
+    () => false,
+  )
 
   const routedState = mapRecord(routes, (mapper) => {
     const result = detachedNode<any, any>(internalParent.keysOrder, (ctx) => {
@@ -72,5 +76,8 @@ export const routeState = <
 
   getInternals(keyState).childRunners.push(run)
 
-  return [keyState, mapRecord(routedState, (x) => x.public) as OT]
+  return [
+    substate(keyState, (ctx) => of(ctx(keyState))),
+    mapRecord(routedState, (x) => x.public) as OT,
+  ]
 }
