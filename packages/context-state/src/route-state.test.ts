@@ -186,5 +186,53 @@ describe("routeState", () => {
 
       expect(a.getValue()).toEqual("a mapped a")
     })
+
+    it("emits new values when the route stays the same", () => {
+      const root = createRoot()
+      const parentSource = new Subject<"a" | "b">()
+      const parent = substate(root, () => parentSource)
+      const [, { a }] = routeState(
+        parent,
+        {
+          a: (v) => "a mapped " + v,
+        },
+        () => "a",
+      )
+
+      root.run()
+
+      parentSource.next("a")
+      parentSource.next("b")
+
+      expect(a.getValue()).toEqual("a mapped b")
+    })
+
+    it("doesn't update if the value returns the same as before", () => {
+      const root = createRoot()
+      const parentSource = new Subject<"a" | "b">()
+      const parent = substate(root, () => parentSource)
+      const [, { a }] = routeState(
+        parent,
+        {
+          a: (v) => "a mapped " + v,
+        },
+        () => "a",
+      )
+
+      root.run()
+
+      const childSpy = jest.fn()
+      substate(a, () => {
+        childSpy()
+        return of("")
+      })
+
+      parentSource.next("a")
+      expect(childSpy).toHaveBeenCalledTimes(1)
+      parentSource.next("a")
+      expect(childSpy).toHaveBeenCalledTimes(1)
+      parentSource.next("b")
+      expect(childSpy).toHaveBeenCalledTimes(2)
+    })
   })
 })
