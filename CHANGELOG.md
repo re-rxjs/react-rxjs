@@ -1,3 +1,7 @@
+## 0.10.4 (2023-03-11)
+
+- fix: can't derive a StateObservable with takeUntil
+
 ## 0.10.3 (2022-09-09)
 
 - fix: avoid errors on unmounted Suspense components
