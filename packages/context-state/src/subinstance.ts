@@ -158,9 +158,6 @@ export const subinstance = <
     ctxFn: InstanceKeysCtxFn<KT, PI>,
   ) => {
     const internalInnerParent = getInternals(parent)
-    const missingKeyIdx = internalParent.keysOrder.findIndex(
-      (val, idx) => internalInnerParent.keysOrder[idx] !== val,
-    )
 
     const idsGenerator = detachedNode(
       internalInnerParent.keysOrder,
@@ -168,17 +165,9 @@ export const subinstance = <
       () => false,
     )
 
-    const idsNotificator: RunFn =
-      missingKeyIdx === -1
-        ? (key, isActive, isParentLoaded, ids) => {
-            idsRun(
-              internalInnerParent,
-              key,
-              isActive && isParentLoaded ? ids : [],
-            )
-          }
-        : () => {}
-    idsGenerator.childRunners.push(idsNotificator)
+    idsGenerator.childRunners.push((key, isActive, isParentLoaded, ids) => {
+      idsRun(internalInnerParent, key, isActive && isParentLoaded ? ids : [])
+    })
   }
 
   internalParent.childRunners.push(result.run)
