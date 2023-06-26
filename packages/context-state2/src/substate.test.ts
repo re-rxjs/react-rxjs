@@ -6,10 +6,13 @@ import {
   NEVER,
   Observable,
   of,
+  startWith,
   Subject,
   throwError,
+  withLatestFrom,
 } from "rxjs"
 import { createRoot } from "./create-root"
+import { createSignal } from "./create-signal"
 import { routeState } from "./route-state"
 import { substate } from "./substate"
 import { testFinalizationRegistry } from "./test-utils/finalizationRegistry"
@@ -471,39 +474,37 @@ describe("subState", () => {
       observable.subscribe((v) => expect(v).toBe(2))
     })
 
-    // it("cleans up after self-referencing observables", () => {
-    //   const root = createRoot()
-    //   const signal = createSignal<string, {}>(root)
-    //   const teardown = jest.fn()
-    //   const nodeA = substate(
-    //     root,
-    //     (_, getState$) =>
-    //       new Observable<string>((obs) => {
-    //         const sub = getState$(signal)
-    //           .pipe(
-    //             withLatestFrom(
-    //               defer(() => getState$(nodeA)).pipe(startWith("")),
-    //             ),
-    //             map(([val, prev]) => prev + val),
-    //           )
-    //           .subscribe(obs)
+    it("cleans up after self-referencing observables", () => {
+      const root = createRoot()
+      const signal = createSignal<string, {}>(root)
+      const teardown = jest.fn()
+      const nodeA = substate(
+        root,
+        (_, getState$) =>
+          new Observable<string>((obs) => {
+            const sub = getState$(signal)
+              .pipe(
+                withLatestFrom(getState$(nodeA).pipe(startWith(""))),
+                map(([val, prev]) => prev + val),
+              )
+              .subscribe(obs)
 
-    //         return () => {
-    //           sub.unsubscribe()
-    //           teardown()
-    //         }
-    //       }),
-    //   )
-    //   const stop = root.run()
+            return () => {
+              sub.unsubscribe()
+              teardown()
+            }
+          }),
+      )
+      const stop = root.run()
 
-    //   signal.push("a")
-    //   signal.push("b")
-    //   signal.push("c")
-    //   expect(nodeA.getValue()).toEqual("abc")
-    //   expect(teardown).not.toBeCalled()
-    //   stop()
-    //   expect(teardown).toBeCalled()
-    // })
+      signal.push("a")
+      signal.push("b")
+      signal.push("c")
+      expect(nodeA.getValue()).toEqual("abc")
+      expect(teardown).not.toBeCalled()
+      stop()
+      expect(teardown).toBeCalled()
+    })
 
     it("doesn't hold references to the observables that were created", async () => {
       const fr = testFinalizationRegistry()
@@ -520,42 +521,42 @@ describe("subState", () => {
       await fr.assertFinalized("nodeA")
     })
 
-    // it("doesn't hold references to dead instances, even on circular references", async () => {
-    //   const fr = testFinalizationRegistry()
-    //   const root = createRoot<string, "gameId">("gameId")
-    //   const signal = createSignal(root)
+    it("doesn't hold references to dead instances, even on circular references", async () => {
+      const fr = testFinalizationRegistry()
+      const root = createRoot<string, "gameId">("gameId")
+      const signal = createSignal(root)
 
-    //   const nodeA = substate(
-    //     root,
-    //     (_, getState$, { gameId }): Observable<string> =>
-    //       fr.tag(
-    //         "nodeA-" + gameId,
-    //         getState$(signal).pipe(
-    //           withLatestFrom(getState$(nodeB).pipe(startWith(""))),
-    //           map(([, prev]) => prev + "/a/"),
-    //         ),
-    //       ),
-    //   )
-    //   const nodeB = substate(
-    //     root,
-    //     (_, getState$, { gameId }): Observable<string> =>
-    //       fr.tag(
-    //         "nodeB-" + gameId,
-    //         getState$(nodeA).pipe(map((v) => v + "$b$")),
-    //       ),
-    //   )
+      const nodeA = substate(
+        root,
+        (_, getState$, { gameId }): Observable<string> =>
+          fr.tag(
+            "nodeA-" + gameId,
+            getState$(signal).pipe(
+              withLatestFrom(getState$(nodeB).pipe(startWith(""))),
+              map(([, prev]) => prev + "/a/"),
+            ),
+          ),
+      )
+      const nodeB = substate(
+        root,
+        (_, getState$, { gameId }): Observable<string> =>
+          fr.tag(
+            "nodeB-" + gameId,
+            getState$(nodeA).pipe(map((v) => v + "$b$")),
+          ),
+      )
 
-    //   root.run("b")
-    //   const stopA = root.run("a")
+      root.run("b")
+      const stopA = root.run("a")
 
-    //   signal.push({ gameId: "a" }, null)
-    //   signal.push({ gameId: "a" }, null)
-    //   signal.push({ gameId: "a" }, null)
-    //   expect(nodeA.getValue({ gameId: "a" })).toEqual("/a/$b$/a/$b$/a/")
-    //   stopA()
+      signal.push({ gameId: "a" }, null)
+      signal.push({ gameId: "a" }, null)
+      signal.push({ gameId: "a" }, null)
+      expect(nodeA.getValue({ gameId: "a" })).toEqual("/a/$b$/a/$b$/a/")
+      stopA()
 
-    //   await fr.assertFinalized("nodeA-a")
-    //   await fr.assertFinalized("nodeB-a")
-    // })
+      await fr.assertFinalized("nodeA-a")
+      await fr.assertFinalized("nodeB-a")
+    })
   })
 })

@@ -1,6 +1,6 @@
 import { Subscription, distinctUntilChanged, map, of } from "rxjs"
 import { NestedMap, createStateNode, getInternals, mapRecord } from "./internal"
-import { GetValueFn, StateNode, StringRecord } from "./types"
+import { GetValueFn, StateNode } from "./types"
 
 export class InvalidRouteError extends Error {
   constructor(key: string, keys: string[]) {
@@ -15,8 +15,8 @@ export class InvalidRouteError extends Error {
 
 export const routeState = <
   T,
-  K extends StringRecord<any>,
-  O extends StringRecord<((value: T) => any) | null>,
+  K extends Record<string, any>,
+  O extends Record<string, ((value: T) => any) | null>,
   OT extends {
     [KOT in keyof O]: null extends O[KOT]
       ? StateNode<T, K>
@@ -83,7 +83,7 @@ export const routeState = <
   return [keyState.public, mapRecord(routedState, (v) => v.public) as OT]
 }
 
-const createKeyState = <T, K extends StringRecord<any>>(
+const createKeyState = <T, K extends Record<string, any>>(
   parent: StateNode<T, K>,
   keys: Set<string>,
   selector: (value: T, ctx: GetValueFn) => string,

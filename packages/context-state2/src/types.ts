@@ -1,9 +1,9 @@
 import { StatePromise } from "./internal"
 import type { Observable } from "rxjs"
 
-export declare type StringRecord<T> = Record<string, T>
+export type KeysBaseType = Record<string, unknown>
 
-export interface StateNode<T, K extends StringRecord<any>> {
+export interface StateNode<T, K extends KeysBaseType> {
   getValue: {} extends K
     ? (key?: K) => T | StatePromise<T>
     : (key: K) => T | StatePromise<T>
@@ -12,19 +12,34 @@ export interface StateNode<T, K extends StringRecord<any>> {
     : (key: K) => Observable<T>
 }
 
+export interface Signal<T, K extends KeysBaseType> {
+  push: {} extends K ? (value: T) => void : (key: K, value: T) => void
+  getSignal$: {} extends K ? () => Observable<T> : (key: K) => Observable<T>
+}
+export function isSignal<T, CK extends KeysBaseType>(
+  value: StateNode<T, CK> | Signal<T, CK>,
+): value is Signal<T, CK> {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "push" in value &&
+      "getSignal$" in value,
+  )
+}
+
 interface GetObservableFn<K> {
-  <T, CK extends StringRecord<any>>(
-    other: K extends CK ? StateNode<T, CK> : never,
+  <T, CK extends KeysBaseType>(
+    other: K extends CK ? StateNode<T, CK> | Signal<T, CK> : never,
   ): Observable<T>
-  <T, CK extends StringRecord<any>>(
-    other: StateNode<T, CK>,
+  <T, CK extends KeysBaseType>(
+    other: StateNode<T, CK> | Signal<T, CK>,
     keys: Omit<CK, keyof K>,
   ): Observable<T>
 }
 
 export type GetValueFn = <CT>(node: StateNode<CT, any>) => CT
 
-export type CtxFn<T, K extends StringRecord<any>> = (
+export type CtxFn<T, K extends KeysBaseType> = (
   ctxValue: GetValueFn,
   ctxObservable: GetObservableFn<K>,
   key: K,

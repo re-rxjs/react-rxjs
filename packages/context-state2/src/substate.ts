@@ -1,12 +1,17 @@
 import { EMPTY, Subscription, defer, distinctUntilChanged, skip } from "rxjs"
 import { NestedMap, createStateNode, getInternals } from "./internal"
-import type { CtxFn, StateNode, StringRecord } from "./types"
+import {
+  isSignal,
+  type CtxFn,
+  type KeysBaseType,
+  type StateNode,
+} from "./types"
 
-export const substate = <T, P extends StringRecord<any>>(
-  parent: StateNode<any, P>,
-  getState$: CtxFn<T, P>,
+export const substate = <T, K extends KeysBaseType>(
+  parent: StateNode<any, K>,
+  getState$: CtxFn<T, K>,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-): StateNode<T, P> => {
+): StateNode<T, K> => {
   const internalParent = getInternals(parent)
   const stateNode = createStateNode(
     internalParent.keysOrder,
@@ -14,14 +19,15 @@ export const substate = <T, P extends StringRecord<any>>(
     (getContext, getObservable, key) =>
       getState$(
         (node) => getContext(getInternals(node)),
-        (other, keys?: any) => getObservable(getInternals(other), keys),
+        (other, keys?: any) =>
+          getObservable(isSignal(other) ? other : getInternals(other), keys),
         key,
       ),
   )
 
-  const subscriptions = new NestedMap<keyof P, Subscription>()
+  const subscriptions = new NestedMap<K[keyof K], Subscription>()
 
-  const addInstance = (instanceKey: P) => {
+  const addInstance = (instanceKey: K) => {
     // TODO duplicate ?
     stateNode.addInstance(instanceKey)
     const sub = defer(() => {
@@ -50,7 +56,7 @@ export const substate = <T, P extends StringRecord<any>>(
       sub,
     )
   }
-  const removeInstance = (instanceKey: P) => {
+  const removeInstance = (instanceKey: K) => {
     const key = internalParent.keysOrder.map((k) => instanceKey[k])
     const sub = subscriptions.get(key)
     subscriptions.delete(key)

@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subscription, filter } from "rxjs"
+import type { KeysBaseType } from "../types"
 import { EMPTY_VALUE } from "./empty-value"
 import { StatePromise, createDeferredPromise } from "./promises"
-import { KeysBaseType } from "./state-node"
 
 // AKA StateObservable
 export interface Instance<T, K> {

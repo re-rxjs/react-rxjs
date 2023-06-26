@@ -1,6 +1,6 @@
 import { defer } from "rxjs"
-import { StateNode } from "../types"
-import { InternalStateNode, KeysBaseType } from "./state-node"
+import type { KeysBaseType, StateNode } from "../types"
+import { InternalStateNode } from "./state-node"
 
 const internals = new WeakMap<
   StateNode<any, any>,

@@ -7,14 +7,12 @@ import {
   take,
   throwError,
 } from "rxjs"
-import { StateNode } from "../types"
+import { KeysBaseType, Signal, StateNode } from "../types"
 import { inactiveContext, invalidContext } from "./errors"
 import { linkPublicInterface } from "./internals"
 import { NestedMap } from "./nested-map"
 import { StatePromise } from "./promises"
 import { Instance, createInstance } from "./state-instance"
-
-export type KeysBaseType = Record<string, unknown>
 
 export interface InternalStateNode<T, K extends KeysBaseType> {
   keysOrder: Array<keyof K>
@@ -34,10 +32,10 @@ export interface InternalStateNode<T, K extends KeysBaseType> {
 
 interface GetObservableFn<K> {
   <T, CK extends KeysBaseType>(
-    other: K extends CK ? InternalStateNode<T, CK> : never,
+    other: K extends CK ? InternalStateNode<T, CK> | Signal<T, CK> : never,
   ): Observable<T>
   <T, CK extends KeysBaseType>(
-    other: InternalStateNode<T, CK>,
+    other: InternalStateNode<T, CK> | Signal<T, CK>,
     keys: Omit<CK, keyof K>,
   ): Observable<T>
 }
@@ -109,7 +107,9 @@ export function createStateNode<T, K extends KeysBaseType, R>(
                     ...key,
                     ...(keys ?? {}),
                   }
-                  return other.public.getState$(mergedKey as any)
+                  return "public" in other
+                    ? other.public.getState$(mergedKey as any)
+                    : other.getSignal$(mergedKey as any)
                 },
                 key,
               )
