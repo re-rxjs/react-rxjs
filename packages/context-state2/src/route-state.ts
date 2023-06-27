@@ -34,10 +34,14 @@ export const routeState = <
   const keyState = createKeyState(parent, keys, selector)
 
   const routedState = mapRecord(routes, (mapper) => {
-    return createStateNode(internalParent.keysOrder, internalParent, (ctx) => {
-      const parentValue = ctx(internalParent)
-      return of(mapper ? mapper(parentValue) : parentValue)
-    })
+    return createStateNode(
+      internalParent.keysOrder,
+      [internalParent],
+      (ctx) => {
+        const parentValue = ctx(internalParent)
+        return of(mapper ? mapper(parentValue) : parentValue)
+      },
+    )
   })
 
   const subscriptions = new NestedMap<keyof K, Subscription>()
@@ -61,7 +65,7 @@ export const routeState = <
     const key = internalParent.keysOrder.map((k) => instanceKey[k])
     subscriptions.set(key, sub)
   }
-  const reomveInstanceRoutes = (instanceKey: K) => {
+  const removeInstanceRoutes = (instanceKey: K) => {
     const key = internalParent.keysOrder.map((k) => instanceKey[k])
     const sub = subscriptions.get(key)
     subscriptions.delete(key)
@@ -76,7 +80,7 @@ export const routeState = <
     if (change.type === "added") {
       watchInstanceRoutes(change.key)
     } else if (change.type === "removed") {
-      reomveInstanceRoutes(change.key)
+      removeInstanceRoutes(change.key)
     }
   })
 
@@ -91,7 +95,7 @@ const createKeyState = <T, K extends Record<string, any>>(
   const internalParent = getInternals(parent)
   const keyNode = createStateNode(
     internalParent.keysOrder,
-    internalParent,
+    [internalParent],
     (ctx, _, key) =>
       parent.getState$(key).pipe(
         map((value) => selector(value, (node) => ctx(getInternals(node)))),

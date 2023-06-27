@@ -19,7 +19,7 @@ export function createRoot<KeyValue = never, KeyName extends string = "">(
     null,
     RootNodeKey<KeyName, KeyValue>,
     null
-  >(keyName ? [keyName] : [], null, () => of(null))
+  >(keyName ? [keyName] : [], [], () => of(null))
 
   internalNode.public.getState$ = () => {
     throw new Error("RootNode doesn't have value")

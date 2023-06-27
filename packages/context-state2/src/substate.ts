@@ -15,7 +15,7 @@ export const substate = <T, K extends KeysBaseType>(
   const internalParent = getInternals(parent)
   const stateNode = createStateNode(
     internalParent.keysOrder,
-    internalParent,
+    [internalParent],
     (getContext, getObservable, key) =>
       getState$(
         (node) => getContext(getInternals(node)),

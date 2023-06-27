@@ -1,11 +1,11 @@
-class InactiveContextError extends Error {
+export class InactiveContextError extends Error {
   constructor() {
     super("Inactive Context")
     this.name = "InactiveContextError"
   }
 }
 
-class InvalidContext extends Error {
+export class InvalidContext extends Error {
   constructor() {
     super("Invalid Context")
     this.name = "InvalidContext"

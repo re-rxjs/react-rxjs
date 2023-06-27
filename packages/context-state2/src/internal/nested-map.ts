@@ -1,3 +1,6 @@
+export const Wildcard = Symbol("Wildcard")
+export type Wildcard = typeof Wildcard
+
 export class NestedMap<K, V extends Object> {
   private root: Map<K, any>
   private rootValue?: V
@@ -56,17 +59,19 @@ export class NestedMap<K, V extends Object> {
     }
   }
 
-  *values(): Generator<V, void, void> {
-    if (this.rootValue) {
+  *values(keys?: Array<K | typeof Wildcard>): Generator<V, void, void> {
+    if (this.rootValue && (!keys || keys.length === 0)) {
       yield this.rootValue
     }
 
-    const mapsToIterate: Array<Map<K, any>> = [this.root]
-    let map: Map<K, any> | undefined
-    while ((map = mapsToIterate.pop())) {
-      for (let [_, value] of map) {
+    const mapsToIterate: Array<[Map<K, any>, number]> = [[this.root, 0]]
+    let iteration: [Map<K, any>, number] | undefined
+    while ((iteration = mapsToIterate.pop())) {
+      const [map, depth] = iteration
+      for (let [key, value] of map) {
+        if (keys && keys[depth] !== Wildcard && keys[depth] !== key) continue
         if (value instanceof Map) {
-          mapsToIterate.push(value)
+          mapsToIterate.push([value, depth + 1])
         } else {
           yield value
         }

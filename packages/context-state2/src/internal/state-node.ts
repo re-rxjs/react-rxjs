@@ -1,6 +1,7 @@
 import {
   Observable,
   Subject,
+  combineLatest,
   defer,
   of,
   switchMap,
@@ -8,15 +9,17 @@ import {
   throwError,
 } from "rxjs"
 import { KeysBaseType, Signal, StateNode } from "../types"
-import { inactiveContext, invalidContext } from "./errors"
+import { InactiveContextError, inactiveContext, invalidContext } from "./errors"
 import { linkPublicInterface } from "./internals"
-import { NestedMap } from "./nested-map"
+import { NestedMap, Wildcard } from "./nested-map"
 import { StatePromise } from "./promises"
 import { Instance, createInstance } from "./state-instance"
 
 export interface InternalStateNode<T, K extends KeysBaseType> {
   keysOrder: Array<keyof K>
-  getInstances: () => Iterable<Instance<T, K>>
+  getInstances: (
+    keys?: Array<Wildcard | K[keyof K]>,
+  ) => Iterable<Instance<T, K>>
   getInstance: (key: K) => Instance<T, K>
   addInstance: (key: K) => void
   activateInstance: (key: K) => void
@@ -26,7 +29,11 @@ export interface InternalStateNode<T, K extends KeysBaseType> {
     type: "added" | "ready" | "removed"
     key: K
   }>
-  getContext: <TC>(node: InternalStateNode<TC, K>, key: K) => TC
+  getContext: <TC>(
+    node: InternalStateNode<TC, K>,
+    key: K,
+    visited?: Set<InternalStateNode<any, any>>,
+  ) => TC
   public: StateNode<T, K>
 }
 
@@ -42,7 +49,7 @@ interface GetObservableFn<K> {
 
 export function createStateNode<T, K extends KeysBaseType, R>(
   keysOrder: Array<keyof K>,
-  parent: InternalStateNode<T, K> | null,
+  parents: Array<InternalStateNode<T, K>>,
   instanceCreator: (
     getContext: <R>(node: InternalStateNode<R, K>) => R,
     getObservable: GetObservableFn<K>,
@@ -59,7 +66,11 @@ export function createStateNode<T, K extends KeysBaseType, R>(
     return result
   }
 
-  const getContext = <TC>(otherNode: InternalStateNode<TC, K>, key: K) => {
+  const getContext = <TC>(
+    otherNode: InternalStateNode<TC, K>,
+    key: K,
+    visited = new Set<InternalStateNode<any, any>>(),
+  ) => {
     if ((otherNode as any) === node) {
       const value = node.public.getValue(key)
       if (value instanceof StatePromise) {
@@ -67,24 +78,42 @@ export function createStateNode<T, K extends KeysBaseType, R>(
       }
       return value as unknown as TC
     }
-    if (!parent) {
-      // TODO shouldn't it be something like "node not a parent" or "invalidContext"?
-      throw inactiveContext()
+    for (let parent of parents) {
+      if (visited.has(parent)) {
+        continue
+      }
+      visited.add(parent)
+
+      try {
+        return parent.getContext(otherNode, key, visited)
+      } catch (ex) {
+        // Don't throw inactiveContext, because it could be on another branch
+        if (!(ex instanceof InactiveContextError)) {
+          throw ex
+        }
+      }
     }
-    return parent.getContext(otherNode, key)
+
+    // TODO shouldn't it be something like "node not a parent" or "invalidContext"?
+    throw inactiveContext()
   }
   const instanceChange$ = new Subject<{
     type: "added" | "ready" | "removed"
     key: K
   }>()
   const addInstance = (key: K) => {
-    // Wait until parent has emitted a value
+    // Wait until parents have emitted a value
     const parent$ = defer(() => {
-      if (!parent) return of(null)
-      const instance = parent.getInstance(key)
+      const instances = parents.map((parent) => parent.getInstance(key))
       try {
-        if (instance.getValue() instanceof StatePromise) {
-          return instance.getState$().pipe(take(1))
+        if (
+          instances.some(
+            (instance) => instance.getValue() instanceof StatePromise,
+          )
+        ) {
+          return combineLatest(
+            instances.map((instance) => instance.getState$()),
+          ).pipe(take(1))
         }
       } catch (error) {
         return throwError(() => error)
@@ -166,7 +195,7 @@ export function createStateNode<T, K extends KeysBaseType, R>(
 
   const node: InternalStateNode<R, K> = {
     keysOrder,
-    getInstances: () => instances.values(),
+    getInstances: (keys) => instances.values(keys),
     getInstance,
     addInstance,
     activateInstance,
