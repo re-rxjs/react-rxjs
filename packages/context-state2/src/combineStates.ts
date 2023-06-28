@@ -50,9 +50,8 @@ export const combineStates = <
             ),
         )
       ) {
-        const key = keysOrder.map((k) => instance.key[k])
-        result.addInstance(key)
-        toActivate.push(key)
+        result.addInstance(instance.key)
+        toActivate.push(instance.key)
       }
     }
     for (let key of toActivate) {
@@ -65,7 +64,7 @@ export const combineStates = <
       keysToRemove.push(instance.key)
     }
     for (let key of keysToRemove) {
-      result.removeInstance(keysOrder.map((k) => key[k]))
+      result.removeInstance(key)
     }
   }
 
@@ -85,7 +84,7 @@ export const combineStates = <
         )
         addInstances(
           keysOrder.map((k) =>
-            k in node.keysOrder ? change.key[k] : Wildcard,
+            node.keysOrder.includes(k) ? change.key[k] : Wildcard,
           ),
         )
       } else if (change.type === "removed") {
@@ -95,7 +94,7 @@ export const combineStates = <
         )
         removeInstances(
           keysOrder.map((k) =>
-            k in node.keysOrder ? change.key[k] : Wildcard,
+            node.keysOrder.includes(k) ? change.key[k] : Wildcard,
           ),
         )
       }
