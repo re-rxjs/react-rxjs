@@ -8,14 +8,15 @@ import {
 import { NestedMap, Wildcard } from "./internal/nested-map"
 import { StateNode } from "./types"
 
+export type StringRecordNodeToStringRecord<
+  States extends Record<string, StateNode<any, any>>,
+> = {
+  [K in keyof States]: States[K] extends StateNode<infer V, any> ? V : never
+}
+
 type StringRecordNodeToNodeStringRecord<
   States extends Record<string, StateNode<any, any>>,
-> = StateNode<
-  {
-    [K in keyof States]: States[K] extends StateNode<infer V, any> ? V : never
-  },
-  any
->
+> = StateNode<StringRecordNodeToStringRecord<States>, any>
 
 export const combineStates = <
   States extends Record<string, StateNode<any, any>>,
@@ -114,7 +115,7 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 /**
  * Converts Record<string, State<any, K>> to Record<string, K>
  */
-type MapKeys<States> = {
+export type MapKeys<States> = {
   [K in keyof States]: States[K] extends StateNode<any, infer K> ? K : never
 }
 
@@ -138,7 +139,7 @@ type IsCompatible<KeysRecord, KeysIntersection> =
     ? true
     : false
 
-type KeysAreCompatible<KeysRecord> = IsCompatible<
+export type KeysAreCompatible<KeysRecord> = IsCompatible<
   KeysRecord,
   UnionToIntersection<KeysRecord[keyof KeysRecord]>
 >

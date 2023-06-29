@@ -6,7 +6,7 @@ describe("subinstance", () => {
     const root = createRoot()
     const instance$ = new Subject<InstanceUpdate<string>>()
     const updates$ = new Subject<{ key: string; value: string }>()
-    const instanceNode = subinstance(
+    const [instanceNode] = subinstance(
       root,
       "keyName",
       () => instance$,

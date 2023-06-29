@@ -11,6 +11,13 @@ export const getInternals = <T, K extends KeysBaseType>(
   node: StateNode<T, K>,
 ): InternalStateNode<T, K> => internals.get(node)!
 
+export const setInternals = <T, K extends KeysBaseType>(
+  node: StateNode<T, K>,
+  internal: InternalStateNode<T, K>,
+) => {
+  internals.set(node, internal)
+}
+
 export function linkPublicInterface<T, K extends KeysBaseType>(
   internal: InternalStateNode<T, K>,
 ): StateNode<T, K> {

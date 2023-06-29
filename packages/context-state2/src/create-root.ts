@@ -2,7 +2,7 @@ import { of } from "rxjs"
 import { createStateNode } from "./internal"
 import { StateNode } from "./types"
 
-type RootNodeKey<K extends string, V> = K extends "" ? {} : Record<K, V>
+export type RootNodeKey<K extends string, V> = K extends "" ? {} : Record<K, V>
 export interface RootNode<V, K extends string>
   extends StateNode<never, RootNodeKey<K, V>> {
   run: K extends "" ? () => () => void : (key: V) => () => void

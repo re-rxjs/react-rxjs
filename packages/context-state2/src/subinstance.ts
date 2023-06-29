@@ -15,7 +15,7 @@ export interface InstanceUpdate<K> {
   key: K
 }
 
-type MergeKey<K extends KeysBaseType, KN extends string, KV> = {
+export type MergeKey<K extends KeysBaseType, KN extends string, KV> = {
   [key in keyof K | KN]: (K & Record<KN, KV>)[key]
 }
 
@@ -26,18 +26,12 @@ export type InstanceCtxFn<T, K extends KeysBaseType, Id> = (
   key: K,
 ) => Observable<T>
 
-export function subinstance<
-  T,
-  K extends KeysBaseType,
-  KN extends string,
-  KV,
-  R,
->(
-  parent: StateNode<T, K>,
+export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
+  parent: StateNode<unknown, K>,
   keyName: KN,
   keySelector: CtxFn<InstanceUpdate<KV>, K>,
   instanceObs: InstanceCtxFn<R, MergeKey<K, KN, KV>, KV>,
-): StateNode<R, MergeKey<K, KN, KV>> {
+): [StateNode<R, MergeKey<K, KN, KV>>, StateNode<Set<KV>, K>] {
   const instanceKeys = substate(
     parent,
     (ctx, getObs, key) => {
@@ -143,7 +137,5 @@ export function subinstance<
     }
   })
 
-  return Object.assign(result.public, {
-    instanceKeys,
-  })
+  return [result.public, instanceKeys]
 }
