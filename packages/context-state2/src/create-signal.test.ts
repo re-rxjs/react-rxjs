@@ -80,9 +80,32 @@ describe("createSignal", () => {
     expect(() => signal.getSignal$({ gameId: "b" })).toThrowError(
       "Inactive Context",
     )
+    expect(() => signal.push({ gameId: "b" }, 3)).toThrowError(
+      "Inactive Context",
+    )
     stop()
     expect(() => signal.getSignal$({ gameId: "a" })).toThrowError(
       "Inactive Context",
     )
+    expect(() => signal.push({ gameId: "a" }, 3)).toThrowError(
+      "Inactive Context",
+    )
+  })
+
+  it("activates even if it's declared after the parent was already active", () => {
+    const root = createRoot()
+
+    root.run()
+
+    const signal = createSignal<number, {}>(root)
+    const next = jest.fn()
+    signal.getSignal$().subscribe(next)
+    expect(next).not.toBeCalled()
+
+    signal.push(4)
+    signal.push(5)
+    expect(next).toBeCalledTimes(2)
+    expect(next).toBeCalledWith(4)
+    expect(next).toBeCalledWith(5)
   })
 })

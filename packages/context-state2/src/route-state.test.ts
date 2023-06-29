@@ -124,6 +124,25 @@ describe("routeState", () => {
       expect(() => routes.b.getValue()).toThrowError("Inactive Context")
     })
 
+    it("activates the route even if it's declared after the parent was running", () => {
+      const root = createRoot()
+      const parentSource = new Subject<"a" | "b">()
+      const parent = substate(root, () => parentSource)
+      root.run()
+      parentSource.next("a")
+
+      const [, routes] = routeState(
+        parent,
+        {
+          a: null,
+          b: null,
+        },
+        (v) => v,
+      )
+
+      expect(routes.a.getValue()).toEqual("a")
+    })
+
     it("deactivates the previous route before activating the new one", () => {
       const root = createRoot()
       const parentSource = new Subject<"a" | "b">()
@@ -185,6 +204,29 @@ describe("routeState", () => {
       parentSource.next("a")
 
       expect(a.getValue()).toEqual("a mapped a")
+    })
+
+    it("deactivates the nodes when the parent is deactivated", () => {
+      const root = createRoot()
+      const parentSource = new Subject<"a" | "b">()
+      const parent = substate(root, () => parentSource)
+      // Now I'd like to have routes first, then the key on the second place :'D
+      const [, routes] = routeState(
+        parent,
+        {
+          a: null,
+          b: null,
+        },
+        (v) => v,
+      )
+      const stahp = root.run()
+
+      parentSource.next("a")
+      expect(routes.a.getValue()).toEqual("a")
+
+      stahp()
+
+      expect(() => routes.a.getValue()).toThrowError("Inactive Context")
     })
   })
 })

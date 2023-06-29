@@ -322,6 +322,25 @@ describe("subState", () => {
       expect(emissions).toEqual([1, 2])
     })
 
+    it("can be declared on a node already running", () => {
+      const root = createRoot()
+      const source$ = new Subject<number>()
+      root.run()
+      const subNode = substate(root, () => source$)
+
+      const emissions: number[] = []
+      subNode.getState$({ root: "" }).subscribe({
+        next: (v) => emissions.push(v),
+      })
+      expect(emissions).toEqual([])
+
+      source$.next(1)
+      expect(emissions).toEqual([1])
+
+      source$.next(2)
+      expect(emissions).toEqual([1, 2])
+    })
+
     it("replays the latest value on late subscription", () => {
       const root = createRoot()
       const source$ = new Subject<number>()

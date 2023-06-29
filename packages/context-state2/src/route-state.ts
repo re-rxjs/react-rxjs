@@ -69,6 +69,9 @@ export const routeState = <
     const key = internalParent.keysOrder.map((k) => instanceKey[k])
     const sub = subscriptions.get(key)
     subscriptions.delete(key)
+    Object.values(routedState).forEach((node) => {
+      node.removeInstance(instanceKey)
+    })
     sub?.unsubscribe()
   }
 

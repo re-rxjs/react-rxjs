@@ -164,8 +164,8 @@ export function createStateNode<T, K extends KeysBaseType, R>(
     getInstance(key).activate()
   }
   const removeInstance = (key: K) => {
-    // TODO already deleted
-    const instance = instances.get(nestedMapKey(key))!
+    const instance = instances.get(nestedMapKey(key))
+    if (!instance) return
     instance.kill()
     instances.delete(nestedMapKey(key))
     instanceChange$.next({
