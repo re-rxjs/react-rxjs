@@ -27,7 +27,7 @@ export function isSignal<T, CK extends KeysBaseType>(
   )
 }
 
-interface GetObservableFn<K> {
+export interface GetObservableFn<K> {
   <T, CK extends KeysBaseType>(
     other: K extends CK ? StateNode<T, CK> | Signal<T, CK> : never,
   ): Observable<T>

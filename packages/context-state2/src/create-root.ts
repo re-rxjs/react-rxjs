@@ -15,11 +15,11 @@ export function createRoot<KeyValue, KeyName extends string>(
 export function createRoot<KeyValue = never, KeyName extends string = "">(
   keyName?: KeyName,
 ): RootNode<KeyValue, KeyName> {
-  const internalNode = createStateNode<
-    null,
-    RootNodeKey<KeyName, KeyValue>,
-    null
-  >(keyName ? [keyName] : [], [], () => of(null))
+  const internalNode = createStateNode<RootNodeKey<KeyName, KeyValue>, null>(
+    keyName ? [keyName] : [],
+    [],
+    () => of(null),
+  )
 
   internalNode.public.getState$ = () => {
     throw new Error("RootNode doesn't have value")

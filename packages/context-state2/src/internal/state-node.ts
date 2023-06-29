@@ -47,9 +47,9 @@ interface GetObservableFn<K> {
   ): Observable<T>
 }
 
-export function createStateNode<T, K extends KeysBaseType, R>(
+export function createStateNode<K extends KeysBaseType, R>(
   keysOrder: Array<keyof K>,
-  parents: Array<InternalStateNode<T, K>>,
+  parents: Array<InternalStateNode<unknown, any>>,
   instanceCreator: (
     getContext: <R>(node: InternalStateNode<R, K>) => R,
     getObservable: GetObservableFn<K>,
@@ -67,7 +67,7 @@ export function createStateNode<T, K extends KeysBaseType, R>(
   }
 
   const getContext = <TC>(
-    otherNode: InternalStateNode<TC, K>,
+    otherNode: InternalStateNode<TC, any>,
     key: K,
     visited = new Set<InternalStateNode<any, any>>(),
   ) => {
