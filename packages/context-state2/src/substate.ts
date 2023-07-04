@@ -1,5 +1,5 @@
-import { EMPTY, Subscription, defer, distinctUntilChanged, skip } from "rxjs"
-import { NestedMap, createStateNode, getInternals } from "./internal"
+import { EMPTY, defer, distinctUntilChanged, skip } from "rxjs"
+import { createStateNode, getInternals, trackParentChanges } from "./internal"
 import {
   isSignal,
   type CtxFn,
@@ -25,12 +25,10 @@ export const substate = <T, K extends KeysBaseType>(
       ),
   )
 
-  const subscriptions = new NestedMap<K[keyof K], Subscription>()
-
   const addInstance = (instanceKey: K) => {
     // TODO duplicate ?
     stateNode.addInstance(instanceKey)
-    const sub = defer(() => {
+    return defer(() => {
       try {
         return parent.getState$(instanceKey)
       } catch (ex) {
@@ -51,36 +49,22 @@ export const substate = <T, K extends KeysBaseType>(
           // ?
         },
       })
-    subscriptions.set(
-      internalParent.keysOrder.map((k) => instanceKey[k]),
-      sub,
-    )
-  }
-  const removeInstance = (instanceKey: K) => {
-    const key = internalParent.keysOrder.map((k) => instanceKey[k])
-    const sub = subscriptions.get(key)
-    subscriptions.delete(key)
-    sub?.unsubscribe()
-    stateNode.removeInstance(instanceKey)
   }
 
-  for (let instance of internalParent.getInstances()) {
-    addInstance(instance.key)
-  }
-  for (let instance of internalParent.getInstances()) {
-    stateNode.activateInstance(instance.key)
-  }
-
-  internalParent.instanceChange$.subscribe((change) => {
-    if (change.type === "added") {
-      addInstance(change.key)
-    } else if (change.type === "ready") {
-      stateNode.activateInstance(change.key)
-    } else if (change.type === "removed") {
-      removeInstance(change.key)
-    } else if (change.type === "reset") {
-      stateNode.resetInstance(change.key)
-    }
+  trackParentChanges(parent, {
+    onAdded(key) {
+      return addInstance(key)
+    },
+    onActive(key) {
+      stateNode.activateInstance(key)
+    },
+    onReset(key) {
+      stateNode.resetInstance(key)
+    },
+    onRemoved(key, storage) {
+      stateNode.removeInstance(key)
+      storage.value.unsubscribe()
+    },
   })
 
   return stateNode.public

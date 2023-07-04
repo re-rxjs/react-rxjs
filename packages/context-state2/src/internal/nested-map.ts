@@ -1,7 +1,7 @@
 export const Wildcard = Symbol("Wildcard")
 export type Wildcard = typeof Wildcard
 
-export class NestedMap<K, V extends Object> {
+export class NestedMap<K, V> {
   private root: Map<K, any>
   private rootValue?: V
   constructor() {

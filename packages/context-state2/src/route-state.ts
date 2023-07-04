@@ -1,5 +1,10 @@
-import { Subscription, distinctUntilChanged, map, of } from "rxjs"
-import { NestedMap, createStateNode, getInternals, mapRecord } from "./internal"
+import { distinctUntilChanged, map, of } from "rxjs"
+import {
+  createStateNode,
+  getInternals,
+  mapRecord,
+  trackParentChanges,
+} from "./internal"
 import { GetValueFn, KeysBaseType, StateNode } from "./types"
 
 export class InvalidRouteError extends Error {
@@ -45,11 +50,9 @@ export const routeState = <
     )
   })
 
-  const subscriptions = new NestedMap<keyof K, Subscription>()
-
   const watchInstanceRoutes = (instanceKey: K) => {
     let previousNode: any = null
-    const sub = keyState
+    return keyState
       .getInstance(instanceKey)
       .getState$()
       .subscribe({
@@ -63,29 +66,23 @@ export const routeState = <
           previousNode = node
         },
       })
-    const key = internalParent.keysOrder.map((k) => instanceKey[k])
-    subscriptions.set(key, sub)
   }
   const removeInstanceRoutes = (instanceKey: K) => {
-    const key = internalParent.keysOrder.map((k) => instanceKey[k])
-    const sub = subscriptions.get(key)
-    subscriptions.delete(key)
     Object.values(routedState).forEach((node) => {
       node.removeInstance(instanceKey)
     })
-    sub?.unsubscribe()
   }
 
-  for (let instance of internalParent.getInstances()) {
-    watchInstanceRoutes(instance.key)
-  }
-
-  internalParent.instanceChange$.subscribe((change) => {
-    if (change.type === "added") {
-      watchInstanceRoutes(change.key)
-    } else if (change.type === "removed") {
-      removeInstanceRoutes(change.key)
-    }
+  trackParentChanges(parent, {
+    onAdded(key) {
+      return watchInstanceRoutes(key)
+    },
+    onActive() {},
+    onReset() {},
+    onRemoved(key, storage) {
+      removeInstanceRoutes(key)
+      storage.value.unsubscribe()
+    },
   })
 
   return [keyState.public, mapRecord(routedState, (v) => v.public) as OT]
@@ -111,29 +108,19 @@ const createKeyState = <T, K extends Record<string, any>>(
       ),
   )
 
-  const addInstance = (instanceKey: K) => {
-    // TODO duplicate ?
-    keyNode.addInstance(instanceKey)
-  }
-  const removeInstance = (instanceKey: K) => {
-    keyNode.removeInstance(instanceKey)
-  }
-
-  for (let instance of internalParent.getInstances()) {
-    addInstance(instance.key)
-  }
-  for (let instance of internalParent.getInstances()) {
-    keyNode.activateInstance(instance.key)
-  }
-
-  internalParent.instanceChange$.subscribe((change) => {
-    if (change.type === "added") {
-      addInstance(change.key)
-    } else if (change.type === "ready") {
-      keyNode.activateInstance(change.key)
-    } else if (change.type === "removed") {
-      removeInstance(change.key)
-    }
+  trackParentChanges(parent, {
+    onAdded(key) {
+      keyNode.addInstance(key)
+    },
+    onActive(key) {
+      keyNode.activateInstance(key)
+    },
+    onReset(key) {
+      keyNode.resetInstance(key)
+    },
+    onRemoved(key) {
+      keyNode.removeInstance(key)
+    },
   })
 
   return keyNode

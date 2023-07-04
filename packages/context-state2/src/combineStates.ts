@@ -4,6 +4,7 @@ import {
   getInternals,
   mapRecord,
   recordEntries,
+  trackParentChanges,
 } from "./internal"
 import { NestedMap, Wildcard } from "./internal/nested-map"
 import { StateNode } from "./types"
@@ -69,36 +70,34 @@ export const combineStates = <
     }
   }
 
-  recordEntries(internalStates).forEach(([key, node]) => {
-    for (let instance of node.getInstances()) {
-      activeInstances[key].set(
-        node.keysOrder.map((k) => instance.key[k]),
-        true,
-      )
-    }
-
-    node.instanceChange$.subscribe((change) => {
-      if (change.type === "added") {
-        activeInstances[key].set(
-          node.keysOrder.map((k) => change.key[k]),
+  recordEntries(states).forEach(([nodeKey, node]) => {
+    trackParentChanges(node, {
+      onAdded(key, isInitial) {
+        const nodeKeyOrder = getInternals(node).keysOrder
+        activeInstances[nodeKey].set(
+          nodeKeyOrder.map((k) => key[k]),
           true,
         )
-        addInstances(
-          keysOrder.map((k) =>
-            node.keysOrder.includes(k) ? change.key[k] : Wildcard,
-          ),
-        )
-      } else if (change.type === "removed") {
-        activeInstances[key].set(
-          node.keysOrder.map((k) => change.key[k]),
+        if (!isInitial) {
+          addInstances(
+            keysOrder.map((k) =>
+              nodeKeyOrder.includes(k) ? key[k] : Wildcard,
+            ),
+          )
+        }
+      },
+      onActive() {},
+      onReset() {},
+      onRemoved(key) {
+        const nodeKeyOrder = getInternals(node).keysOrder
+        activeInstances[nodeKey].set(
+          nodeKeyOrder.map((k) => key[k]),
           true,
         )
         removeInstances(
-          keysOrder.map((k) =>
-            node.keysOrder.includes(k) ? change.key[k] : Wildcard,
-          ),
+          keysOrder.map((k) => (nodeKeyOrder.includes(k) ? key[k] : Wildcard)),
         )
-      }
+      },
     })
   })
   addInstances()

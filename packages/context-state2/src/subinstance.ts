@@ -1,5 +1,5 @@
 import { Observable, map, scan, startWith } from "rxjs"
-import { NestedMap, createStateNode, getInternals } from "./internal"
+import { createStateNode, getInternals, trackParentChanges } from "./internal"
 import { substate } from "./substate"
 import {
   CtxFn,
@@ -74,9 +74,8 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
       ),
   )
 
-  const parentInstanceWatches = new NestedMap<K[keyof K], () => void>()
   function watchParentInstance(key: K) {
-    const sub = instanceKeys
+    return instanceKeys
       .getState$(key)
       .pipe(map((v, i) => [v, i] as const))
       .subscribe(([v, i]) => {
@@ -111,30 +110,17 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
           }
         }
       })
-
-    parentInstanceWatches.set(
-      parentInternals.keysOrder.map((k) => key[k]),
-      () => sub.unsubscribe(),
-    )
-  }
-  function stopWatchParentInstance(key: K) {
-    const orderedKey = parentInternals.keysOrder.map((k) => key[k])
-    const teardown = parentInstanceWatches.get(orderedKey)
-    parentInstanceWatches.delete(orderedKey)
-    teardown?.()
   }
 
-  // TODO this pattern is common on all operators... maybe it can be abstracted away? watch parent instances, do something on them, tear down their subscriptions.
-  for (let instance of parentInternals.getInstances()) {
-    watchParentInstance(instance.key)
-  }
-
-  parentInternals.instanceChange$.subscribe((change) => {
-    if (change.type === "added") {
-      watchParentInstance(change.key)
-    } else if (change.type === "removed") {
-      stopWatchParentInstance(change.key)
-    }
+  trackParentChanges(parent, {
+    onAdded(key) {
+      return watchParentInstance(key)
+    },
+    onActive() {},
+    onReset() {},
+    onRemoved(_, storage) {
+      storage.value.unsubscribe()
+    },
   })
 
   return [result.public, instanceKeys]
