@@ -26,7 +26,7 @@ export interface InternalStateNode<T, K extends KeysBaseType> {
   removeInstance: (key: K) => void
   resetInstance: (key: K) => void
   instanceChange$: Observable<{
-    type: "added" | "ready" | "removed"
+    type: "added" | "ready" | "removed" | "reset"
     key: K
   }>
   getContext: <TC>(
@@ -98,7 +98,7 @@ export function createStateNode<K extends KeysBaseType, R>(
     throw inactiveContext()
   }
   const instanceChange$ = new Subject<{
-    type: "added" | "ready" | "removed"
+    type: "added" | "ready" | "removed" | "reset"
     key: K
   }>()
   const addInstance = (key: K) => {
@@ -186,11 +186,10 @@ export function createStateNode<K extends KeysBaseType, R>(
     // also be waiting, and any promise/Observable returned by it is still pending
     // which is something we want to keep.
     instance.reset()
-    // if (instance.isActive) {
-    //   removeInstance(key)
-    //   addInstance(key)
-    //   activateInstance(key)
-    // }
+    instanceChange$.next({
+      type: "reset",
+      key,
+    })
   }
 
   const node: InternalStateNode<R, K> = {

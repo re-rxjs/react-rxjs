@@ -441,6 +441,30 @@ describe("subState", () => {
       expect(next).not.toHaveBeenCalled()
     })
 
+    it("emits the next value after a reentrant resubscription on context change", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const source$ = new Subject<number>()
+      const subNode = substate(contextNode, () => source$)
+      root.run()
+
+      contextSource$.next(1)
+      source$.next(1)
+      const next = jest.fn()
+      subNode.getState$().subscribe({
+        complete: () => {
+          subNode.getState$().subscribe({ next })
+        },
+      })
+
+      contextSource$.next(2)
+      expect(next).not.toHaveBeenCalled()
+
+      source$.next(1)
+      expect(next).toHaveBeenCalledWith(1)
+    })
+
     it("doesn't emit a complete if a context emits without change", () => {
       const root = createRoot()
       const contextSource$ = new Subject<number>()
@@ -475,6 +499,27 @@ describe("subState", () => {
       contextSource$.next(2)
 
       expect(complete).not.toHaveBeenCalled()
+    })
+
+    it("completes when it's further down the chain even if the parent didn't complete", () => {
+      const root = createRoot()
+      const contextSource$ = new Subject<number>()
+      const contextNode = substate(root, () => contextSource$)
+      const subNodeA = substate(contextNode, () => of(3))
+      const subNodeB = substate(subNodeA, (ctx) => of(ctx(contextNode)))
+      root.run()
+
+      contextSource$.next(1)
+
+      expect(subNodeB.getValue()).toEqual(1)
+
+      const complete = jest.fn()
+      subNodeB.getState$({ root: "" }).subscribe({ complete })
+
+      contextSource$.next(2)
+
+      expect(complete).toHaveBeenCalled()
+      expect(subNodeB.getValue()).toEqual(2)
     })
 
     it("emits the values from the new context change even if the observable was created earlier", () => {

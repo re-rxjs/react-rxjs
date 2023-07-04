@@ -78,6 +78,8 @@ export const substate = <T, K extends KeysBaseType>(
       stateNode.activateInstance(change.key)
     } else if (change.type === "removed") {
       removeInstance(change.key)
+    } else if (change.type === "reset") {
+      stateNode.resetInstance(change.key)
     }
   })
 
