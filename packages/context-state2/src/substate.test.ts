@@ -300,6 +300,29 @@ describe("subState", () => {
       expect(nodeB.getValue()).toBe("b")
       expect(nodeA.getValue()).toBe("b-a")
     })
+
+    it.only("can reference its siblings after a change", () => {
+      const root = createRoot()
+      const source$ = new Subject<string>()
+      const subNode = substate(root, () => source$)
+      const nodeA = substate(subNode, (ctx, getState$) =>
+        getState$(nodeB, {}).pipe(map((v) => ctx(subNode) + "-" + v + "-a")),
+      )
+      const nodeB = substate(subNode, (ctx) => of("b" + ctx(subNode)))
+
+      root.run()
+
+      expect(nodeA.getValue()).toBeInstanceOf(Promise)
+      source$.next("1")
+
+      expect(nodeB.getValue()).toBe("b1")
+      expect(nodeA.getValue()).toBe("1-b1-a")
+
+      source$.next("2")
+
+      expect(nodeB.getValue()).toBe("b2")
+      expect(nodeA.getValue()).toBe("2-b2-a")
+    })
   })
 
   describe("state$", () => {

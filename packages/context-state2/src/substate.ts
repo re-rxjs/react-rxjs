@@ -41,6 +41,8 @@ export const substate = <T, K extends KeysBaseType>(
         next: () => {
           stateNode.resetInstance(instanceKey)
           // TODO shouldn't re-activation of instances happen after all subscribers have restarted? how to do it?
+          // Yes. I would need a special kind of observable so that I can first reset the instances without activating them
+          // and then synchronously activate them
         },
         error: () => {
           // TODO

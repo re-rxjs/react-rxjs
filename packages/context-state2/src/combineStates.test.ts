@@ -86,6 +86,28 @@ describe("combineStates", () => {
     })
   })
 
+  it("updates when one of the sources updates", () => {
+    const root = createRoot()
+    const source$ = new Subject<string>()
+    const nodeA = substate(root, () => source$)
+    const nodeB = substate(root, () => of("b"))
+
+    const combined = combineStates({ nodeA, nodeB })
+    root.run()
+
+    source$.next("a")
+    expect(combined.getValue({ root: "" })).toEqual({
+      nodeA: "a",
+      nodeB: "b",
+    })
+
+    source$.next("2")
+    expect(combined.getValue({ root: "" })).toEqual({
+      nodeA: "2",
+      nodeB: "b",
+    })
+  })
+
   it("doesn't emit a value until all branches have one", async () => {
     function createSettableNode<K extends Record<string, any>>(
       root: StateNode<never, K>,
