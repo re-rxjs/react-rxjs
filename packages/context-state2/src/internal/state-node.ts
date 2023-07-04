@@ -15,6 +15,12 @@ import { NestedMap, Wildcard } from "./nested-map"
 import { StatePromise } from "./promises"
 import { Instance, createInstance } from "./state-instance"
 
+export type InstanceEvent =
+  | "added"
+  | "ready"
+  | "removed"
+  | "reset"
+  | "postchange"
 export interface InternalStateNode<T, K extends KeysBaseType> {
   keysOrder: Array<keyof K>
   getInstances: (
@@ -26,7 +32,7 @@ export interface InternalStateNode<T, K extends KeysBaseType> {
   removeInstance: (key: K) => void
   resetInstance: (key: K) => void
   instanceChange$: Observable<{
-    type: "added" | "ready" | "removed" | "reset"
+    type: InstanceEvent
     key: K
   }>
   getContext: <TC>(
@@ -98,7 +104,7 @@ export function createStateNode<K extends KeysBaseType, R>(
     throw inactiveContext()
   }
   const instanceChange$ = new Subject<{
-    type: "added" | "ready" | "removed" | "reset"
+    type: InstanceEvent
     key: K
   }>()
   const addInstance = (key: K) => {
@@ -147,6 +153,11 @@ export function createStateNode<K extends KeysBaseType, R>(
             }
           }),
         ),
+        () =>
+          instanceChange$.next({
+            type: "postchange",
+            key,
+          }),
       ),
     )
 
@@ -178,7 +189,6 @@ export function createStateNode<K extends KeysBaseType, R>(
     if (!instance) {
       // TODO is this a valid path? Maybe throw error instead!
       addInstance(key)
-      activateInstance(key)
       return
     }
     // Only kill + readd if it was already active.

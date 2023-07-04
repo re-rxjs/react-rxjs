@@ -16,6 +16,7 @@ export interface Instance<T, K> {
 export function createInstance<T, K extends KeysBaseType>(
   key: K,
   observable: Observable<T>,
+  onAfterChange: () => void,
 ): Instance<T, K> {
   let subject = new BehaviorSubject<T | EMPTY_VALUE>(EMPTY_VALUE)
 
@@ -35,6 +36,7 @@ export function createInstance<T, K extends KeysBaseType>(
       next: (v) => {
         deferred.res(v)
         subject.next(v)
+        onAfterChange()
       },
       error: (e) => {
         deferred.rej(e)
@@ -69,6 +71,7 @@ export function createInstance<T, K extends KeysBaseType>(
       }
     },
     reset() {
+      // TODO how to reset without activating straight away with this flow?
       if (error !== EMPTY_VALUE || subject.getValue() !== EMPTY_VALUE) {
         // If the new subscription returns the same value synchronously, do not complete the previous result.
         // TODO the child nodes should also reset... are they resetting?
