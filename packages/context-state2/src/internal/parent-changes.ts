@@ -14,6 +14,7 @@ export function trackParentChanges<T, K extends Record<string, any>, R>(
     onAdded: (key: K, isInitial: boolean) => R
     onActive: (key: K, storage: Storage<R>) => void
     onReset: (key: K, storage: Storage<R>) => void
+    onAfterChange?: (key: K, storage: Storage<R>) => void
     onRemoved: (key: K, storage: Storage<R>) => void
   },
 ): Subscription {
@@ -47,6 +48,8 @@ export function trackParentChanges<T, K extends Record<string, any>, R>(
       tracker.onActive(change.key, getStorage(change.key))
     } else if (change.type === "reset") {
       tracker.onReset(change.key, getStorage(change.key))
+    } else if (change.type === "postchange") {
+      tracker.onAfterChange?.(change.key, getStorage(change.key))
     } else if (change.type === "removed") {
       const storage = getStorage(change.key)
       tracker.onRemoved(change.key, storage)

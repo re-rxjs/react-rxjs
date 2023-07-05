@@ -301,7 +301,7 @@ describe("subState", () => {
       expect(nodeA.getValue()).toBe("b-a")
     })
 
-    it.only("can reference its siblings after a change", () => {
+    it("can reference its siblings after a change", () => {
       const root = createRoot()
       const source$ = new Subject<string>()
       const subNode = substate(root, () => source$)
