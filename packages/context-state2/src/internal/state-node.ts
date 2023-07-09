@@ -108,6 +108,11 @@ export function createStateNode<K extends KeysBaseType, R>(
     key: K
   }>()
   const addInstance = (key: K) => {
+    const orderedKey = nestedMapKey(key)
+    if (instances.get(orderedKey)) {
+      return
+    }
+
     // Wait until parents have emitted a value
     const parent$ = defer(() => {
       const instances = parents.map((parent) => parent.getInstance(key))
@@ -127,9 +132,8 @@ export function createStateNode<K extends KeysBaseType, R>(
       return of(null)
     })
 
-    // TODO case key already has instance?
     instances.set(
-      nestedMapKey(key),
+      orderedKey,
       createInstance(
         key,
         parent$.pipe(

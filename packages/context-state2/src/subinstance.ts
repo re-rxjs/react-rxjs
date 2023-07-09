@@ -1,5 +1,10 @@
-import { Observable, map, scan, startWith } from "rxjs"
-import { createStateNode, getInternals, trackParentChanges } from "./internal"
+import { Observable, filter, map, scan, startWith } from "rxjs"
+import {
+  Wildcard,
+  createStateNode,
+  getInternals,
+  trackParentChanges,
+} from "./internal"
 import { substate } from "./substate"
 import {
   CtxFn,
@@ -32,31 +37,39 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
   keySelector: CtxFn<InstanceUpdate<KV>, K>,
   instanceObs: InstanceCtxFn<R, MergeKey<K, KN, KV>, KV>,
 ): [StateNode<R, MergeKey<K, KN, KV>>, StateNode<Set<KV>, K>] {
-  const instanceKeys = substate(
-    parent,
-    (ctx, getObs, key) => {
-      const keys = Object.assign(new Set<KV>(), {
-        lastUpdate: null,
-      } as {
-        lastUpdate: InstanceUpdate<KV> | null
-      })
-      return keySelector(ctx, getObs, key).pipe(
-        scan((acc, change) => {
-          acc.lastUpdate = change
-          if (change.type === "add") {
-            acc.add(change.key)
-          } else {
-            acc.delete(change.key)
-          }
-          return acc
-        }, keys),
-        startWith(keys),
-      )
-    },
-    () => false,
-  )
-
   const parentInternals = getInternals(parent)
+  if (parentInternals.keysOrder.includes(keyName)) {
+    throw new Error(`Key "${keyName}" is already being used by a parent node`)
+  }
+  const instanceKeys = substate(parent, (ctx, getObs, key) => {
+    const keys = Object.assign(new Set<KV>(), {
+      lastUpdate: null,
+    } as {
+      lastUpdate: InstanceUpdate<KV> | null
+    })
+    return keySelector(ctx, getObs, key).pipe(
+      scan((acc, change) => {
+        acc.lastUpdate = change
+        if (change.type === "add") {
+          if (acc.has(change.key)) {
+            acc.lastUpdate = null
+          } else {
+            acc.add(change.key)
+          }
+        } else {
+          if (acc.has(change.key)) {
+            acc.delete(change.key)
+          } else {
+            acc.lastUpdate = null
+          }
+        }
+        return acc
+      }, keys),
+      filter((v) => v.lastUpdate !== null),
+      startWith(keys),
+    )
+  })
+
   const result = createStateNode<MergeKey<K, KN, KV>, R>(
     [...parentInternals.keysOrder, keyName],
     [parentInternals],
@@ -80,6 +93,9 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
       .pipe(map((v, i) => [v, i] as const))
       .subscribe(([v, i]) => {
         if (i === 0) {
+          // TODO ackchyually, this can't happen because `instanceKeys` has startWith(new Set())
+          // Something I don't like from this is that this also means that there's currently no way of doing one single update with all the changes
+          // Maybe change API to { type: 'add', keys: key[] }? And also change startWith for defaultStart
           for (let instanceKey of v) {
             result.addInstance({
               ...key,
@@ -118,8 +134,15 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
     },
     onActive() {},
     onReset() {},
-    onRemoved(_, storage) {
+    onRemoved(key, storage) {
       storage.value.unsubscribe()
+      const orderedKey = parentInternals.keysOrder.map((k) => key[k])
+      const instancesToRemove = [
+        ...result.getInstances([...orderedKey, Wildcard] as any),
+      ]
+      instancesToRemove.forEach((instance) =>
+        result.removeInstance(instance.key),
+      )
     },
   })
 
