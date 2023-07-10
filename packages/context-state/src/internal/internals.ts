@@ -1,7 +1,7 @@
 import { StateNode, StringRecord } from "../types"
 
 export interface RunFn {
-  (key: any[], isActive: boolean, isParentLoaded?: boolean): void
+  (key: any[], isActive: boolean, isParentLoaded?: boolean, value?: any): void
 }
 
 export interface InternalStateNode<T, K extends StringRecord<any>> {

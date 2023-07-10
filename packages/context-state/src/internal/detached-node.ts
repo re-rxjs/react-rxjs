@@ -114,6 +114,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
     key: any[],
     isActive: boolean,
     isParentLoaded?: boolean,
+    value?: any,
   ) => void = (instance, ...args) => {
     const waiters: Array<() => void> = []
     instance.onFlushQueue = waiters
@@ -268,7 +269,7 @@ export const detachedNode = <T, K extends StringRecord<any>>(
             actualInstance.promise = null
             if (prevValue === EMPTY_VALUE || !equalityFn(prevValue, value)) {
               prevPromise?.res(value)
-              runChildren(actualInstance, key, true, true)
+              runChildren(actualInstance, key, true, true, value)
               actualInstance.subject!.next(value)
             }
           },

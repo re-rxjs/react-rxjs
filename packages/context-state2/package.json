@@ -1,0 +1,58 @@
+{
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/re-rxjs/react-rxjs.git"
+  },
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "node": {
+        "module": "./dist/context-state.es2017.js",
+        "import": "./dist/context-state.es2019.mjs",
+        "require": "./dist/index.cjs"
+      },
+      "default": "./dist/context-state.es2017.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "./dist/context-state.es2017.js",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019",
+    "build:esm2019": "esbuild src/index.tsx --bundle --outfile=./dist/context-state.es2019.mjs --target=es2019 --external:react --external:rxjs --external:use-sync-external-store --format=esm --sourcemap",
+    "build:esm2017": "esbuild src/index.tsx --bundle --outfile=./dist/context-state.es2017.js --target=es2017 --external:react --external:rxjs --external:use-sync-external-store --format=esm --sourcemap",
+    "build:cjs:dev": "node cjsBuild.js",
+    "build:cjs:prod": "node cjsBuild.js --prod",
+    "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
+    "test": "jest --coverage",
+    "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
+    "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "rxjs": ">=7"
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": false,
+    "trailingComma": "all"
+  },
+  "name": "@react-rxjs/context-state2",
+  "authors": [
+    "Josep M Sobrepere (https://github.com/josepot)",
+    "Victor Oliva (https://github.com/voliva)"
+  ],
+  "dependencies": {
+    "use-sync-external-store": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/use-sync-external-store": "^0.0.3"
+  }
+}
