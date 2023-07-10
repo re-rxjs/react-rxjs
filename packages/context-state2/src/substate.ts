@@ -7,6 +7,13 @@ import {
   type StateNode,
 } from "./types"
 
+/**
+ *
+ * @param parent
+ * @param getState$
+ * @param equalityFn TODO <- this equality function actually refers to the parent?!
+ * @returns
+ */
 export const substate = <T, K extends KeysBaseType>(
   parent: StateNode<any, K>,
   getState$: CtxFn<T, K>,
