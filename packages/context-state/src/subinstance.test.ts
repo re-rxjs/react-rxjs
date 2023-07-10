@@ -1,13 +1,4 @@
-import {
-  NEVER,
-  Subject,
-  filter,
-  from,
-  map,
-  mergeAll,
-  of,
-  startWith,
-} from "rxjs"
+import { NEVER, Subject, filter, map, of, startWith } from "rxjs"
 import { InstanceUpdate, createRoot, subinstance, substate } from "./"
 
 describe("subinstance", () => {
@@ -30,14 +21,12 @@ describe("subinstance", () => {
       root.run()
 
       instance$.next({
-        type: "add",
-        key: "a",
+        add: ["a"],
       })
       expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
 
       instance$.next({
-        type: "add",
-        key: "b",
+        add: ["b"],
       })
       expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
       expect(instanceNode.getValue({ keyName: "b" })).toEqual("b")
@@ -50,23 +39,21 @@ describe("subinstance", () => {
       expect(instanceNode.getValue({ keyName: "b" })).toEqual("b")
 
       instance$.next({
-        type: "remove",
-        key: "a",
+        remove: ["a"],
       })
       expect(() => instanceNode.getValue({ keyName: "a" })).toThrow()
       expect(instanceNode.getValue({ keyName: "b" })).toEqual("b")
 
       instance$.next({
-        type: "remove",
-        key: "b",
+        remove: ["b"],
       })
       expect(() => instanceNode.getValue({ keyName: "b" })).toThrow()
     })
 
     it("throws if the key name is already used by one of the parents", () => {
       const root = createRoot("rootKey")
-      const context = substate(root, () => NEVER)
 
+      // Try 1-levels deep
       expect(() =>
         subinstance(
           root,
@@ -75,6 +62,9 @@ describe("subinstance", () => {
           () => NEVER,
         ),
       ).toThrow()
+
+      // Try 2-levels deep
+      const context = substate(root, () => NEVER)
       expect(() =>
         subinstance(
           context,
@@ -98,8 +88,7 @@ describe("subinstance", () => {
       root.run()
 
       instance$.next({
-        type: "add",
-        key: "a",
+        add: ["a"],
       })
       expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
       expect(instanceFn).toHaveBeenCalledTimes(1)
@@ -109,15 +98,13 @@ describe("subinstance", () => {
       expect(keysObserver).toHaveBeenCalledTimes(1)
 
       instance$.next({
-        type: "add",
-        key: "a",
+        add: ["a"],
       })
       expect(instanceFn).toHaveBeenCalledTimes(1)
       expect(keysObserver).toHaveBeenCalledTimes(1)
 
       instance$.next({
-        type: "remove",
-        key: "a",
+        remove: ["a"],
       })
       expect(() => instanceNode.getValue({ keyName: "a" })).toThrow()
       expect(keysObserver).toHaveBeenCalledTimes(2)
@@ -135,20 +122,17 @@ describe("subinstance", () => {
       root.run()
 
       instance$.next({
-        type: "add",
-        key: "a",
+        add: ["a"],
       })
       expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
 
       instance$.next({
-        type: "remove",
-        key: "a",
+        remove: ["a"],
       })
       expect(() => instanceNode.getValue({ keyName: "a" })).toThrow()
 
       instance$.next({
-        type: "remove",
-        key: "a",
+        remove: ["a"],
       })
       expect(() => instanceNode.getValue({ keyName: "a" })).toThrow()
     })
@@ -159,12 +143,9 @@ describe("subinstance", () => {
         root,
         "keyName",
         () =>
-          from(["a", "b"]).pipe(
-            map((key) => ({
-              type: "add",
-              key,
-            })),
-          ),
+          of({
+            add: ["a", "b"],
+          }),
         (id) => of(id),
       )
       const stop = root.run()
@@ -188,12 +169,9 @@ describe("subinstance", () => {
         keys,
         "keyName",
         (ctx) =>
-          from(ctx(keys)).pipe(
-            map((key) => ({
-              type: "add",
-              key,
-            })),
-          ),
+          of({
+            add: ctx(keys),
+          }),
         (id) => of(id),
       )
       root.run()
@@ -210,10 +188,8 @@ describe("subinstance", () => {
         "keyName",
         (_, getObs$) =>
           getObs$(keys).pipe(
-            mergeAll(),
-            map((key) => ({
-              type: "add",
-              key,
+            map((keys) => ({
+              add: keys,
             })),
           ),
         (id) => of(id),
@@ -233,12 +209,9 @@ describe("subinstance", () => {
         values,
         "keyName",
         () =>
-          from(["a", "b"] as const).pipe(
-            map((key) => ({
-              type: "add",
-              key,
-            })),
-          ),
+          of({
+            add: ["a", "b"] as const,
+          }),
         (id, ctx) => of(ctx(values)[id]),
       )
       root.run()
@@ -253,12 +226,9 @@ describe("subinstance", () => {
         root,
         "keyName",
         () =>
-          from(["a", "b"] as const).pipe(
-            map((key) => ({
-              type: "add",
-              key,
-            })),
-          ),
+          of({
+            add: ["a", "b"] as const,
+          }),
         (id, _, getObs$) => getObs$(values).pipe(map((values) => values[id])),
       )
       const values = substate(root, () => of({ a: 1, b: 2 }))

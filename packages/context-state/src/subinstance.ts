@@ -1,4 +1,4 @@
-import { Observable, filter, map, scan, startWith } from "rxjs"
+import { Observable, filter, scan, startWith } from "rxjs"
 import {
   Wildcard,
   createStateNode,
@@ -16,8 +16,8 @@ import {
 } from "./types"
 
 export interface InstanceUpdate<K> {
-  type: "add" | "remove"
-  key: K
+  add?: readonly K[]
+  remove?: readonly K[]
 }
 
 export type MergeKey<K extends KeysBaseType, KN extends string, KV> = {
@@ -43,29 +43,28 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
   }
   const instanceKeys = substate(parent, (ctx, getObs, key) => {
     const keys = Object.assign(new Set<KV>(), {
-      lastUpdate: null,
-    } as {
-      lastUpdate: InstanceUpdate<KV> | null
+      lastUpdate: {} as InstanceUpdate<KV>,
     })
     return keySelector(ctx, getObs, key).pipe(
       scan((acc, change) => {
-        acc.lastUpdate = change
-        if (change.type === "add") {
-          if (acc.has(change.key)) {
-            acc.lastUpdate = null
-          } else {
-            acc.add(change.key)
-          }
-        } else {
-          if (acc.has(change.key)) {
-            acc.delete(change.key)
-          } else {
-            acc.lastUpdate = null
-          }
+        const cleanUpdate: InstanceUpdate<KV> = {
+          add: change.add?.filter((key) => !acc.has(key)),
+          remove: change.remove?.filter((key) => acc.has(key)),
         }
+
+        acc.lastUpdate = cleanUpdate
+        cleanUpdate.add?.forEach((key) => {
+          acc.add(key)
+        })
+        cleanUpdate.remove?.forEach((key) => {
+          acc.delete(key)
+        })
+
         return acc
       }, keys),
-      filter((v) => v.lastUpdate !== null),
+      filter((v) =>
+        Boolean(v.lastUpdate.add?.length || v.lastUpdate.remove?.length),
+      ),
       startWith(keys),
     )
   })
@@ -88,44 +87,24 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
   )
 
   function watchParentInstance(key: K) {
-    return instanceKeys
-      .getState$(key)
-      .pipe(map((v, i) => [v, i] as const))
-      .subscribe(([v, i]) => {
-        if (i === 0) {
-          // TODO ackchyually, this can't happen because `instanceKeys` has startWith(new Set())
-          // Something I don't like from this is that this also means that there's currently no way of doing one single update with all the changes
-          // Maybe change API to { type: 'add', keys: key[] }? And also change startWith for defaultStart
-          for (let instanceKey of v) {
-            result.addInstance({
-              ...key,
-              [keyName]: instanceKey,
-            })
-          }
-          for (let instanceKey of v) {
-            result.activateInstance({
-              ...key,
-              [keyName]: instanceKey,
-            })
-          }
-        } else {
-          if (v.lastUpdate?.type === "add") {
-            result.addInstance({
-              ...key,
-              [keyName]: v.lastUpdate.key,
-            })
-            result.activateInstance({
-              ...key,
-              [keyName]: v.lastUpdate.key,
-            })
-          } else if (v.lastUpdate?.type === "remove") {
-            result.removeInstance({
-              ...key,
-              [keyName]: v.lastUpdate.key,
-            })
-          }
-        }
+    return instanceKeys.getState$(key).subscribe((v) => {
+      v.lastUpdate.remove?.forEach((keyValue) => {
+        result.removeInstance({
+          ...key,
+          [keyName]: keyValue,
+        })
       })
+      v.lastUpdate.add?.forEach((keyValue) => {
+        result.addInstance({
+          ...key,
+          [keyName]: keyValue,
+        })
+        result.activateInstance({
+          ...key,
+          [keyName]: keyValue,
+        })
+      })
+    })
   }
 
   trackParentChanges(parent, {
