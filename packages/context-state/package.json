@@ -44,7 +44,7 @@
     "semi": false,
     "trailingComma": "all"
   },
-  "name": "@react-rxjs/context-state2",
+  "name": "@react-rxjs/context-state",
   "authors": [
     "Josep M Sobrepere (https://github.com/josepot)",
     "Victor Oliva (https://github.com/voliva)"

@@ -13,6 +13,5 @@ packages/dom/dist/**
 !packages/dom/dist/index.cjs
 !packages/dom/dist/index.js
 packages/context-state/dist/**
-packages/context-state2/dist/**
 !packages/context-state/dist/index.cjs
 !packages/context-state/dist/index.js
