@@ -13,13 +13,14 @@
         "import": "./dist/dom.es2019.mjs",
         "require": "./dist/index.cjs"
       },
-      "default": "./dist/dom.es2017.js"
+      "default": "./dist/dom.es2017.js",
+      "types": "./dist/index.d.ts"
     },
     "./package.json": "./package.json"
   },
   "module": "./dist/dom.es2017.js",
   "main": "./dist/index.js",
-  "typings": "./dist/index.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
