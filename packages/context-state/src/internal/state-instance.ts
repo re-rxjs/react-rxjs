@@ -1,4 +1,11 @@
-import { Observable, Subject, Subscription, filter, startWith } from "rxjs"
+import {
+  Observable,
+  Subject,
+  Subscription,
+  filter,
+  startWith,
+  defer,
+} from "rxjs"
 import type { KeysBaseType } from "../types"
 import { EMPTY_VALUE } from "./empty-value"
 import { StatePromise, createDeferredPromise } from "./promises"
@@ -21,19 +28,26 @@ export function createInstance<T, K extends KeysBaseType>(
   let currentValue: T | EMPTY_VALUE = EMPTY_VALUE
   let previousContextValue: T | EMPTY_VALUE = currentValue
   let subject = new Subject<T | EMPTY_VALUE>()
-  let state$ = subject.pipe(
-    startWith(currentValue),
-    filter((v) => v !== EMPTY_VALUE),
-  ) as Observable<T>
+  // Needs to be deferred for the `startWith(currentValue)`
+  let state$ = defer(
+    () =>
+      subject.pipe(
+        startWith(currentValue),
+        filter((v) => v !== EMPTY_VALUE),
+      ) as Observable<T>,
+  )
 
   const resetSubject = () => {
     previousContextValue = EMPTY_VALUE
     const oldSubject = subject
     subject = new Subject<T | EMPTY_VALUE>()
-    state$ = subject.pipe(
-      startWith(currentValue),
-      filter((v) => v !== EMPTY_VALUE),
-    ) as Observable<T>
+    state$ = defer(
+      () =>
+        subject.pipe(
+          startWith(currentValue),
+          filter((v) => v !== EMPTY_VALUE),
+        ) as Observable<T>,
+    )
     oldSubject.complete()
   }
 

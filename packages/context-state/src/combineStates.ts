@@ -7,7 +7,7 @@ import {
   trackParentChanges,
 } from "./internal"
 import { NestedMap, Wildcard } from "./internal/nested-map"
-import { StateNode } from "./types"
+import { KeysBaseType, StateNode } from "./types"
 
 export type StringRecordNodeToStringRecord<
   States extends Record<string, StateNode<any, any>>,
@@ -17,7 +17,10 @@ export type StringRecordNodeToStringRecord<
 
 type StringRecordNodeToNodeStringRecord<
   States extends Record<string, StateNode<any, any>>,
-> = StateNode<StringRecordNodeToStringRecord<States>, any>
+> = StateNode<
+  StringRecordNodeToStringRecord<States>,
+  CombineStateKeys<MapKeys<States>>
+>
 
 export const combineStates = <
   States extends Record<string, StateNode<any, any>>,
@@ -102,11 +105,11 @@ export const combineStates = <
   })
   addInstances()
 
-  return result.public as StringRecordNodeToNodeStringRecord<States>
+  return result.public as any
 }
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
+  k: infer I extends KeysBaseType,
 ) => void
   ? I
   : never
@@ -138,7 +141,11 @@ type IsCompatible<KeysRecord, KeysIntersection> =
     ? true
     : false
 
+export type CombineStateKeys<KeysRecord> = UnionToIntersection<
+  KeysRecord[keyof KeysRecord]
+>
+
 export type KeysAreCompatible<KeysRecord> = IsCompatible<
   KeysRecord,
-  UnionToIntersection<KeysRecord[keyof KeysRecord]>
+  CombineStateKeys<KeysRecord>
 >

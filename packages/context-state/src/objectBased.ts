@@ -3,6 +3,7 @@ import {
   MapKeys,
   StringRecordNodeToStringRecord,
   combineStates,
+  CombineStateKeys,
 } from "./combineStates"
 import { RootNodeKey, createRoot, RootNode as rootNode } from "./create-root"
 import { createSignal } from "./create-signal"
@@ -139,6 +140,9 @@ export function combineStateNodes<
   States extends Record<string, types.StateNode<any, any>>,
 >(
   states: KeysAreCompatible<MapKeys<States>> extends true ? States : never,
-): StateNode<StringRecordNodeToStringRecord<States>, any> {
+): StateNode<
+  StringRecordNodeToStringRecord<States>,
+  CombineStateKeys<MapKeys<States>> & types.KeysBaseType
+> {
   return new StateNode(combineStates(states))
 }
