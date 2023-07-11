@@ -1,3 +1,11 @@
+## 0.10.5 (2023-07-11)
+
+- fix: types not read when moduleResolution is not "node" (#302)
+
+### utils@0.9.6
+
+- fix(selfDependent): prevent subject from being closed after unsubscription (#283)
+
 ## 0.10.4 (2023-03-11)
 
 - fix: can't derive a StateObservable with takeUntil
