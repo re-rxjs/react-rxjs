@@ -2,6 +2,7 @@ import { TestScheduler } from "rxjs/testing"
 import { from, merge, defer, Observable, noop } from "rxjs"
 import { shareLatest } from "./"
 import { withLatestFrom, startWith, map, take } from "rxjs/operators"
+import { describe, it, expect } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

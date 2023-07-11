@@ -1,6 +1,7 @@
 import { asapScheduler, map, observeOn, of, Subject } from "rxjs"
 import { TestScheduler } from "rxjs/testing"
 import { KeyChanges, toKeySet } from "./"
+import { describe, expect, it } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

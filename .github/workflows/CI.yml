@@ -1,37 +1,36 @@
 name: CI
 
 on:
-    pull_request:
-      branches: [main]
-    push:
-      branches: [main]
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '16'
-    - run: npm ci
-    - run: npm run lint
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "16"
+      - run: npm ci
+      - run: npm run lint
 
-    - name: Build & Bundlewatch
-      uses: jackyef/bundlewatch-gh-action@master
-      env:
-        CI_BRANCH_BASE: main
-      with:
-        build-script: npm run build
-        bundlewatch-github-token: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
+      - name: Build & Bundlewatch
+        uses: jackyef/bundlewatch-gh-action@master
+        env:
+          CI_BRANCH_BASE: main
+        with:
+          build-script: npm run build
+          bundlewatch-github-token: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
 
-    - name: Tests
-      run: npm test
+      - name: Tests
+        run: npm test
 
-    - name: Code Coverage
-      uses: codecov/codecov-action@v1
-      with:
-        files: ./packages/core/coverage/lcov.info,./packages/utils/coverage/lcov.info,./packages/dom/coverage/lcov.info
-        fail_ci_if_error: true
+      - name: Code Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/core/coverage/lcov.info,./packages/utils/coverage/lcov.info,./packages/dom/coverage/lcov.info
+          fail_ci_if_error: true

@@ -31,7 +31,8 @@
     "build:cjs:dev": "node cjsBuild.js",
     "build:cjs:prod": "node cjsBuild.js --prod",
     "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
-    "test": "jest --coverage",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepack": "npm run build"

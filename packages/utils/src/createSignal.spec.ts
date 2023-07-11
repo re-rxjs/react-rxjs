@@ -1,5 +1,6 @@
 import { createSignal } from "./"
 import { createListener } from "./"
+import { describe, expect, it } from "vitest"
 
 describe("createSignal", () => {
   it('receives an "event creator" and it returns a tuple with an observable and its corresponding event-emitter', () => {
