@@ -21,6 +21,21 @@ export function createInstance<T, K extends KeysBaseType>(
   let currentValue: T | EMPTY_VALUE = EMPTY_VALUE
   let previousContextValue: T | EMPTY_VALUE = currentValue
   let subject = new Subject<T | EMPTY_VALUE>()
+  let state$ = subject.pipe(
+    startWith(currentValue),
+    filter((v) => v !== EMPTY_VALUE),
+  ) as Observable<T>
+
+  const resetSubject = () => {
+    previousContextValue = EMPTY_VALUE
+    const oldSubject = subject
+    subject = new Subject<T | EMPTY_VALUE>()
+    state$ = subject.pipe(
+      startWith(currentValue),
+      filter((v) => v !== EMPTY_VALUE),
+    ) as Observable<T>
+    oldSubject.complete()
+  }
 
   // TODO firehose
   let deferred = createDeferredPromise<T>()
@@ -51,10 +66,7 @@ export function createInstance<T, K extends KeysBaseType>(
           previousContextValue !== EMPTY_VALUE &&
           !Object.is(previousContextValue, v)
         ) {
-          previousContextValue = EMPTY_VALUE
-          const oldSubject = subject
-          subject = new Subject<T | EMPTY_VALUE>()
-          oldSubject.complete()
+          resetSubject()
         }
         emitted = true
 
@@ -79,10 +91,7 @@ export function createInstance<T, K extends KeysBaseType>(
     isSynchronous = false
 
     if (!emitted && previousContextValue !== EMPTY_VALUE) {
-      previousContextValue = EMPTY_VALUE
-      const oldSubject = subject
-      subject = new Subject<T | EMPTY_VALUE>()
-      oldSubject.complete()
+      resetSubject()
     }
   }
 
@@ -129,16 +138,10 @@ export function createInstance<T, K extends KeysBaseType>(
       // we can't return the current subject because that might complete straight away
       // after the context switch, so we just swap it now.
       if (previousContextValue !== EMPTY_VALUE) {
-        previousContextValue = EMPTY_VALUE
-        const oldSubject = subject
-        subject = new Subject<T | EMPTY_VALUE>()
-        oldSubject.complete()
+        resetSubject()
       }
 
-      return subject.pipe(
-        startWith(currentValue),
-        filter((v) => v !== EMPTY_VALUE),
-      ) as Observable<T>
+      return state$
     },
   }
   return instance

@@ -11,3 +11,4 @@ export {
   SubinstanceNode,
   combineStateNodes,
 } from "./objectBased"
+export * from "./react-bindings"
