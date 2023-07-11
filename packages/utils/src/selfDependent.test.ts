@@ -6,6 +6,7 @@ import {
   takeWhile,
   switchMapTo,
   delay,
+  startWith,
 } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { selfDependent } from "."
@@ -51,6 +52,66 @@ describe("selfDependent", () => {
         e: 4,
       })
       expectSubscriptions((source as any).subscriptions).toBe(sourceSub)
+    })
+  })
+
+  it("works after unsubscription and re-subscription", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const source = cold("abcde")
+      const sourceSub1 = " ^--!"
+      const expected1 = "  abc"
+      const sourceSub2 = " -----^---!"
+      const expected2 = "  -----abcd"
+
+      const [lastValue$, connect] = selfDependent<string>()
+      const result$ = source.pipe(
+        withLatestFrom(lastValue$.pipe(startWith(""))),
+        map(([v]) => v),
+        connect(),
+      )
+
+      expectObservable(result$, sourceSub1).toBe(expected1)
+      expectObservable(result$, sourceSub2).toBe(expected2)
+    })
+  })
+
+  it("works after complete and re-subscription", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const source = cold("abc|")
+      const sourceSub1 = " ^---!"
+      const expected1 = "  abc|"
+      const sourceSub2 = " -----^---!"
+      const expected2 = "  -----abc|"
+
+      const [lastValue$, connect] = selfDependent<string>()
+      const result$ = source.pipe(
+        withLatestFrom(lastValue$.pipe(startWith(""))),
+        map(([v]) => v),
+        connect(),
+      )
+
+      expectObservable(result$, sourceSub1).toBe(expected1)
+      expectObservable(result$, sourceSub2).toBe(expected2)
+    })
+  })
+
+  it("works after error and re-subscription", () => {
+    scheduler().run(({ expectObservable, cold }) => {
+      const source = cold("abc#")
+      const sourceSub1 = " ^---!"
+      const expected1 = "  abc#"
+      const sourceSub2 = " -----^---!"
+      const expected2 = "  -----abc#"
+
+      const [lastValue$, connect] = selfDependent<string>()
+      const result$ = source.pipe(
+        withLatestFrom(lastValue$.pipe(startWith(""))),
+        map(([v]) => v),
+        connect(),
+      )
+
+      expectObservable(result$, sourceSub1).toBe(expected1)
+      expectObservable(result$, sourceSub2).toBe(expected2)
     })
   })
 })
