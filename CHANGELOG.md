@@ -1,3 +1,7 @@
+## 0.10.6 (2023-07-12)
+
+- fix(webpack build): default condition should be last one (#304)
+
 ## 0.10.5 (2023-07-11)
 
 - fix: types not read when moduleResolution is not "node" (#302)
