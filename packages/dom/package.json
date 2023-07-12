@@ -13,8 +13,8 @@
         "import": "./dist/dom.es2019.mjs",
         "require": "./dist/index.cjs"
       },
-      "default": "./dist/dom.es2017.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/dom.es2017.js"
     },
     "./package.json": "./package.json"
   },

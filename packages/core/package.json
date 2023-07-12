@@ -13,8 +13,8 @@
         "import": "./dist/core.es2019.mjs",
         "require": "./dist/index.cjs"
       },
-      "default": "./dist/core.es2017.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/core.es2017.js"
     },
     "./package.json": "./package.json"
   },
@@ -51,7 +51,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
-    "@rx-state/core": "0.1.3",
+    "@rx-state/core": "0.1.4",
     "use-sync-external-store": "^1.0.0"
   },
   "devDependencies": {
