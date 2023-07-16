@@ -1,4 +1,5 @@
 import { Observable, of, Subject } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import { createRoot } from "./create-root"
 import { routeState } from "./route-state"
 import { substate } from "./substate"
@@ -65,7 +66,7 @@ describe("routeState", () => {
       const [key] = routeState(parent, { a: null, b: null }, (v) => v)
       root.run()
 
-      const next = jest.fn()
+      const next = vi.fn()
       key.getState$().subscribe({
         next,
       })
@@ -88,7 +89,7 @@ describe("routeState", () => {
       const [key] = routeState(parent, { a: null, b: null }, () => "a")
       root.run()
 
-      const next = jest.fn()
+      const next = vi.fn()
       key.getState$().subscribe({ next })
 
       parentSource.next(1)

@@ -1,10 +1,11 @@
-import { createRoot } from "./create-root"
 import { BehaviorSubject, of, Subject } from "rxjs"
-import { substate } from "./substate"
+import { describe, expect, it, vi } from "vitest"
 import { combineStates } from "./combineStates"
-import { StateNode } from "./types"
+import { createRoot } from "./create-root"
 import { routeState } from "./route-state"
+import { substate } from "./substate"
 import { instanceNode } from "./test-utils/instance-node"
+import { StateNode } from "./types"
 
 describe("combineStates", () => {
   it("combines state nodes into one", () => {
@@ -126,8 +127,8 @@ describe("combineStates", () => {
     const promise = combined.getValue({ root: "" })
     expect(promise).toBeInstanceOf(Promise)
 
-    const next = jest.fn()
-    const complete = jest.fn()
+    const next = vi.fn()
+    const complete = vi.fn()
     combined.getState$({ root: "" }).subscribe({ next, complete })
     expect(next).not.toHaveBeenCalled()
     expect(complete).not.toHaveBeenCalled()

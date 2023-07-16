@@ -65,6 +65,9 @@ export const routeState = <
           node.activateInstance(instanceKey)
           previousNode = node
         },
+        error: () => {
+          // TODO any implication here? How will we recover?
+        },
       })
   }
   const removeInstanceRoutes = (instanceKey: K) => {

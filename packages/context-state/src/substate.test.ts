@@ -11,6 +11,7 @@ import {
   throwError,
   withLatestFrom,
 } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import { createRoot } from "./create-root"
 import { createSignal } from "./create-signal"
 import { routeState } from "./route-state"
@@ -431,7 +432,7 @@ describe("subState", () => {
       const subNode = substate(contextNode, () => source$)
       root.run()
 
-      const complete = jest.fn()
+      const complete = vi.fn()
       subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(1)
@@ -458,7 +459,7 @@ describe("subState", () => {
       source$.next(1)
 
       contextSource$.next(2)
-      const next = jest.fn()
+      const next = vi.fn()
       subNode.getState$({ root: "" }).subscribe({ next })
 
       expect(next).not.toHaveBeenCalled()
@@ -474,7 +475,7 @@ describe("subState", () => {
 
       contextSource$.next(1)
       source$.next(1)
-      const next = jest.fn()
+      const next = vi.fn()
       subNode.getState$().subscribe({
         complete: () => {
           subNode.getState$().subscribe({ next })
@@ -499,7 +500,7 @@ describe("subState", () => {
       contextSource$.next(1)
       source$.next(1)
 
-      const complete = jest.fn()
+      const complete = vi.fn()
       subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(1)
@@ -516,7 +517,7 @@ describe("subState", () => {
 
       contextSource$.next(1)
 
-      const complete = jest.fn()
+      const complete = vi.fn()
       subNode.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(2)
@@ -536,7 +537,7 @@ describe("subState", () => {
 
       expect(subNodeB.getValue()).toEqual(1)
 
-      const complete = jest.fn()
+      const complete = vi.fn()
       subNodeB.getState$({ root: "" }).subscribe({ complete })
 
       contextSource$.next(2)
@@ -564,7 +565,7 @@ describe("subState", () => {
     it("cleans up after self-referencing observables", () => {
       const root = createRoot()
       const signal = createSignal<string, {}>(root)
-      const teardown = jest.fn()
+      const teardown = vi.fn()
       const nodeA = substate(
         root,
         (_, getState$) =>

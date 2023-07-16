@@ -2,9 +2,9 @@ import {
   Observable,
   Subject,
   Subscription,
+  defer,
   filter,
   startWith,
-  defer,
 } from "rxjs"
 import type { KeysBaseType } from "../types"
 import { EMPTY_VALUE } from "./empty-value"

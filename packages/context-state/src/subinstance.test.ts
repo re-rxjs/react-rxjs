@@ -1,4 +1,5 @@
 import { NEVER, Subject, filter, map, of, startWith } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import { InstanceUpdate, createRoot, subinstance, substate } from "./"
 
 describe("subinstance", () => {
@@ -78,7 +79,7 @@ describe("subinstance", () => {
     it("ignores adding duplicate key values", () => {
       const root = createRoot()
       const instance$ = new Subject<InstanceUpdate<string>>()
-      const instanceFn = jest.fn((id: string) => of(id))
+      const instanceFn = vi.fn((id: string) => of(id))
       const [instanceNode, keys] = subinstance(
         root,
         "keyName",
@@ -93,7 +94,7 @@ describe("subinstance", () => {
       expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
       expect(instanceFn).toHaveBeenCalledTimes(1)
 
-      const keysObserver = jest.fn()
+      const keysObserver = vi.fn()
       keys.getState$().subscribe(keysObserver)
       expect(keysObserver).toHaveBeenCalledTimes(1)
 

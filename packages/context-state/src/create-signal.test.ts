@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from "vitest"
 import { createSignal } from "./create-signal"
 import { createRoot } from "./create-root"
 
@@ -8,7 +9,7 @@ describe("createSignal", () => {
 
     root.run()
 
-    const next = jest.fn()
+    const next = vi.fn()
     signal.getSignal$().subscribe(next)
     expect(next).not.toBeCalled()
 
@@ -25,12 +26,12 @@ describe("createSignal", () => {
 
     root.run()
 
-    const nextA = jest.fn()
+    const nextA = vi.fn()
     signal.getSignal$().subscribe(nextA)
 
     signal.push(3)
 
-    const nextB = jest.fn()
+    const nextB = vi.fn()
     signal.getSignal$().subscribe(nextB)
 
     signal.push(4)
@@ -55,10 +56,10 @@ describe("createSignal", () => {
     root.run("a")
     root.run("b")
 
-    const nextA = jest.fn()
+    const nextA = vi.fn()
     signal.getSignal$({ gameId: "a" }).subscribe(nextA)
 
-    const nextB = jest.fn()
+    const nextB = vi.fn()
     signal.getSignal$({ gameId: "b" }).subscribe(nextB)
 
     signal.push({ gameId: "a" }, 1)
@@ -98,7 +99,7 @@ describe("createSignal", () => {
     root.run()
 
     const signal = createSignal<number, {}>(root)
-    const next = jest.fn()
+    const next = vi.fn()
     signal.getSignal$().subscribe(next)
     expect(next).not.toBeCalled()
 
