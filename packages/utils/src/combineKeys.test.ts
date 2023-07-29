@@ -2,6 +2,7 @@ import { concat, NEVER, Observable, of } from "rxjs"
 import { map, scan } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { combineKeys, KeyChanges } from "./"
+import { describe, expect, it } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

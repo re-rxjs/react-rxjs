@@ -4,7 +4,7 @@ import {
   render,
   screen,
 } from "@testing-library/react"
-import { act, renderHook } from "@testing-library/react-hooks"
+import { act, renderHook } from "@testing-library/react"
 import React, { FC, StrictMode, Suspense, useEffect, useState } from "react"
 import {
   defer,
@@ -25,6 +25,7 @@ import {
   startWith,
   switchMapTo,
 } from "rxjs/operators"
+import { describe, it, beforeAll, afterAll, expect, vi } from "vitest"
 import {
   bind,
   sinkSuspense,
@@ -192,7 +193,7 @@ describe("connectObservable", () => {
       )
     }
 
-    const updates = jest.fn()
+    const updates = vi.fn()
     render(<BatchComponent onUpdate={updates} />)
     expect(updates).toHaveBeenCalledTimes(1)
 
@@ -419,7 +420,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     render(
       <TestErrorBoundary onError={errorCallback}>
         <ErrorComponent />
@@ -447,7 +448,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
@@ -474,7 +475,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe fallback={<div>Loading...</div>}>
@@ -501,7 +502,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe source$={errStream$} fallback={<div>Loading...</div>}>
@@ -527,7 +528,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe
@@ -570,7 +571,7 @@ describe("connectObservable", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     const { unmount } = render(
       <TestErrorBoundary onError={errorCallback}>
         <Subscribe source$={error$} fallback={<div>Loading...</div>}>
@@ -641,7 +642,7 @@ describe("connectObservable", () => {
       return value === 1 ? <ErrorComponent /> : <>Nothing to show here</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     render(
       <TestErrorBoundary onError={errorCallback}>
         <Container />
@@ -666,11 +667,13 @@ describe("connectObservable", () => {
     )
     const subscription = function$.subscribe()
 
-    const { result } = renderHook(() => useFunction())
+    const { result, rerender } = renderHook(() => useFunction())
 
     expect(result.current()).toBe(0)
 
     values$.next(1)
+    rerender()
+
     expect(result.current()).toBe(1)
 
     subscription.unsubscribe()
@@ -678,7 +681,7 @@ describe("connectObservable", () => {
 
   it("should throw an error when the stream does not have a subscription", () => {
     const [useValue] = bind(of("Hello"))
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
 
     const Component: FC = () => <>{useValue()}</>
     render(
@@ -698,7 +701,7 @@ describe("connectObservable", () => {
   it("should throw an error if the stream completes without emitting while on SUSPENSE", async () => {
     const subject = new Subject()
     const [useValue, value$] = bind(subject)
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
 
     const Component: FC = () => <>{useValue()}</>
     render(

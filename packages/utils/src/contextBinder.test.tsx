@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react"
 import React, { createContext, useContext } from "react"
 import { of } from "rxjs"
 import { contextBinder } from "./index"
+import { describe, expect, it } from "vitest"
 
 describe("contextBinder", () => {
   it("bounds the provided context into the first args of the hook", () => {

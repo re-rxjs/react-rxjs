@@ -1,6 +1,7 @@
 import { map } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { mergeWithKey } from "./"
+import { describe, expect, it } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

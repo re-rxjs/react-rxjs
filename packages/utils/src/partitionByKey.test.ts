@@ -1,7 +1,9 @@
 import { concat, EMPTY, from, NEVER, Observable, of, Subject } from "rxjs"
 import { catchError, map, switchMap, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { combineKeys, KeyChanges, partitionByKey } from "./"
+import "expose-gc"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -560,7 +562,7 @@ describe("partitionByKey", () => {
         () => inner$,
       )
 
-      const next = jest.fn()
+      const next = vi.fn()
       getInstance$("a").subscribe(next)
 
       source$.next("a")
@@ -570,7 +572,7 @@ describe("partitionByKey", () => {
       expect(next).toHaveBeenCalledTimes(1)
       expect(next).toHaveBeenCalledWith(1)
 
-      const lateNext = jest.fn()
+      const lateNext = vi.fn()
       getInstance$("a").subscribe(lateNext)
       expect(lateNext).toHaveBeenCalledTimes(1)
       expect(lateNext).toHaveBeenCalledWith(1)

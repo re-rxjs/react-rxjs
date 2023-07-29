@@ -2,6 +2,7 @@ import { TestScheduler } from "rxjs/testing"
 import { SUSPENSE } from "@react-rxjs/core"
 import { of } from "rxjs"
 import { suspend } from "./"
+import { describe, expect, it } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {

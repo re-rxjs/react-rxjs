@@ -10,7 +10,7 @@ import {
   EMPTY,
   NEVER,
 } from "rxjs"
-import { renderHook, act as actHook } from "@testing-library/react-hooks"
+import { renderHook, act as actHook } from "@testing-library/react"
 import {
   delay,
   take,
@@ -31,6 +31,7 @@ import {
   act,
   waitFor,
 } from "@testing-library/react"
+import { describe, it, beforeAll, afterAll, expect, vi } from "vitest"
 import { bind, Subscribe } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
@@ -319,7 +320,7 @@ describe("connectFactoryObservable", () => {
         return <>{value}</>
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       render(
         <TestErrorBoundary onError={errorCallback}>
           <ErrorComponent />
@@ -348,7 +349,7 @@ describe("connectFactoryObservable", () => {
         return <>{value}</>
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
           <Subscribe
@@ -377,7 +378,7 @@ describe("connectFactoryObservable", () => {
         return <>{value}</>
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
           <Subscribe
@@ -432,7 +433,7 @@ describe("connectFactoryObservable", () => {
           )
         }
 
-        const errorCallback = jest.fn()
+        const errorCallback = vi.fn()
         const { unmount } = render(
           <TestErrorBoundary onError={errorCallback}>
             <ErrorComponent />
@@ -484,7 +485,7 @@ describe("connectFactoryObservable", () => {
         return value === 1 ? <ErrorComponent /> : <>Nothing to show here</>
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       render(
         <TestErrorBoundary onError={errorCallback}>
           <Container />
