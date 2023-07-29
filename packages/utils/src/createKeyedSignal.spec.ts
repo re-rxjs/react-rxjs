@@ -1,4 +1,5 @@
 import { createKeyedSignal } from "./"
+import { describe, expect, it } from "vitest"
 
 describe("createKeyedSignal", () => {
   it("receives a key selector and a mapper and returns a tuple with an observable-getter and its corresponding event-emitter", () => {

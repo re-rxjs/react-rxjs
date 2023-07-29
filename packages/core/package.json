@@ -1,5 +1,5 @@
 {
-  "version": "0.10.3",
+  "version": "0.10.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -13,13 +13,14 @@
         "import": "./dist/core.es2019.mjs",
         "require": "./dist/index.cjs"
       },
+      "types": "./dist/index.d.ts",
       "default": "./dist/core.es2017.js"
     },
     "./package.json": "./package.json"
   },
   "module": "./dist/core.es2017.js",
   "main": "./dist/index.js",
-  "typings": "./dist/index.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -30,7 +31,8 @@
     "build:cjs:dev": "node cjsBuild.js",
     "build:cjs:prod": "node cjsBuild.js --prod",
     "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
-    "test": "jest --coverage",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepack": "npm run build"
@@ -50,7 +52,7 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "dependencies": {
-    "@rx-state/core": "0.1.1",
+    "@rx-state/core": "0.1.4",
     "use-sync-external-store": "^1.0.0"
   },
   "devDependencies": {

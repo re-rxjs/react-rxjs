@@ -1,6 +1,7 @@
 import { render, screen, act } from "@testing-library/react"
 import React, { Suspense } from "react"
 import { map, Subject } from "rxjs"
+import { describe, it, expect } from "vitest"
 import { state } from "./"
 
 describe("stateJsx", () => {

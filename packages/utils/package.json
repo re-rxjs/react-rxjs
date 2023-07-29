@@ -1,5 +1,6 @@
 {
-  "version": "0.9.5",
+  "version": "0.9.6",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/re-rxjs/react-rxjs.git"
@@ -13,13 +14,14 @@
         "import": "./dist/utils.es2019.mjs",
         "require": "./dist/index.cjs"
       },
+      "types": "./dist/index.d.ts",
       "default": "./dist/utils.es2017.js"
     },
     "./package.json": "./package.json"
   },
   "module": "./dist/utils.es2017.js",
   "main": "./dist/index.js",
-  "typings": "./dist/index.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -30,7 +32,8 @@
     "build:cjs:dev": "esbuild src/index.tsx --bundle --outfile=./dist/utils.cjs.development.js --target=es2015 --external:react --external:rxjs --external:@react-rxjs/core --format=cjs --sourcemap",
     "build:cjs:prod": "esbuild src/index.tsx --bundle --outfile=./dist/utils.cjs.production.min.js --target=es2015 --external:react --external:rxjs --external:@react-rxjs/core --format=cjs --minify --sourcemap",
     "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
-    "test": "node --expose-gc ../../node_modules/.bin/jest --coverage --runInBand",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepack": "npm run build"
@@ -51,6 +54,6 @@
     "Victor Oliva (https://github.com/voliva)"
   ],
   "devDependencies": {
-    "@react-rxjs/core": "0.10.3"
+    "@react-rxjs/core": "0.10.5"
   }
 }

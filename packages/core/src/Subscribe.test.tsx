@@ -8,6 +8,7 @@ import {
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
 import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
+import { describe, it, expect, vi } from "vitest"
 import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
@@ -341,7 +342,7 @@ describe("Subscribe", () => {
         return <>{value}</>
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
           <Subscribe fallback={<div>Loading...</div>}>
@@ -362,8 +363,8 @@ describe("Subscribe", () => {
     })
 
     it("propagates the EmptyObservable error if a stream completes synchronously", async () => {
-      const globalErrors = jest.spyOn(console, "error")
-      globalErrors.mockImplementation()
+      const globalErrors = vi.spyOn(console, "error")
+      globalErrors.mockImplementation((v) => v)
 
       const [useEmpty] = bind(() => EMPTY)
 
@@ -372,7 +373,7 @@ describe("Subscribe", () => {
         return null
       }
 
-      const errorCallback = jest.fn()
+      const errorCallback = vi.fn()
       const { unmount } = render(
         <TestErrorBoundary onError={errorCallback}>
           <Subscribe fallback={<div>Loading...</div>}>
@@ -442,7 +443,7 @@ describe("RemoveSubscribe", () => {
       return <>{value}</>
     }
 
-    const errorCallback = jest.fn()
+    const errorCallback = vi.fn()
     render(
       <TestErrorBoundary onError={(e) => errorCallback(e.message)}>
         <Subscribe>
