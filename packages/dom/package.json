@@ -32,7 +32,8 @@
     "build:cjs:dev": "esbuild src/index.tsx --bundle --outfile=./dist/dom.cjs.development.js --target=es2015 --external:react --external:rxjs --external:react-dom --format=cjs --sourcemap",
     "build:cjs:prod": "esbuild src/index.tsx --bundle --outfile=./dist/dom.cjs.production.min.js --target=es2015 --external:react --external:rxjs --external:react-dom --format=cjs --minify --sourcemap",
     "build:ts": "tsc -p ./tsconfig.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
-    "test": "jest --coverage",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepack": "npm run build"

@@ -4,6 +4,7 @@ import { mergeMapTo, take, filter, catchError } from "rxjs/operators"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { batchUpdates } from "./"
 import { act, render, screen } from "@testing-library/react"
+import { describe, expect, test, beforeAll, vi } from "vitest"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
@@ -101,7 +102,7 @@ describe("batchUpdates", () => {
   })
 
   test.skip("it triggers nested updates when batchUpdates is not used", async () => {
-    const mockFn = jest.fn()
+    const mockFn = vi.fn()
     render(
       <Subscribe source$={latestNumber$(false, false)}>
         <Father onRender={mockFn} />
@@ -124,7 +125,7 @@ describe("batchUpdates", () => {
   })
 
   test("batchUpdates prevents unnecessary updates", async () => {
-    const mockFn = jest.fn()
+    const mockFn = vi.fn()
     render(
       <Subscribe source$={latestNumber$(true, false)}>
         <Father batched onRender={mockFn} />
@@ -148,8 +149,8 @@ describe("batchUpdates", () => {
   })
 
   test("batchUpdates doesn't get in the way of Error Boundaries", async () => {
-    const mockFn = jest.fn()
-    const errorCallback = jest.fn()
+    const mockFn = vi.fn()
+    const errorCallback = vi.fn()
     latestNumber$(true, true)
       .pipe(catchError(() => []))
       .subscribe()

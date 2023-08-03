@@ -11,6 +11,7 @@ import {
 import { TestScheduler } from "rxjs/testing"
 import { selfDependent } from "."
 import { merge, Observable, defer, of } from "rxjs"
+import { describe, expect, it } from "vitest"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
