@@ -7,9 +7,20 @@ import {
 } from "@rx-state/core"
 import { act, render, screen } from "@testing-library/react"
 import React, { StrictMode, useEffect, useState } from "react"
-import { defer, EMPTY, NEVER, Observable, of, startWith, Subject } from "rxjs"
-import { describe, it, expect, vi } from "vitest"
-import { bind, RemoveSubscribe, Subscribe as OriginalSubscribe } from "./"
+import { renderToPipeableStream } from "react-dom/server"
+import {
+  defer,
+  EMPTY,
+  lastValueFrom,
+  NEVER,
+  Observable,
+  of,
+  startWith,
+  Subject,
+} from "rxjs"
+import { describe, expect, it, vi } from "vitest"
+import { bind, Subscribe as OriginalSubscribe, RemoveSubscribe } from "./"
+import { pipeableStreamToObservable } from "./test-helpers/pipeableStreamToObservable"
 import { TestErrorBoundary } from "./test-helpers/TestErrorBoundary"
 import { useStateObservable } from "./useStateObservable"
 
@@ -430,6 +441,22 @@ describe("Subscribe", () => {
       expect(innerSubs).toBe(1)
 
       unmount()
+    })
+  })
+
+  describe("On SSR", () => {
+    // Testing-library doesn't support SSR yet https://github.com/testing-library/react-testing-library/issues/561
+
+    it("Renders the fallback", async () => {
+      const stream = renderToPipeableStream(
+        <Subscribe fallback={<div>Loading</div>}>
+          <div>Content</div>
+        </Subscribe>,
+      )
+      const result = await lastValueFrom(pipeableStreamToObservable(stream))
+
+      expect(result).toContain("<div>Loading</div>")
+      expect(result).not.toContain("<div>Content</div>")
     })
   })
 })
