@@ -1,3 +1,7 @@
+## 0.10.7 (2023-08-04)
+
+- Add getServerSnapshot, fix loop on SSR Subscribe (#306)
+
 ## 0.10.6 (2023-07-12)
 
 - fix(webpack build): default condition should be last one (#304)
