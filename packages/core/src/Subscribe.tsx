@@ -125,6 +125,8 @@ export const Subscribe: React.FC<{
 
   return fallback === undefined ? (
     actualChildren
+  ) : subscribedSource === null ? (
+    fallback
   ) : (
     <Suspense fallback={fallback}>{actualChildren}</Suspense>
   )

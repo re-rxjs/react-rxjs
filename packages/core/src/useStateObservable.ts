@@ -14,7 +14,11 @@ type VoidCb = () => void
 
 interface Ref<T> {
   source$: StateObservable<T>
-  args: [(cb: VoidCb) => VoidCb, () => Exclude<T, SUSPENSE>]
+  args: [
+    (cb: VoidCb) => VoidCb,
+    () => Exclude<T, typeof SUSPENSE>,
+    () => Exclude<T, typeof SUSPENSE>,
+  ]
 }
 
 export const useStateObservable = <O>(
@@ -46,7 +50,7 @@ export const useStateObservable = <O>(
 
     callbackRef.current = {
       source$: null as any,
-      args: [, gv] as any,
+      args: [, gv, gv] as any,
     }
   }
 

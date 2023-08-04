@@ -10,6 +10,7 @@ import {
   defer,
   EMPTY,
   from,
+  lastValueFrom,
   merge,
   NEVER,
   Observable,
@@ -34,6 +35,8 @@ import {
   useStateObservable,
 } from "../"
 import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
+import { renderToPipeableStream } from "react-dom/server"
+import { pipeableStreamToObservable } from "../test-helpers/pipeableStreamToObservable"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
@@ -938,5 +941,50 @@ describe("connectObservable", () => {
       subject$.next(SUSPENSE)
     })
     expect(queryByText("Result 10")).not.toBeNull()
+  })
+
+  describe("The hook on SSR", () => {
+    // Testing-library doesn't support SSR yet https://github.com/testing-library/react-testing-library/issues/561
+
+    it("returns the value if the state observable has a subscription", async () => {
+      const [useState, state$] = bind(of(5))
+      state$.subscribe()
+      const Component = () => {
+        const value = useState()
+        return <div>Value: {value}</div>
+      }
+      const stream = renderToPipeableStream(<Component />)
+      const result = await lastValueFrom(pipeableStreamToObservable(stream))
+
+      // Sigh...
+      expect(result).toEqual("<div>Value: <!-- -->5</div>")
+    })
+
+    it("throws Missing Subscribe if the state observable doesn't have a subscription nor a default value", async () => {
+      const [useState] = bind(of(5))
+      const Component = () => {
+        const value = useState()
+        return <div>Value: {value}</div>
+      }
+      const stream = renderToPipeableStream(<Component />)
+      try {
+        await lastValueFrom(pipeableStreamToObservable(stream))
+      } catch (ex: any) {
+        expect(ex.message).to.equal("Missing Subscribe!")
+      }
+      expect.assertions(1)
+    })
+
+    it("returns the default value if the observable didn't emit yet", async () => {
+      const [useState] = bind(of(5), 3)
+      const Component = () => {
+        const value = useState()
+        return <div>Value: {value}</div>
+      }
+      const stream = renderToPipeableStream(<Component />)
+      const result = await lastValueFrom(pipeableStreamToObservable(stream))
+
+      expect(result).toEqual("<div>Value: <!-- -->3</div>")
+    })
   })
 })
