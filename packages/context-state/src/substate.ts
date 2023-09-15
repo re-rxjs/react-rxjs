@@ -1,4 +1,4 @@
-import { EMPTY, defer, distinctUntilChanged, skip } from "rxjs"
+import { distinctUntilChanged, skip } from "rxjs"
 import { createStateNode, getInternals, trackParentChanges } from "./internal"
 import {
   isSignal,
@@ -35,14 +35,8 @@ export const substate = <T, K extends KeysBaseType>(
   const addInstance = (instanceKey: K) => {
     // TODO duplicate ?
     stateNode.addInstance(instanceKey)
-    return defer(() => {
-      try {
-        return parent.getState$(instanceKey)
-      } catch (ex) {
-        // root nodes don't have values, so they throw an error when trying to get the observable
-        return EMPTY
-      }
-    })
+    return parent
+      .getState$(instanceKey)
       .pipe(distinctUntilChanged(equalityFn), skip(1))
       .subscribe({
         next: () => {

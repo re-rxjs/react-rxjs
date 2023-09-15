@@ -6,14 +6,6 @@ import { substate } from "./substate"
 
 describe("routeState", () => {
   describe("constructor", () => {
-    it("requires a node with a value", () => {
-      const root = createRoot()
-      const [key] = routeState(root, { a: null }, () => "a")
-      root.run()
-
-      expect(() => key.getValue()).toThrowError("RootNode doesn't have value")
-    })
-
     it("passes the value of the node as a parameter for the selector function", () => {
       const root = createRoot()
       const parentSource = new Subject<"a" | "b">()

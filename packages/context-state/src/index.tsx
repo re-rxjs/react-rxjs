@@ -3,6 +3,7 @@ export * from "./combineStates"
 export * from "./route-state"
 export * from "./subinstance"
 export * from "./substate"
+export * from "./subtree"
 export * from "./types"
 export { StatePromise } from "./internal/promises"
 export {

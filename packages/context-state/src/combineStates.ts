@@ -9,6 +9,8 @@ import {
 import { NestedMap, Wildcard } from "./internal/nested-map"
 import { KeysBaseType, StateNode } from "./types"
 
+// TODO combineStates must be nodes of the same root. Detect immediately?
+
 export type StringRecordNodeToStringRecord<
   States extends Record<string, StateNode<any, any>>,
 > = {

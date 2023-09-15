@@ -17,10 +17,10 @@ export type RunFn<CtxValue, KeyName, KeyValue> = KeyName extends ""
 export interface RootNode<CtxValue, KeyName extends string, KeyValue>
   extends StateNode<CtxValue, RootNodeKey<KeyName, KeyValue>> {
   run: KeyName extends ""
-    ? never extends CtxValue
+    ? CtxValue extends null
       ? () => TeardownFn
       : (key: unknown, ctxValue: CtxValue) => TeardownFn
-    : never extends CtxValue
+    : CtxValue extends null
     ? (key: KeyValue) => TeardownFn
     : (key: KeyValue, ctxValue: CtxValue) => TeardownFn
   withTypes: <NewCtxValue, NewKeyValue = KeyValue>() => RootNode<
@@ -30,10 +30,10 @@ export interface RootNode<CtxValue, KeyName extends string, KeyValue>
   >
 }
 
-export function createRoot(): RootNode<never, "", unknown>
+export function createRoot(): RootNode<null, "", unknown>
 export function createRoot<KeyName extends string = "">(
   keyName: KeyName,
-): RootNode<never, KeyName, unknown>
+): RootNode<null, KeyName, unknown>
 export function createRoot<CtxValue, KeyName extends string, KeyValue>(
   keyName?: KeyName,
 ): RootNode<CtxValue, KeyName, KeyValue> {
@@ -45,15 +45,8 @@ export function createRoot<CtxValue, KeyName extends string, KeyValue>(
     keyName ? [keyName] : [],
     [],
     (_getCtx, _getObs, key) =>
-      of(contextValues.get(key[keyName!] ?? ("" as KeyValue))!), // TODO throw otherwise?
+      of(contextValues.get(key[keyName!] ?? ("" as KeyValue)) ?? null!), // TODO throw otherwise?
   )
-
-  internalNode.public.getState$ = () => {
-    throw new Error("RootNode doesn't have value")
-  }
-  internalNode.public.getValue = () => {
-    throw new Error("RootNode doesn't have value")
-  }
 
   const result: RootNode<CtxValue, KeyName, KeyValue> = Object.assign(
     internalNode.public as any,
