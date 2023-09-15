@@ -50,7 +50,7 @@ describe("createSignal", () => {
   })
 
   it("respects instances as separate signals", () => {
-    const root = createRoot<string, "gameId">("gameId")
+    const root = createRoot("gameId")
     const signal = createSignal<number, { gameId: string }>(root)
 
     root.run("a")
@@ -73,7 +73,7 @@ describe("createSignal", () => {
   })
 
   it("throws an error if the instance doesn't exist", () => {
-    const root = createRoot<string, "gameId">("gameId")
+    const root = createRoot("gameId")
     const signal = createSignal<number, { gameId: string }>(root)
 
     const stop = root.run("a")

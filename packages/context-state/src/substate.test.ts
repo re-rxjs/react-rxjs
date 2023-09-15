@@ -611,7 +611,7 @@ describe("subState", () => {
 
     it("doesn't hold references to dead instances, even on circular references", async () => {
       const fr = testFinalizationRegistry()
-      const root = createRoot<string, "gameId">("gameId")
+      const root = createRoot("gameId")
       const signal = createSignal(root)
 
       const nodeA = substate(

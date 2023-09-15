@@ -2,23 +2,43 @@ import { of } from "rxjs"
 import { createStateNode } from "./internal"
 import { StateNode } from "./types"
 
-export type RootNodeKey<K extends string, V> = K extends "" ? {} : Record<K, V>
-export interface RootNode<V, K extends string>
-  extends StateNode<never, RootNodeKey<K, V>> {
-  run: K extends "" ? () => () => void : (key: V) => () => void
+export type RootNodeKey<CtxValue, KeyName extends string> = KeyName extends ""
+  ? {}
+  : Record<KeyName, CtxValue>
+
+type TeardownFn = () => void
+export interface RootNode<CtxValue, KeyName extends string, KeyValue>
+  extends StateNode<CtxValue, RootNodeKey<KeyValue, KeyName>> {
+  run: KeyName extends ""
+    ? never extends CtxValue
+      ? () => TeardownFn
+      : (key: unknown, ctxValue: CtxValue) => TeardownFn
+    : never extends CtxValue
+    ? (key: KeyValue) => TeardownFn
+    : (key: KeyValue, ctxValue: CtxValue) => TeardownFn
+  withTypes: <NewCtxValue, NewKeyValue = KeyValue>() => RootNode<
+    NewCtxValue,
+    KeyName,
+    NewKeyValue
+  >
 }
 
-export function createRoot(): RootNode<never, "">
-export function createRoot<KeyValue, KeyName extends string>(
+export function createRoot(): RootNode<never, "", unknown>
+export function createRoot<KeyName extends string = "">(
   keyName: KeyName,
-): RootNode<KeyValue, KeyName>
-export function createRoot<KeyValue = never, KeyName extends string = "">(
+): RootNode<never, KeyName, unknown>
+export function createRoot<CtxValue, KeyName extends string, KeyValue>(
   keyName?: KeyName,
-): RootNode<KeyValue, KeyName> {
-  const internalNode = createStateNode<RootNodeKey<KeyName, KeyValue>, null>(
+): RootNode<CtxValue, KeyName, KeyValue> {
+  const contextValues = new Map<KeyValue, CtxValue>()
+  const internalNode = createStateNode<
+    RootNodeKey<KeyValue, KeyName>,
+    CtxValue
+  >(
     keyName ? [keyName] : [],
     [],
-    () => of(null),
+    (_getCtx, _getObs, key) =>
+      of(contextValues.get(key[keyName!] ?? ("" as KeyValue))!), // TODO throw otherwise?
   )
 
   internalNode.public.getState$ = () => {
@@ -28,24 +48,30 @@ export function createRoot<KeyValue = never, KeyName extends string = "">(
     throw new Error("RootNode doesn't have value")
   }
 
-  const result: RootNode<KeyValue, KeyName> = Object.assign(
+  const result: RootNode<CtxValue, KeyName, KeyValue> = Object.assign(
     internalNode.public as any,
     {
-      run: (root?: KeyValue) => {
+      run: (root?: KeyValue, ctxValue?: CtxValue) => {
         const key = (
           keyName
             ? {
                 [keyName]: root,
               }
             : {}
-        ) as RootNodeKey<KeyName, KeyValue>
+        ) as RootNodeKey<KeyValue, KeyName>
+
+        // TODO throw if instance already exists?
+        const contextValueKey = root ?? ("" as KeyValue)
+        contextValues.set(contextValueKey, ctxValue!)
 
         internalNode.addInstance(key)
         internalNode.activateInstance(key)
         return () => {
           internalNode.removeInstance(key)
+          contextValues.delete(contextValueKey)
         }
       },
+      withTypes: () => result as any,
     },
   )
   return result
