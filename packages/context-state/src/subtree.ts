@@ -1,10 +1,5 @@
-import { Observable } from "rxjs"
-import {
-  NestedMap,
-  createStateNode,
-  getInternals,
-  trackParentChanges,
-} from "./internal"
+import { Observable, defer, filter, switchMap, take } from "rxjs"
+import { NestedMap, getInternals, trackParentChanges } from "./internal"
 import {
   GetObservableFn,
   GetValueFn,
@@ -55,5 +50,33 @@ export function subtree<K extends KeysBaseType>(
     onAfterChange: restart,
     onReset: restart,
     onRemoved: teardown,
+  })
+}
+
+export function activeObs$<T>(node: StateNode<T, {}>): Observable<T>
+export function activeObs$<T, K extends KeysBaseType>(
+  node: StateNode<T, K>,
+  key: K,
+): Observable<T>
+export function activeObs$<T, K extends KeysBaseType>(
+  node: StateNode<T, K>,
+  key: K = {} as any,
+): Observable<T> {
+  const internalNode = getInternals(node)
+
+  return defer(() => {
+    try {
+      return internalNode.getInstance(key).getState$()
+    } catch (ex) {
+      return internalNode.instanceChange$.pipe(
+        filter(
+          (change) =>
+            change.type === "ready" &&
+            internalNode.keysOrder.every((k) => change.key[k] === key[k]),
+        ),
+        take(1),
+        switchMap(() => node.getState$(key)),
+      )
+    }
   })
 }

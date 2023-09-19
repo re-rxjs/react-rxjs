@@ -2,7 +2,7 @@ import { Subject } from "rxjs"
 import { describe, expect, it } from "vitest"
 import { createRoot } from "./create-root"
 import { substate } from "./substate"
-import { subtree } from "./subtree"
+import { activeObs$, subtree } from "./subtree"
 
 describe("subtree", () => {
   it("creates instances of another root", () => {
@@ -28,7 +28,7 @@ describe("subtree", () => {
     const subnode$ = new Subject<string>()
     const subnode = substate(mainRoot, () => subnode$)
 
-    const otherRootCopy = substate(subnode, (_, getObs$) => getObs$(otherRoot))
+    const otherRootCopy = substate(subnode, () => activeObs$(otherRoot))
 
     const otherRoot = createRoot().withTypes<{ value: string }>()
     subtree(subnode, (ctx) => otherRoot.run(null, { value: ctx(subnode) }))
