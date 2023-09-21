@@ -2,13 +2,20 @@ import { of } from "rxjs"
 import { createStateNode } from "./internal"
 import { StateNode } from "./types"
 
-export type RootNodeKey<CtxValue, KeyName extends string> = KeyName extends ""
+export type RootNodeKey<KeyName extends string, KeyValue> = KeyName extends ""
   ? {}
-  : Record<KeyName, CtxValue>
+  : Record<KeyName, KeyValue>
 
 type TeardownFn = () => void
+export type RunFn<CtxValue, KeyName, KeyValue> = KeyName extends ""
+  ? CtxValue extends null
+    ? () => TeardownFn
+    : (key: unknown, ctxValue: CtxValue) => TeardownFn
+  : CtxValue extends null
+  ? (key: KeyValue) => TeardownFn
+  : (key: KeyValue, ctxValue: CtxValue) => TeardownFn
 export interface RootNode<CtxValue, KeyName extends string, KeyValue>
-  extends StateNode<CtxValue, RootNodeKey<KeyValue, KeyName>> {
+  extends StateNode<CtxValue, RootNodeKey<KeyName, KeyValue>> {
   run: KeyName extends ""
     ? never extends CtxValue
       ? () => TeardownFn
@@ -32,7 +39,7 @@ export function createRoot<CtxValue, KeyName extends string, KeyValue>(
 ): RootNode<CtxValue, KeyName, KeyValue> {
   const contextValues = new Map<KeyValue, CtxValue>()
   const internalNode = createStateNode<
-    RootNodeKey<KeyValue, KeyName>,
+    RootNodeKey<KeyName, KeyValue>,
     CtxValue
   >(
     keyName ? [keyName] : [],
@@ -58,7 +65,7 @@ export function createRoot<CtxValue, KeyName extends string, KeyValue>(
                 [keyName]: root,
               }
             : {}
-        ) as RootNodeKey<KeyValue, KeyName>
+        ) as RootNodeKey<KeyName, KeyValue>
 
         // TODO throw if instance already exists?
         const contextValueKey = root ?? ("" as KeyValue)

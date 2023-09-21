@@ -1,4 +1,13 @@
-import { NEVER, Subject, filter, map, of, startWith } from "rxjs"
+import {
+  EMPTY,
+  NEVER,
+  Subject,
+  filter,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { InstanceUpdate, createRoot, subinstance, substate } from "./"
 
@@ -159,6 +168,71 @@ describe("subinstance", () => {
       expect(() => instances.getValue({ keyName: "a" })).toThrow()
       expect(() => instances.getValue({ keyName: "b" })).toThrow()
       expect(() => [...(keys.getValue() as Set<string>)]).toThrow()
+    })
+
+    it("can access instances as soon as they are announced", () => {
+      const root = createRoot()
+      const instance$ = new Subject<InstanceUpdate<string>>()
+      const [instanceNode, keys] = subinstance(
+        root,
+        "keyName",
+        () => instance$,
+        (id) => of(id),
+      )
+      root.run()
+
+      let error = null
+      let lastActive = null
+      keys
+        .getState$()
+        .pipe(
+          switchMap((v) =>
+            v.size
+              ? instanceNode.getState$({
+                  keyName: Array.from(v.values()).at(-1)!,
+                })
+              : EMPTY,
+          ),
+        )
+        .subscribe({
+          next: (v) => (lastActive = v),
+          error: (e) => (error = e),
+        })
+
+      instance$.next({
+        add: ["a"],
+      })
+      expect(lastActive).toEqual("a")
+      instance$.next({
+        add: ["b"],
+      })
+      expect(lastActive).toEqual("b")
+      expect(error).toBe(null)
+    })
+
+    it("continues working after the parent changes value", () => {
+      const root = createRoot()
+      const subnode$ = new Subject<string>()
+      const subnode = substate(root, () => subnode$.pipe(startWith("a")))
+      const [instanceNode, keys] = subinstance(
+        subnode,
+        "keyName",
+        (ctx) =>
+          ctx(subnode) === "a"
+            ? EMPTY
+            : of({
+                add: ["a", "b"],
+              }),
+        (id) => of(id),
+      )
+      root.run()
+
+      expect(Array.from(keys.getValue() as Set<string>)).toEqual([])
+      subnode$.next("b")
+      expect(Array.from(keys.getValue() as Set<string>)).toEqual(["a", "b"])
+
+      expect(instanceNode.getValue({ keyName: "a" })).toEqual("a")
+      expect(instanceNode.getValue({ keyName: "b" })).toEqual("b")
     })
   })
 

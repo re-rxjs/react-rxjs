@@ -1,3 +1,4 @@
+import { subtree } from "./subtree"
 import {
   KeysAreCompatible,
   MapKeys,
@@ -5,7 +6,12 @@ import {
   combineStates,
   CombineStateKeys,
 } from "./combineStates"
-import { RootNodeKey, createRoot, RootNode as rootNode } from "./create-root"
+import {
+  RootNodeKey,
+  RunFn,
+  createRoot,
+  RootNode as rootNode,
+} from "./create-root"
 import { createSignal } from "./create-signal"
 import { getInternals, mapRecord, setInternals } from "./internal"
 import { routeState } from "./route-state"
@@ -57,17 +63,26 @@ class StateNode<T, K extends types.KeysBaseType>
   }
 }
 
-export class RootNode<K extends string, V> extends StateNode<
-  never,
-  RootNodeKey<K, V>
-> {
+export class RootNode<
+  CtxValue,
+  K extends string = "",
+  KeyValue = unknown,
+> extends StateNode<CtxValue, RootNodeKey<K, KeyValue>> {
   constructor(keyName?: K) {
-    super(keyName ? createRoot(keyName) : createRoot())
+    super(keyName ? createRoot(keyName) : (createRoot() as any))
   }
 
-  run(key?: V) {
-    ;(this.node as rootNode<V, K>).run(key!)
+  withTypes<NewCtxValue, NewKeyValue = KeyValue>() {
+    return this as unknown as RootNode<NewCtxValue, K, NewKeyValue>
   }
+
+  run: RunFn<CtxValue, K, KeyValue> = function (
+    this: RootNode<CtxValue, K, KeyValue>,
+    root?: KeyValue,
+    ctxValue?: CtxValue,
+  ) {
+    return (this.node as rootNode<CtxValue, K, KeyValue>).run(root!, ctxValue!)
+  } as any
 }
 
 type ResultingRoutes<O, T, K extends types.KeysBaseType> = {
@@ -142,7 +157,7 @@ export function combineStateNodes<
   states: KeysAreCompatible<MapKeys<States>> extends true ? States : never,
 ): StateNode<
   StringRecordNodeToStringRecord<States>,
-  CombineStateKeys<MapKeys<States>> & types.KeysBaseType
+  CombineStateKeys<MapKeys<States>>
 > {
   return new StateNode(combineStates(states))
 }

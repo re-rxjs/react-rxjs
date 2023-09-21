@@ -108,9 +108,11 @@ export const combineStates = <
   return result.public as any
 }
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I extends KeysBaseType,
-) => void
+type UnionToIntersection<U> = U extends never
+  ? never
+  : (U extends any ? (k: U) => void : never) extends (
+      k: infer I extends KeysBaseType,
+    ) => void
   ? I
   : never
 

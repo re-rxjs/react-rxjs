@@ -1,4 +1,5 @@
 export * from "./create-root"
+export * from "./combineStates"
 export * from "./route-state"
 export * from "./subinstance"
 export * from "./substate"

@@ -8,6 +8,7 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react"
+import { Subscription } from "rxjs"
 import { Instance, StatePromise, getInternals } from "./internal"
 import { KeysBaseType, StateNode } from "./types"
 
@@ -77,18 +78,21 @@ export const useStateNode = <O, K extends KeysBaseType>(
   if (ref.source$ !== instance) {
     ref.source$ = instance
     ref.args[0] = (next: () => void) => {
-      let subscription = instance.getState$().subscribe({
-        next,
-        error: (e) => {
-          setError(() => {
-            throw e
-          })
-        },
-        complete() {
-          next()
-          subscription.add(ref.args[0](next))
-        },
-      })
+      const subscription = new Subscription()
+      subscription.add(
+        instance.getState$().subscribe({
+          next,
+          error: (e) => {
+            setError(() => {
+              throw e
+            })
+          },
+          complete() {
+            next()
+            subscription.add(ref.args[0](next))
+          },
+        }),
+      )
       return () => {
         subscription.unsubscribe()
       }

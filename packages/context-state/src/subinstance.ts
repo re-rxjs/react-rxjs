@@ -113,6 +113,10 @@ export function subinstance<K extends KeysBaseType, KN extends string, KV, R>(
     },
     onActive() {},
     onReset() {},
+    onAfterChange(key, storage) {
+      storage.value.unsubscribe()
+      storage.setValue(watchParentInstance(key))
+    },
     onRemoved(key, storage) {
       storage.value.unsubscribe()
       const orderedKey = parentInternals.keysOrder.map((k) => key[k])

@@ -1,4 +1,5 @@
 import "expose-gc"
+import { expect } from "vitest"
 
 export function testFinalizationRegistry() {
   const promises = new Map<
