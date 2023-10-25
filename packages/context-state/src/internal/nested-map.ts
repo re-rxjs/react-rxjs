@@ -1,79 +1,78 @@
+import { EMPTY_VALUE } from "./empty-value"
+
 export const Wildcard = Symbol("Wildcard")
 export type Wildcard = typeof Wildcard
 
 export class NestedMap<K, V> {
-  private root: Map<K, any>
-  private rootValue?: V
-  constructor() {
-    this.root = new Map()
-    this.rootValue = undefined
-  }
+  protected subtree: Map<K, NestedMap<K, V>> = new Map()
+  protected value: V | EMPTY_VALUE = EMPTY_VALUE
 
   get(keys: K[]): V | undefined {
-    if (keys.length === 0) return this.rootValue
-    let current: any = this.root
+    let current: NestedMap<K, V> = this
     for (let i = 0; i < keys.length; i++) {
-      current = current.get(keys[i])
-      if (!current) return undefined
-      // a child instance could be checking for a parent instance with its (longer) key
-      if (!(current instanceof Map)) return current
+      const next = current.subtree.get(keys[i])
+      if (!next) return undefined
+      current = next
     }
-    return current
+
+    return current.value === EMPTY_VALUE ? undefined : current.value
   }
 
   set(keys: K[], value: V): void {
-    if (keys.length === 0) {
-      this.rootValue = value
-      return
-    }
-    let current: Map<K, any> = this.root
-    let i
-    for (i = 0; i < keys.length - 1; i++) {
-      let nextCurrent = current.get(keys[i])
+    let current: NestedMap<K, V> = this
+    for (let i = 0; i < keys.length; i++) {
+      let nextCurrent = current.subtree.get(keys[i])
       if (!nextCurrent) {
-        nextCurrent = new Map<K, any>()
-        current.set(keys[i], nextCurrent)
+        nextCurrent = new NestedMap<K, V>()
+        current.subtree.set(keys[i], nextCurrent)
       }
       current = nextCurrent
     }
-    current.set(keys[i], value)
+    current.value = value
   }
 
   delete(keys: K[]): void {
-    if (keys.length === 0) {
-      delete this.rootValue
-      return
-    }
-    const maps: Map<K, any>[] = [this.root]
-    let current: Map<K, any> = this.root
+    let current: NestedMap<K, V> = this
+    const maps = [current]
 
-    for (let i = 0; i < keys.length - 1; i++) {
-      maps.push((current = current.get(keys[i])))
+    for (let i = 0; i < keys.length; i++) {
+      const next = current.subtree.get(keys[i])
+      if (!next) break
+      maps.push((current = next))
     }
 
-    let mapIdx = maps.length - 1
-    maps[mapIdx].delete(keys[mapIdx])
-
-    while (--mapIdx > -1 && maps[mapIdx].get(keys[mapIdx]).size === 0) {
-      maps[mapIdx].delete(keys[mapIdx])
+    current.value = EMPTY_VALUE
+    let currentIdx = maps.length
+    while (
+      --currentIdx > 0 &&
+      maps[currentIdx].value === EMPTY_VALUE &&
+      maps[currentIdx].subtree.size === 0
+    ) {
+      maps[currentIdx - 1].subtree.delete(keys[currentIdx - 1])
     }
   }
 
   *values(keys?: Array<K | typeof Wildcard>): Generator<V, void, void> {
-    if (this.rootValue && (!keys || keys.length === 0)) {
-      yield this.rootValue
+    if (this.value !== EMPTY_VALUE && (!keys || keys.length === 0)) {
+      yield this.value
     }
 
-    const mapsToIterate: Array<[Map<K, any>, number]> = [[this.root, 0]]
-    let iteration: [Map<K, any>, number] | undefined
+    const mapsToIterate: Array<[NestedMap<K, V>, number]> = [[this, 0]]
+    let iteration: [NestedMap<K, V>, number] | undefined
     while ((iteration = mapsToIterate.pop())) {
       const [map, depth] = iteration
-      for (let [key, value] of map) {
+      if (
+        map.value !== EMPTY_VALUE &&
+        (!keys || keys.length <= depth || keys[depth] === Wildcard)
+      ) {
+        yield map.value
+      }
+      for (let [key, nestedMap] of map.subtree) {
         if (keys && keys[depth] !== Wildcard && keys[depth] !== key) continue
-        if (value instanceof Map) {
-          mapsToIterate.push([value, depth + 1])
-        } else {
-          yield value
+
+        mapsToIterate.push([nestedMap, depth + 1])
+        if (nestedMap.value !== EMPTY_VALUE) {
+          yield nestedMap.value
         }
       }
     }
