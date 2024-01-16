@@ -7,16 +7,28 @@ import {
   StateNode,
   isSignal,
 } from "./types"
+import { RootNode } from "./create-root"
 
-export function subtree<K extends KeysBaseType>(
+export function subtree<K extends KeysBaseType, CtxValue, KeyValue>(
   parent: StateNode<unknown, K>,
-  createInstance: (
+  node: RootNode<CtxValue, string, KeyValue>,
+  instanceSelector: (
     ctxValue: GetValueFn,
     ctxObservable: GetObservableFn<K>,
     key: K,
-  ) => () => void,
+  ) => [KeyValue] | [KeyValue, CtxValue],
 ): void {
   const internalParent = getInternals(parent)
+
+  const createInstance = (
+    ctxValue: GetValueFn,
+    ctxObservable: GetObservableFn<K>,
+    key: K,
+  ) => {
+    const [keyValue, context] = instanceSelector(ctxValue, ctxObservable, key)
+
+    return node.run(keyValue, context!)
+  }
 
   const teardowns = new NestedMap<K[keyof K], () => void>()
   const nestedMapKey = (key: K) => internalParent.keysOrder.map((k) => key[k])

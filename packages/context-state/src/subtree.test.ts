@@ -12,7 +12,7 @@ describe("subtree", () => {
 
     const otherRoot = createRoot().withTypes<{ value: string }>()
 
-    subtree(subnode, (ctx) => otherRoot.run(null, { value: ctx(subnode) }))
+    subtree(subnode, otherRoot, (ctx) => [null, { value: ctx(subnode) }])
 
     mainRoot.run()
 
@@ -31,7 +31,7 @@ describe("subtree", () => {
     const otherRootCopy = substate(subnode, () => activeObs$(otherRoot))
 
     const otherRoot = createRoot().withTypes<{ value: string }>()
-    subtree(subnode, (ctx) => otherRoot.run(null, { value: ctx(subnode) }))
+    subtree(subnode, otherRoot, (ctx) => [null, { value: ctx(subnode) }])
 
     mainRoot.run()
 
