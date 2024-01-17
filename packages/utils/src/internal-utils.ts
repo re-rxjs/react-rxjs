@@ -5,18 +5,18 @@ export const defaultStart =
   (source$: Observable<T>) =>
     new Observable<T | D>((observer) => {
       let emitted = false
-      const subscription = source$.subscribe(
-        (x) => {
+      const subscription = source$.subscribe({
+        next: (x) => {
           emitted = true
           observer.next(x)
         },
-        (e) => {
+        error: (e) => {
           observer.error(e)
         },
-        () => {
+        complete: () => {
           observer.complete()
         },
-      )
+      })
 
       if (!emitted) {
         observer.next(value)

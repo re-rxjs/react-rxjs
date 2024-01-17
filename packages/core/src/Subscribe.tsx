@@ -15,9 +15,19 @@ const SubscriptionContext = createContext<
   ((src: StateObservable<any>) => void) | null
 >(null)
 const { Provider } = SubscriptionContext
+/**
+ * @returns A function that registers a subscription to the nearest `Subscribe`
+ */
 export const useSubscription = () => useContext(SubscriptionContext)
 
 const p = Promise.resolve()
+/**
+ * A React Component that throws a promise that resolves immediately to signal
+ * to React that the nearest Suspense boundary should fallback and attempt to
+ * rerender its children. In theory this can cause a potentially infinite render
+ * loop if we repeatedly render this component. In practice, the way we are
+ * using it, we know it will only render once or twice.
+ */
 const Throw = () => {
   throw p
 }
@@ -35,7 +45,7 @@ const Throw = () => {
  * the subscription exists.
  *
  * @param [source$] (=undefined) - Source observable that the Component will
- * subscrib to before it renders its children.
+ * subscribe to before it renders its children.
  * @param [fallback] (=null) - JSX Element to be used by the Suspense boundary.
  *
  * @remarks This Component doesn't trigger any updates from the source$.
@@ -46,18 +56,21 @@ export const Subscribe: React.FC<{
   fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {
   const subscriptionRef = useRef<{
-    s: Subscription
-    u: (source: StateObservable<any>) => void
+    subscription: Subscription
+    registerSubscription: (source: StateObservable<any>) => void
   }>()
 
   if (!subscriptionRef.current) {
     const s = new Subscription()
     subscriptionRef.current = {
-      s,
-      u: (src) => {
+      subscription: s,
+      registerSubscription: (src) => {
         let error = EMPTY_VALUE
         let synchronous = true
         s.add(
+          // create a subscription to src; we are not concerned with consuming
+          // the values, only with instantiating the subscription and handling
+          // errors
           liftSuspense()(src).subscribe({
             error: (e) => {
               if (synchronous) {
@@ -88,6 +101,8 @@ export const Subscribe: React.FC<{
       setSubscribedSource(source$)
     } else {
       try {
+        // don't setSubscribedSource if getValue() throws, because if it does,
+        // source$ is in an error state
         ;(source$ as any).getValue()
         setSubscribedSource(source$)
       } catch (e: any) {}
@@ -111,14 +126,19 @@ export const Subscribe: React.FC<{
 
   useEffect(() => {
     return () => {
-      subscriptionRef.current?.s.unsubscribe()
+      subscriptionRef.current?.subscription.unsubscribe()
       subscriptionRef.current = undefined
     }
   }, [])
 
+  // If source$ was not provided, both source$ and subscribedSource$ will be
+  // undefined. If source$ was provided, suspend and trigger re-render until we
+  // know it was subscribed to.
   const actualChildren =
     subscribedSource === source$ ? (
-      <Provider value={subscriptionRef.current!.u}>{children}</Provider>
+      <Provider value={subscriptionRef.current!.registerSubscription}>
+        {children}
+      </Provider>
     ) : fallback === undefined ? null : (
       <Throw />
     )

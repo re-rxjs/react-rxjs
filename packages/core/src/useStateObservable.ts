@@ -24,7 +24,7 @@ interface Ref<T> {
 export const useStateObservable = <O>(
   source$: StateObservable<O>,
 ): Exclude<O, typeof SUSPENSE> => {
-  const subscription = useSubscription()
+  const registerSubscription = useSubscription()
   const [, setError] = useState()
   const callbackRef = useRef<Ref<O>>()
 
@@ -32,6 +32,8 @@ export const useStateObservable = <O>(
     const getValue = (src: StateObservable<O>) => {
       const result = src.getValue()
       if (result instanceof StatePromise)
+        // Q: why is it useful to throw a promise that resolves (rather than
+        // rejects) to a NoSubscribersError? How is this ultimately handled?
         throw result.catch((e) => {
           if (e instanceof NoSubscribersError) return e
           throw e
@@ -42,8 +44,8 @@ export const useStateObservable = <O>(
     const gv: <T>() => Exclude<T, typeof SUSPENSE> = () => {
       const src = callbackRef.current!.source$ as DefaultedStateObservable<O>
       if (!src.getRefCount() && !src.getDefaultValue) {
-        if (!subscription) throw new Error("Missing Subscribe!")
-        subscription(src)
+        if (!registerSubscription) throw new Error("Missing Subscribe!")
+        registerSubscription(src)
       }
       return getValue(src)
     }
