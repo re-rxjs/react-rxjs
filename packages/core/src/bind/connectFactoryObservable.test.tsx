@@ -445,7 +445,7 @@ describe("connectFactoryObservable", () => {
 
         await componentAct(async () => {
           normal$.next("ALL GOOD")
-          await wait(50)
+          await wait(5)
         })
 
         expect(screen.queryByText("ALL GOOD")).not.toBeNull()
