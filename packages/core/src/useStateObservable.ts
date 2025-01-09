@@ -26,7 +26,7 @@ export const useStateObservable = <O>(
 ): Exclude<O, typeof SUSPENSE> => {
   const subscription = useSubscription()
   const [, setError] = useState()
-  const callbackRef = useRef<Ref<O>>()
+  const callbackRef = useRef<Ref<O> | undefined>(undefined)
 
   if (!callbackRef.current) {
     const getValue = (src: StateObservable<O>) => {
