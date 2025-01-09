@@ -45,10 +45,13 @@ export const Subscribe: React.FC<{
   source$?: Observable<any>
   fallback?: NonNullable<ReactNode> | null
 }> = ({ source$, children, fallback }) => {
-  const subscriptionRef = useRef<{
-    s: Subscription
-    u: (source: StateObservable<any>) => void
-  }>()
+  const subscriptionRef = useRef<
+    | {
+        s: Subscription
+        u: (source: StateObservable<any>) => void
+      }
+    | undefined
+  >(undefined)
 
   if (!subscriptionRef.current) {
     const s = new Subscription()
