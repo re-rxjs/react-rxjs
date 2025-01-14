@@ -1,3 +1,7 @@
+## 0.10.8 (2025-01-14)
+
+- Update dependencies to support React 19 (#321)
+
 ## 0.10.7 (2023-08-04)
 
 - Add getServerSnapshot, fix loop on SSR Subscribe (#306)
