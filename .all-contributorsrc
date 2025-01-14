@@ -103,6 +103,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "rveciana",
+      "name": "Roger Veciana i Rovira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2832885?v=4",
+      "profile": "http://geoexamples.com",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -110,5 +119,7 @@
   "projectOwner": "re-rxjs",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitType": "docs",
+  "commitConvention": "angular"
 }
