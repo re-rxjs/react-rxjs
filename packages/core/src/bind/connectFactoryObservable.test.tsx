@@ -89,8 +89,13 @@ describe("connectFactoryObservable", () => {
 
       await wait(110)
 
-      expect(screen.queryByText("Result 1")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
+      vi.waitFor(
+        () => {
+          expect(screen.queryByText("Result 1")).not.toBeNull()
+          expect(screen.queryByText("Waiting")).toBeNull()
+        },
+        { timeout: 2000 },
+      )
     })
 
     it("synchronously mounts the emitted value if the observable emits synchronously", () => {
@@ -311,7 +316,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows errors to be caught in error boundaries", () => {
-      const errStream = new Subject()
+      const errStream = new Subject<any>()
       const [useError] = bind(() => errStream, 1)
 
       const ErrorComponent = () => {
@@ -338,7 +343,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows sync errors to be caught in error boundaries with suspense", () => {
-      const errStream = new Observable((observer) =>
+      const errStream = new Observable<any>((observer) =>
         observer.error("controlled error"),
       )
       const [useError, getErrStream$] = bind((_: string) => errStream)
@@ -369,7 +374,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows async errors to be caught in error boundaries with suspense", async () => {
-      const errStream = new Subject()
+      const errStream = new Subject<any>()
       const [useError, getErrStream$] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {

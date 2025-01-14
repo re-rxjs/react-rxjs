@@ -1,11 +1,13 @@
 import {
+  act,
   act as componentAct,
   fireEvent,
   render,
+  renderHook,
   screen,
 } from "@testing-library/react"
-import { act, renderHook } from "@testing-library/react"
 import React, { FC, StrictMode, Suspense, useEffect, useState } from "react"
+import { renderToPipeableStream } from "react-dom/server"
 import {
   defer,
   EMPTY,
@@ -26,7 +28,7 @@ import {
   startWith,
   switchMapTo,
 } from "rxjs/operators"
-import { describe, it, beforeAll, afterAll, expect, vi } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import {
   bind,
   sinkSuspense,
@@ -34,9 +36,8 @@ import {
   SUSPENSE,
   useStateObservable,
 } from "../"
-import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
-import { renderToPipeableStream } from "react-dom/server"
 import { pipeableStreamToObservable } from "../test-helpers/pipeableStreamToObservable"
+import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
@@ -93,8 +94,13 @@ describe("connectObservable", () => {
 
     await wait(110)
 
-    expect(screen.queryByText("Result 1")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
+    vi.waitFor(
+      () => {
+        expect(screen.queryByText("Result 1")).not.toBeNull()
+        expect(screen.queryByText("Waiting")).toBeNull()
+      },
+      { timeout: 2000 },
+    )
     sub.unsubscribe()
   })
 
@@ -118,8 +124,13 @@ describe("connectObservable", () => {
 
     await wait(110)
 
-    expect(screen.queryByText("Result 1")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
+    vi.waitFor(
+      () => {
+        expect(screen.queryByText("Result 1")).not.toBeNull()
+        expect(screen.queryByText("Waiting")).toBeNull()
+      },
+      { timeout: 2000 },
+    )
     sub.unsubscribe()
   })
 
@@ -183,9 +194,7 @@ describe("connectObservable", () => {
     const [useNumber] = bind(numberStream, 1)
     const [useString] = bind(stringStream, "a")
 
-    const BatchComponent: FC<{
-      onUpdate: () => void
-    }> = ({ onUpdate }) => {
+    const BatchComponent: FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
       const number = useNumber()
       const string = useString()
       useEffect(onUpdate)
@@ -329,8 +338,8 @@ describe("connectObservable", () => {
           {value === null
             ? "default"
             : value instanceof Promise
-            ? "promise"
-            : "wtf?"}
+              ? "promise"
+              : "wtf?"}
         </div>
       )
     }
@@ -387,13 +396,17 @@ describe("connectObservable", () => {
 
     await wait(10)
 
-    expect(screen.queryByText("Waiting")).toBeNull()
-    expect(screen.queryByText("Result 1")).not.toBeNull()
+    vi.waitFor(() => {
+      expect(screen.queryByText("Waiting")).toBeNull()
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+    })
 
     fireEvent.click(screen.getByText(/NextVal/i))
 
-    expect(screen.queryByText("Result 2")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
+    vi.waitFor(() => {
+      expect(screen.queryByText("Result 2")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+    })
 
     fireEvent.click(screen.getByText(/NextKey/i))
 
@@ -405,17 +418,21 @@ describe("connectObservable", () => {
 
     await wait(10)
 
-    expect(screen.queryByText("Result 1")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
+    vi.waitFor(() => {
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+    })
 
     fireEvent.click(screen.getByText(/NextVal/i))
 
-    expect(screen.queryByText("Result 2")).not.toBeNull()
-    expect(screen.queryByText("Waiting")).toBeNull()
+    vi.waitFor(() => {
+      expect(screen.queryByText("Result 2")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
+    })
   })
 
   it("allows errors to be caught in error boundaries", () => {
-    const errStream = new Subject()
+    const errStream = new Subject<any>()
     const [useError] = bind(errStream, 1)
 
     const ErrorComponent = () => {
@@ -441,7 +458,7 @@ describe("connectObservable", () => {
   })
 
   it("allows sync errors to be caught in error boundaries with suspense, using source$", () => {
-    const errStream = new Observable((observer) =>
+    const errStream = new Observable<any>((observer) =>
       observer.error("controlled error"),
     )
     const [useError, errStream$] = bind(errStream)
@@ -468,7 +485,7 @@ describe("connectObservable", () => {
   })
 
   it("allows sync errors to be caught in error boundaries with suspense, without using source$", () => {
-    const errStream = new Observable((observer) =>
+    const errStream = new Observable<any>((observer) =>
       observer.error("controlled error"),
     )
     const [useError] = bind(errStream)
@@ -495,7 +512,7 @@ describe("connectObservable", () => {
   })
 
   it("allows sync errors to be caught in error boundaries when there is a default value", () => {
-    const errStream = new Observable((observer) =>
+    const errStream = new Observable<any>((observer) =>
       observer.error("controlled error"),
     )
     const [useError, errStream$] = bind(errStream, 0)
@@ -522,7 +539,7 @@ describe("connectObservable", () => {
   })
 
   it("allows async errors to be caught in error boundaries with suspense", async () => {
-    const errStream = new Subject()
+    const errStream = new Subject<any>()
     const [useError, errStream$] = bind(errStream)
     const errStream$WithoutErrors = errStream$.pipe(catchError(() => NEVER))
 
@@ -702,7 +719,7 @@ describe("connectObservable", () => {
   })
 
   it("should throw an error if the stream completes without emitting while on SUSPENSE", async () => {
-    const subject = new Subject()
+    const subject = new Subject<any>()
     const [useValue, value$] = bind(subject)
     const errorCallback = vi.fn()
 

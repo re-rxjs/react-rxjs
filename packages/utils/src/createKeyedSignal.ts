@@ -79,8 +79,8 @@ export function createKeyedSignal<K, T, A extends any[]>(
       const payload = mapper
         ? mapper(...args)
         : args.length === 2
-        ? args[1]
-        : args[0]
+          ? args[1]
+          : args[0]
       const key = keySelector ? keySelector(payload) : args[0]
       observersMap.get(key)?.forEach((o) => {
         o.next(payload)
