@@ -231,7 +231,7 @@ describe("connectFactoryObservable", () => {
       const [useDelayedNumber, getDelayedNumber$] = bind((x: number) =>
         of(x).pipe(delay(50)),
       )
-      const Result: React.FC = (p) => (
+      const Result: React.FC<{ input: number }> = (p) => (
         <div>Result {useDelayedNumber(p.input)}</div>
       )
       const TestSuspense: React.FC = () => {
@@ -316,7 +316,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows errors to be caught in error boundaries", () => {
-      const errStream = new Subject()
+      const errStream = new Subject<any>()
       const [useError] = bind(() => errStream, 1)
 
       const ErrorComponent = () => {
@@ -343,7 +343,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows sync errors to be caught in error boundaries with suspense", () => {
-      const errStream = new Observable((observer) =>
+      const errStream = new Observable<any>((observer) =>
         observer.error("controlled error"),
       )
       const [useError, getErrStream$] = bind((_: string) => errStream)
@@ -374,7 +374,7 @@ describe("connectFactoryObservable", () => {
     })
 
     it("allows async errors to be caught in error boundaries with suspense", async () => {
-      const errStream = new Subject()
+      const errStream = new Subject<any>()
       const [useError, getErrStream$] = bind((_: string) => errStream)
 
       const ErrorComponent = () => {
@@ -424,7 +424,7 @@ describe("connectFactoryObservable", () => {
           .pipe(catchError(() => []))
           .subscribe()
 
-        const Ok: React.FC = ({ ok }) => <>{useOkKo(ok)}</>
+        const Ok: React.FC<{ ok: boolean }> = ({ ok }) => <>{useOkKo(ok)}</>
 
         const ErrorComponent = () => {
           const [ok, setOk] = useState(true)
@@ -839,7 +839,7 @@ describe("connectFactoryObservable", () => {
         const [, obs$] = bind(
           (key: number) => defer(() => obs$(key)).pipe(take(1)),
           (key: number) => key,
-        ) as [(key: number) => number, (key: number) => Observable]
+        ) as [(key: number) => number, (key: number) => Observable<number>]
 
         let error = null
         obs$(1)
@@ -856,7 +856,7 @@ describe("connectFactoryObservable", () => {
       it("does not crash when the factory function self-references its enhanced self", () => {
         let nSubscriptions = 0
         const [, me$] = bind(
-          (key: number): Observable => {
+          (key: number): Observable<number> => {
             nSubscriptions++
             return defer(() => me$(key)).pipe(
               take(1),
