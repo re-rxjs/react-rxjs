@@ -1,11 +1,13 @@
 import {
+  act,
   act as componentAct,
   fireEvent,
   render,
+  renderHook,
   screen,
 } from "@testing-library/react"
-import { act, renderHook } from "@testing-library/react"
 import React, { FC, StrictMode, Suspense, useEffect, useState } from "react"
+import { renderToPipeableStream } from "react-dom/server"
 import {
   defer,
   EMPTY,
@@ -26,7 +28,7 @@ import {
   startWith,
   switchMapTo,
 } from "rxjs/operators"
-import { describe, it, beforeAll, afterAll, expect, vi } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import {
   bind,
   sinkSuspense,
@@ -34,9 +36,8 @@ import {
   SUSPENSE,
   useStateObservable,
 } from "../"
-import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
-import { renderToPipeableStream } from "react-dom/server"
 import { pipeableStreamToObservable } from "../test-helpers/pipeableStreamToObservable"
+import { TestErrorBoundary } from "../test-helpers/TestErrorBoundary"
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
@@ -88,18 +89,18 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result")).toBeNull()
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Result")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
-    await wait(330)
+    await wait(110)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 1")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
-
+    vi.waitFor(
+      () => {
+        expect(screen.queryByText("Result 1")).not.toBeNull()
+        expect(screen.queryByText("Waiting")).toBeNull()
+      },
+      { timeout: 2000 },
+    )
     sub.unsubscribe()
   })
 
@@ -118,18 +119,18 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result")).toBeNull()
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Result")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     await wait(110)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 1")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
-
+    vi.waitFor(
+      () => {
+        expect(screen.queryByText("Result 1")).not.toBeNull()
+        expect(screen.queryByText("Waiting")).toBeNull()
+      },
+      { timeout: 2000 },
+    )
     sub.unsubscribe()
   })
 
@@ -193,9 +194,7 @@ describe("connectObservable", () => {
     const [useNumber] = bind(numberStream, 1)
     const [useString] = bind(stringStream, "a")
 
-    const BatchComponent: FC<{
-      onUpdate: () => void
-    }> = ({ onUpdate }) => {
+    const BatchComponent: FC = ({ onUpdate }) => {
       const number = useNumber()
       const string = useString()
       useEffect(onUpdate)
@@ -272,23 +271,17 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 0")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
+    expect(screen.queryByText("Result 0")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 2")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
+    expect(screen.queryByText("Result 2")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
   })
 
   it("keeps in suspense if more than two SUSPENSE are emitted in succesion", async () => {
@@ -318,33 +311,25 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 0")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
+    expect(screen.queryByText("Result 0")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/Next/i))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 3")).not.toBeNull()
-      expect(screen.queryByText("Waiting")).toBeNull()
-    })
+    expect(screen.queryByText("Result 3")).not.toBeNull()
+    expect(screen.queryByText("Waiting")).toBeNull()
   })
 
   it("doesn't enter suspense if the observable emits a promise", async () => {
-    const subject$ = new Subject<Promise<any>>()
+    const subject$ = new Subject<Promise>()
     const [usePromise, promise$] = bind(subject$, null)
     const Result: React.FC = () => {
       const value = usePromise()
@@ -371,17 +356,13 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).toBeNull()
-      expect(screen.queryByText("default")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).toBeNull()
+    expect(screen.queryByText("default")).not.toBeNull()
 
     act(() => subject$.next(new Promise(() => {})))
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).toBeNull()
-      expect(screen.queryByText("promise")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).toBeNull()
+    expect(screen.queryByText("promise")).not.toBeNull()
   })
 
   it("correctly unsubscribes when the Subscribe component gets unmounted", async () => {
@@ -408,10 +389,8 @@ describe("connectObservable", () => {
 
     render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Result 0")).toBeNull()
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Result 0")).toBeNull()
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/NextVal/i))
 
@@ -433,9 +412,7 @@ describe("connectObservable", () => {
 
     await wait(10)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).not.toBeNull()
 
     fireEvent.click(screen.getByText(/NextVal/i))
 
@@ -623,20 +600,16 @@ describe("connectObservable", () => {
       </TestErrorBoundary>,
     )
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Loading...")).not.toBeNull()
-      expect(screen.queryByText("ALL GOOD")).toBeNull()
-    })
+    expect(screen.queryByText("Loading...")).not.toBeNull()
+    expect(screen.queryByText("ALL GOOD")).toBeNull()
 
     await componentAct(async () => {
       errStream.next("controlled error")
       await wait(50)
     })
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Loading...")).toBeNull()
-      expect(screen.queryByText("ALL GOOD")).toBeNull()
-    })
+    expect(screen.queryByText("Loading...")).toBeNull()
+    expect(screen.queryByText("ALL GOOD")).toBeNull()
     expect(errorCallback).toHaveBeenCalledWith(
       "controlled error",
       expect.any(Object),
@@ -655,10 +628,7 @@ describe("connectObservable", () => {
         </Subscribe>
       </TestErrorBoundary>,
     )
-
-    vi.waitFor(() => {
-      expect(screen.queryByText("Loading...")).not.toBeNull()
-    })
+    expect(screen.queryByText("Loading...")).not.toBeNull()
 
     await componentAct(async () => {
       nextStream.next("ALL GOOD")
@@ -669,9 +639,7 @@ describe("connectObservable", () => {
       "controlled error",
       expect.any(Object),
     )
-    vi.waitFor(() => {
-      expect(screen.queryByText("ALL GOOD")).not.toBeNull()
-    })
+    expect(screen.queryByText("ALL GOOD")).not.toBeNull()
   })
 
   it("doesn't throw errors on components that will get unmounted on the next cycle", () => {
@@ -768,18 +736,14 @@ describe("connectObservable", () => {
     )
 
     expect(errorCallback).not.toHaveBeenCalled()
-    vi.waitFor(() => {
-      expect(screen.queryByText("Loading...")).not.toBeNull()
-    })
+    expect(screen.queryByText("Loading...")).not.toBeNull()
 
     await componentAct(async () => {
       subject.complete()
       await wait(100)
     })
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Loading...")).toBeNull()
-    })
+    expect(screen.queryByText("Loading...")).toBeNull()
     expect(errorCallback).toHaveBeenCalled()
   })
 
@@ -882,27 +846,21 @@ describe("connectObservable", () => {
       subject$.next(0)
     })
 
-    vi.waitFor(() => {
-      expect(queryByText("Result 0")).not.toBeNull()
-      expect(queryByText("Waiting")).toBeNull()
-    })
+    expect(queryByText("Result 0")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
 
     act(() => {
       subject$.next(SUSPENSE)
     })
 
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     act(() => {
       subject$.next(1)
     })
 
-    vi.waitFor(() => {
-      expect(queryByText("Result 1")).not.toBeNull()
-      expect(queryByText("Waiting")).toBeNull()
-    })
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
   })
 
   it("ignores effects while waiting for the first value", async () => {
@@ -920,33 +878,25 @@ describe("connectObservable", () => {
 
     const { queryByText } = render(<TestSuspense />)
 
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
       subject$.next(SUSPENSE)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
       subject$.next(SUSPENSE)
       await wait(10)
       subject$.next(SUSPENSE)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
       subject$.next(1)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Result 1")).not.toBeNull()
-      expect(queryByText("Waiting")).toBeNull()
-    })
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
   })
 
   it("ignores effects after entering suspense", async () => {
@@ -968,34 +918,26 @@ describe("connectObservable", () => {
       subject$.next(0)
     })
 
-    vi.waitFor(() => {
-      expect(queryByText("Result 0")).not.toBeNull()
-      expect(queryByText("Waiting")).toBeNull()
-    })
+    expect(queryByText("Result 0")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
 
     await act(async () => {
       subject$.next(SUSPENSE)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
       subject$.next(SUSPENSE)
       await wait(10)
       subject$.next(SUSPENSE)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Waiting")).not.toBeNull()
-    })
+    expect(queryByText("Waiting")).not.toBeNull()
 
     await act(async () => {
       subject$.next(1)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Result 1")).not.toBeNull()
-      expect(queryByText("Waiting")).toBeNull()
-    })
+    expect(queryByText("Result 1")).not.toBeNull()
+    expect(queryByText("Waiting")).toBeNull()
   })
 
   it("emits the default value when an effect is received", () => {
@@ -1005,23 +947,17 @@ describe("connectObservable", () => {
 
     const { queryByText } = render(<Result />)
 
-    vi.waitFor(() => {
-      expect(queryByText("Result 10")).not.toBeNull()
-    })
+    expect(queryByText("Result 10")).not.toBeNull()
 
     act(() => {
       subject$.next(5)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Result 5")).not.toBeNull()
-    })
+    expect(queryByText("Result 5")).not.toBeNull()
 
     act(() => {
       subject$.next(SUSPENSE)
     })
-    vi.waitFor(() => {
-      expect(queryByText("Result 10")).not.toBeNull()
-    })
+    expect(queryByText("Result 10")).not.toBeNull()
   })
 
   describe("The hook on SSR", () => {

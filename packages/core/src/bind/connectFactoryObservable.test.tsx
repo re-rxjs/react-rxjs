@@ -84,17 +84,18 @@ describe("connectFactoryObservable", () => {
 
       render(<TestSuspense />)
 
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result")).toBeNull()
-        expect(screen.queryByText("Waiting")).not.toBeNull()
-      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
 
       await wait(110)
 
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 1")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      vi.waitFor(
+        () => {
+          expect(screen.queryByText("Result 1")).not.toBeNull()
+          expect(screen.queryByText("Waiting")).toBeNull()
+        },
+        { timeout: 2000 },
+      )
     })
 
     it("synchronously mounts the emitted value if the observable emits synchronously", () => {
@@ -114,10 +115,8 @@ describe("connectFactoryObservable", () => {
 
       render(<TestSuspense />)
 
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 1")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
     })
 
     it("doesn't mount the fallback element if the subscription is already active", () => {
@@ -139,10 +138,8 @@ describe("connectFactoryObservable", () => {
       source$.next(1)
       render(<TestSuspense />)
 
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 1")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
       subscription.unsubscribe()
     })
 
@@ -234,7 +231,7 @@ describe("connectFactoryObservable", () => {
       const [useDelayedNumber, getDelayedNumber$] = bind((x: number) =>
         of(x).pipe(delay(50)),
       )
-      const Result: React.FC<{ input: number }> = (p) => (
+      const Result: React.FC = (p) => (
         <div>Result {useDelayedNumber(p.input)}</div>
       )
       const TestSuspense: React.FC = () => {
@@ -254,50 +251,38 @@ describe("connectFactoryObservable", () => {
 
       getDelayedNumber$(0).subscribe()
       render(<TestSuspense />)
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result")).toBeNull()
-        expect(screen.queryByText("Waiting")).not.toBeNull()
-      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
       await componentAct(async () => {
         await getDelayedNumber$(0).pipe(first()).toPromise()
         await wait(0)
       })
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 0")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      expect(screen.queryByText("Result 0")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
 
       componentAct(() => {
         getDelayedNumber$(1).subscribe()
         fireEvent.click(screen.getByText(/increase/i))
       })
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result")).toBeNull()
-        expect(screen.queryByText("Waiting")).not.toBeNull()
-      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
       await componentAct(async () => {
         await wait(60)
       })
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 1")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      expect(screen.queryByText("Result 1")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
 
       componentAct(() => {
         getDelayedNumber$(2).subscribe()
         fireEvent.click(screen.getByText(/increase/i))
       })
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result")).toBeNull()
-        expect(screen.queryByText("Waiting")).not.toBeNull()
-      })
+      expect(screen.queryByText("Result")).toBeNull()
+      expect(screen.queryByText("Waiting")).not.toBeNull()
       await componentAct(async () => {
         await wait(60)
       })
-      vi.waitFor(() => {
-        expect(screen.queryByText("Result 2")).not.toBeNull()
-        expect(screen.queryByText("Waiting")).toBeNull()
-      })
+      expect(screen.queryByText("Result 2")).not.toBeNull()
+      expect(screen.queryByText("Waiting")).toBeNull()
     })
 
     it("shares the source subscription until the refCount has stayed at zero for the grace-period", async () => {
@@ -439,7 +424,7 @@ describe("connectFactoryObservable", () => {
           .pipe(catchError(() => []))
           .subscribe()
 
-        const Ok: React.FC<{ ok: boolean }> = ({ ok }) => <>{useOkKo(ok)}</>
+        const Ok: React.FC = ({ ok }) => <>{useOkKo(ok)}</>
 
         const ErrorComponent = () => {
           const [ok, setOk] = useState(true)
@@ -459,20 +444,17 @@ describe("connectFactoryObservable", () => {
             <ErrorComponent />
           </TestErrorBoundary>,
         )
-        vi.waitFor(() => {
-          expect(screen.queryByText("ALL GOOD")).toBeNull()
-          expect(screen.queryByText("Loading...")).not.toBeNull()
-        })
+
+        expect(screen.queryByText("ALL GOOD")).toBeNull()
+        expect(screen.queryByText("Loading...")).not.toBeNull()
 
         await componentAct(async () => {
           normal$.next("ALL GOOD")
           await wait(50)
         })
 
-        vi.waitFor(() => {
-          expect(screen.queryByText("ALL GOOD")).not.toBeNull()
-          expect(screen.queryByText("Loading...")).toBeNull()
-        })
+        expect(screen.queryByText("ALL GOOD")).not.toBeNull()
+        expect(screen.queryByText("Loading...")).toBeNull()
         expect(errorCallback).not.toHaveBeenCalled()
 
         componentAct(() => {
@@ -688,9 +670,7 @@ describe("connectFactoryObservable", () => {
 
     render(<Container />)
 
-    vi.waitFor(() => {
-      expect(screen.queryByText("Waiting")).not.toBeNull()
-    })
+    expect(screen.queryByText("Waiting")).not.toBeNull()
     componentAct(() => {
       ticks$.next()
     })
@@ -859,7 +839,7 @@ describe("connectFactoryObservable", () => {
         const [, obs$] = bind(
           (key: number) => defer(() => obs$(key)).pipe(take(1)),
           (key: number) => key,
-        ) as [(key: number) => number, (key: number) => Observable<number>]
+        ) as [(key: number) => number, (key: number) => Observable]
 
         let error = null
         obs$(1)
@@ -876,7 +856,7 @@ describe("connectFactoryObservable", () => {
       it("does not crash when the factory function self-references its enhanced self", () => {
         let nSubscriptions = 0
         const [, me$] = bind(
-          (key: number): Observable<number> => {
+          (key: number): Observable => {
             nSubscriptions++
             return defer(() => me$(key)).pipe(
               take(1),
